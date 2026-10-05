@@ -10,7 +10,7 @@ import { cardTitle } from "@/lib/blocks";
 import { val } from "@/lib/fields";
 import { useFlash, useOnline } from "@/lib/hooks";
 import type { Draft, Guest } from "@/lib/model";
-import { copy, haptic, saveFile, share, shareFile } from "@/lib/native";
+import { copy, haptic, openLink, saveFile, share, shareFile } from "@/lib/native";
 import { UI } from "@/lib/ui";
 import { cardStyle } from "../card/card-view";
 import { Seal } from "../craft";
@@ -54,14 +54,21 @@ export type Publisher = ReturnType<typeof usePublish>;
 const O = UI.out;
 const csvCell = (s: string) => `"${s.replaceAll('"', '""')}"`;
 
-/** How a guest's letter is delivered: their phone (WhatsApp), their email, or the system share sheet. */
-function deliver(guest: Guest, title: string, link: string) {
+/**
+ * How a guest's letter is delivered: their phone (WhatsApp), their email, or the share sheet.
+ * WhatsApp and email also copy the message first, so sending never depends on an app being
+ * installed: if nothing opens, it's ready to paste anywhere. Resolves true when it was copied.
+ */
+async function deliver(guest: Guest, title: string, link: string) {
   const text = `${title}\n${link}`;
   const phone = val("phone", guest.phone);
   const email = val("email", guest.email);
-  if (phone) return window.open(`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
-  if (email) return window.open(`mailto:${email}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`, "_blank");
-  return share({ title, text: title, url: link });
+  if (!phone && !email) return (await share({ title, text: title, url: link })) === "copied";
+  const copied = copy(text); // inside the click, before anything takes focus
+  openLink(phone
+    ? `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`
+    : `mailto:${email}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`);
+  return copied;
 }
 
 export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Draft; pub: Publisher; origin: string; save: (p: Partial<Draft>, touch?: boolean) => void; initialTab?: "link" | "image" }) {
@@ -170,7 +177,8 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [allCopied, flashAll] = useFlash();
   const done = guests.filter((g) => sent[g.id]).length;
-  const copyOne = (g: Guest) => copy(linkFor(g)).then((ok) => { if (ok) { setCopiedId(g.id); setTimeout(() => setCopiedId(null), 1400); } });
+  const flashGuest = (id: string) => { setCopiedId(id); setTimeout(() => setCopiedId(null), 1400); };
+  const copyOne = (g: Guest) => copy(linkFor(g)).then((ok) => ok && flashGuest(g.id));
   const csv = () => saveFile(`${slug(cardTitle(draft.card))}-guests.csv`, new Blob(
     [["name,phone,email,link", ...guests.map((g) => [g.name, g.phone ?? "", g.email ?? "", linkFor(g)].map(csvCell).join(","))].join("\n")],
     { type: "text/csv" },
@@ -197,7 +205,7 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
                 className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
                 {copiedId === g.id ? <Check size={16} /> : <Copy size={16} />}
               </button>
-              <SketchButton size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, title, linkFor(g)); markSent(g.id); }}>
+              <SketchButton size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, title, linkFor(g)).then((copied) => copied && flashGuest(g.id)); markSent(g.id); }}>
                 {channel} {O.sendTo}
               </SketchButton>
             </li>

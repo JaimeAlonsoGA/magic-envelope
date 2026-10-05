@@ -67,7 +67,7 @@ export function GuestsPanel({ draft, setGuests, setCard, previewId, setPreviewId
         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-highlight/60 px-3 py-2 text-sm">
           <TriangleAlert size={16} className="shrink-0" /> {G.notUsed}
           <button type="button" className="ml-auto font-bold underline underline-offset-4"
-            onClick={() => setCard({ blocks: [{ ...newBlock("heading"), text: `${NAME_TOKEN},`, size: "md" } as Card["blocks"][number], ...card.blocks] })}>
+            onClick={() => setCard({ blocks: [{ ...newBlock("heading"), text: NAME_TOKEN, size: "md" } as Card["blocks"][number], ...card.blocks] })}>
             {G.addGreeting}
           </button>
         </div>
