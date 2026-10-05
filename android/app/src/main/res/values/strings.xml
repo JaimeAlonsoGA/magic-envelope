@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Magic Envelope</string>
+    <string name="title_activity_main">Magic Envelope</string>
+    <string name="package_name">app.magicenvelope</string>
+    <string name="custom_url_scheme">app.magicenvelope</string>
+</resources>

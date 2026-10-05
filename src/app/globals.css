@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fbf8f1;
+  --grid: #e9e2d2;
+  --ink: #1e1e1e;
+  --muted: #6b6458;
+  --violet: #6965db;
+  --violet-soft: #c9c7f5;
+  --wax: #a3172b;
+  --wax-soft: #f2c7cd;
+  --highlight: #fff1a8;
+  --sheet: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17161b;
+    --grid: #26242d;
+    --ink: #ece8df;
+    --muted: #a19b90;
+    --violet: #a8a5ff;
+    --violet-soft: #3a3870;
+    --wax: #ef5a6e;
+    --wax-soft: #5a1f29;
+    --highlight: #5b5124;
+    --sheet: #201f26;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-violet: var(--violet);
+  --color-wax: var(--wax);
+  --color-sheet: var(--sheet);
+  --font-hand: var(--font-kalam);
+  --font-medieval: var(--font-medieval);
+  --font-fell: var(--font-fell);
+}
+
+/* Element defaults live in the base layer so Tailwind utilities (text-*, font-*, …) always win. */
+@layer base {
+  html { color-scheme: light dark; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: var(--font-kalam), ui-rounded, system-ui, sans-serif;
+    background-image: radial-gradient(var(--grid) 1.2px, transparent 1.2px);
+    background-size: 22px 22px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input, textarea, select, button { font: inherit; color: inherit; }
+  input, textarea, select { background: transparent; }
+  button, [role="button"], a { touch-action: manipulation; }
+  ::selection { background: var(--violet-soft); }
+  input[type="datetime-local"], input[type="date"] { min-height: 2.5rem; }
+  :focus-visible { outline-color: var(--violet); }
+  input:focus, textarea:focus, select:focus { outline: none; }
+  .field {
+    width: 100%;
+    border-bottom: 2px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+    padding: .35rem .1rem;
+  }
+  .field:focus { border-bottom-color: var(--violet); border-bottom-style: solid; }
+  .field::placeholder { color: var(--muted); opacity: .6; }
+}
+
+/* Parchment & dot textures for cards */
+/* Paper textures are real PNGs (not SVG filters) so they render identically online and in exported images. */
+.tex-parchment {
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgb(255 255 255 / .35), transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgb(120 80 30 / .12), transparent 55%),
+    url("/textures/parchment.png");
+  background-size: auto, auto, 200px 200px;
+}
+.tex-grain { background-image: url("/textures/grain.png"); background-size: 200px 200px; }
+.tex-scanlines { background-image: repeating-linear-gradient(0deg, var(--c-ink) 0 1px, transparent 1px 3px); }
+.tex-dots { background-image: radial-gradient(currentColor .8px, transparent .8px); background-size: 18px 18px; background-blend-mode: normal; }
+
+/* Motion policy: nothing moves on its own. Motion only answers the user (hover, press, open, appear),
+   is short (≤ 700ms), eased, and never loops, bounces or wobbles. */
+@keyframes pop { from { transform: translateY(6px); opacity: 0 } to { transform: none; opacity: 1 } }
+.pop { animation: pop .22s ease-out both; }
+@keyframes rise { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+.rise { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes sheet { from { transform: translateY(100%) } to { transform: none } }
+.sheet-in { animation: sheet .26s cubic-bezier(.2,.8,.2,1) both; }
+
+/* The fold of a letter still folded in its envelope (shared by the envelope's paper and the hand-off). */
+.letter-fold {
+  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / .07) 70%, rgb(0 0 0 / .13));
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / .35);
+}
+
+/* Letter hand-off (components/card/reveal.tsx): the shadow starts as the paper's and grows. */
+.morph-start .print-card { box-shadow: 0 1px 2px rgb(0 0 0 / .12) !important; transition: none !important; }
+.morph-run .print-card { transition: box-shadow 560ms cubic-bezier(.3,.1,.2,1); }
+
+@media print {
+  body { background: none !important; }
+  .no-print { display: none !important; }
+  .print-card { box-shadow: none !important; margin: 0 auto !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
