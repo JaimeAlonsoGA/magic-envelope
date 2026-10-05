@@ -1,5 +1,6 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
+import { MCP_NAME, MCP_VERSION } from "@/lib/agents";
 import { LetterInput, LetterPatch, catalog, createLetter, getLetter, updateLetter } from "@/lib/api.server";
 
 /**
@@ -38,6 +39,6 @@ const handler = createMcpHandler((server) => {
     const out = await updateLetter(id, editKey, patch);
     return out ? json(out) : { content: [{ type: "text" as const, text: "Unknown letter or wrong editKey." }], isError: true };
   });
-}, { serverInfo: { name: "magic-envelope", version: "1.0.0" } });
+}, { serverInfo: { name: MCP_NAME, version: MCP_VERSION } });
 
 export { handler as GET, handler as POST, handler as DELETE };

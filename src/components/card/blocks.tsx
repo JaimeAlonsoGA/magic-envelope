@@ -1,5 +1,6 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import {
   CalendarPlus, Camera, Check, Copy, Gift, HelpCircle, Link2, Map as MapIcon, MapPin, Music, Shirt, Video, X,
 } from "lucide-react";
@@ -16,7 +17,6 @@ import type { Block, BlockOf, Card } from "@/lib/model";
 import { copy, haptic, isNative, saveFile } from "@/lib/native";
 import { SHAPE, type Resolved } from "@/lib/styles";
 import { fallbackName, splitName } from "@/lib/personalize";
-import { BLOCK_LABEL } from "@/lib/ui";
 import { Stamp } from "../craft";
 import { Placeholder } from "../selectable";
 
@@ -33,6 +33,7 @@ const live = (ctx: Ctx, b: { interactive?: boolean }) => !ctx.flat && b.interact
 
 /** Text with the guest's name injected. In the editor the name is marked as a field. */
 function Named({ text, ctx }: { text: string; ctx: Ctx }) {
+  const ui = useUI();
   const parts = splitName(text);
   if (parts.length === 1) return <>{text}</>;
   const name = ctx.guestName?.trim() || fallbackName(ctx.card);
@@ -42,7 +43,7 @@ function Named({ text, ctx }: { text: string; ctx: Ctx }) {
         <Fragment key={i}>
           {p}
           {i < parts.length - 1 && (ctx.editing
-            ? <span className="rounded-sm underline decoration-dotted decoration-2 underline-offset-4" title="Guest name">{name}</span>
+            ? <span className="rounded-sm underline decoration-dotted decoration-2 underline-offset-4" title={ui.guests.insertName}>{name}</span>
             : name)}
         </Fragment>
       ))}
@@ -139,8 +140,10 @@ export function RenderBlock({ b, ctx, ghost }: { b: Block; ctx: Ctx; ghost?: boo
   }
 }
 
-const Ghost = ({ b, digitalOnly }: { b: Block; digitalOnly?: boolean }) =>
-  <Placeholder icon={BLOCK_ICON[b.type]} label={BLOCK_LABEL[b.type]} note={digitalOnly ? "link only" : undefined} />;
+function Ghost({ b, digitalOnly }: { b: Block; digitalOnly?: boolean }) {
+  const ui = useUI();
+  return <Placeholder icon={BLOCK_ICON[b.type]} label={ui.blocks[b.type]} note={digitalOnly ? ui.linkOnly : undefined} />;
+}
 
 function DateB({ b, ctx }: { b: BlockOf<"date">; ctx: Ctx }) {
   const { lang } = ctx.card;

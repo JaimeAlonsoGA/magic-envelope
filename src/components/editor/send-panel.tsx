@@ -1,5 +1,6 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import {
   Check, Copy, Download, FileSpreadsheet, ImageIcon, KeyRound, Link2, Loader2, Mail, MessageCircle, Printer,
   RefreshCw, Send, Share2, WifiOff,
@@ -11,7 +12,6 @@ import { val } from "@/lib/fields";
 import { useFlash, useOnline } from "@/lib/hooks";
 import type { Draft, Guest } from "@/lib/model";
 import { copy, haptic, openLink, saveFile, share, shareFile } from "@/lib/native";
-import { UI } from "@/lib/ui";
 import { cardStyle } from "../card/card-view";
 import { Seal } from "../craft";
 import { slug, useLetterImages } from "../export-stage";
@@ -51,7 +51,6 @@ export function usePublish(draft: Draft | undefined, save: (p: Partial<Draft>, t
 }
 export type Publisher = ReturnType<typeof usePublish>;
 
-const O = UI.out;
 const csvCell = (s: string) => `"${s.replaceAll('"', '""')}"`;
 
 /**
@@ -72,6 +71,7 @@ async function deliver(guest: Guest, title: string, link: string) {
 }
 
 export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Draft; pub: Publisher; origin: string; save: (p: Partial<Draft>, touch?: boolean) => void; initialTab?: "link" | "image" }) {
+  const ui = useUI();
   // opens on the output being previewed
   const [tab, setTab] = useState<"link" | "image">(initialTab ?? draft.view ?? "link");
   const online = useOnline();
@@ -88,13 +88,13 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
         {pub.busy ? (
           <>
             <Seal value={card.seal} shape={card.sealShape} color={cardStyle(card).wax} size={64} />
-            <span className="font-hand text-lg text-muted"><Loader2 className="mr-1 inline animate-spin" size={16} />{UI.publishing}</span>
+            <span className="font-hand text-lg text-muted"><Loader2 className="mr-1 inline animate-spin" size={16} />{ui.publishing}</span>
           </>
         ) : (
           <>
-            {!online && <span className="flex items-center gap-2 text-muted"><WifiOff size={16} /> {UI.offline}</span>}
-            {pub.err && <p className="text-sm text-wax">{UI.error}</p>}
-            <SketchButton tone="wax" size="lg" disabled={!online} onClick={pub.run}><Send size={18} /> {UI.publish}</SketchButton>
+            {!online && <span className="flex items-center gap-2 text-muted"><WifiOff size={16} /> {ui.offline}</span>}
+            {pub.err && <p className="text-sm text-wax">{ui.error}</p>}
+            <SketchButton tone="wax" size="lg" disabled={!online} onClick={pub.run}><Send size={18} /> {ui.publish}</SketchButton>
           </>
         )}
       </div>
@@ -108,17 +108,17 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
           {(["link", "image"] as const).map((k) => (
             <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
               className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-base transition-colors ${tab === k ? "bg-sheet shadow-sm" : "text-muted hover:text-ink"}`}>
-              {k === "link" ? <Link2 size={16} /> : <ImageIcon size={16} />} {k === "link" ? O.link : O.image}
+              {k === "link" ? <Link2 size={16} /> : <ImageIcon size={16} />} {k === "link" ? ui.out.link : ui.out.image}
             </button>
           ))}
         </div>
         {pub.stale && (
           <SketchButton size="sm" tone="primary" className="ml-auto" disabled={pub.busy || !online} onClick={pub.run}>
-            <RefreshCw size={15} className={pub.busy ? "animate-spin" : ""} /> {UI.update}
+            <RefreshCw size={15} className={pub.busy ? "animate-spin" : ""} /> {ui.update}
           </SketchButton>
         )}
       </div>
-      {pub.err && <p className="text-sm text-wax">{UI.error}</p>}
+      {pub.err && <p className="text-sm text-wax">{ui.error}</p>}
 
       {tab === "link" ? (
         guests.length ? <GuestLinks draft={draft} guests={guests} sent={sent} linkFor={linkFor} markSent={markSent} /> : <SingleLink draft={draft} url={base} />
@@ -130,6 +130,7 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
 }
 
 function SingleLink({ draft, url }: { draft: Draft; url: string }) {
+  const ui = useUI();
   const [copied, flash] = useFlash();
   const [keyCopied, flashKey] = useFlash();
   const [qr, setQr] = useState("");
@@ -144,7 +145,7 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
       {qr && (
         <button type="button" onClick={async () => saveFile("magic-envelope-qr.png", await (await fetch(qr)).blob())}
-          className="shrink-0 rounded-lg bg-white p-1 shadow-sm transition-transform hover:-translate-y-0.5" aria-label="Save QR code" title="Save QR code">
+          className="shrink-0 rounded-lg bg-white p-1 shadow-sm transition-transform hover:-translate-y-0.5" aria-label={ui.saveQr} title={ui.saveQr}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qr} alt="" className="h-36 w-36" />
         </button>
@@ -155,14 +156,14 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
           {copied ? <Check size={16} className="ml-auto shrink-0 text-violet" /> : <Copy size={16} className="ml-auto shrink-0" />}
         </button>
         <div className="flex flex-wrap gap-2">
-          <SketchButton tone="wax" onClick={() => share({ title, text: title, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {UI.share}</SketchButton>
+          <SketchButton tone="wax" onClick={() => share({ title, text: title, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {ui.share}</SketchButton>
           <SketchLink external href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`}><MessageCircle size={18} /> WhatsApp</SketchLink>
-          <SketchLink external href={`${url}?print=1`} size="icon" aria-label={UI.print} title={UI.print}><Printer size={18} /></SketchLink>
+          <SketchLink external href={`${url}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
         </div>
         {draft.editKey && (
           <button type="button" onClick={() => copy(`${location.origin}/e/${draft.publishedId}#${draft.editKey}`).then((ok) => ok && flashKey())}
             className="inline-flex min-h-10 items-center gap-2 text-sm text-muted hover:text-ink">
-            {keyCopied ? <Check size={16} /> : <KeyRound size={16} />} {keyCopied ? UI.copied : UI.editElsewhere}
+            {keyCopied ? <Check size={16} /> : <KeyRound size={16} />} {keyCopied ? ui.copied : ui.editElsewhere}
           </button>
         )}
       </div>
@@ -174,6 +175,7 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
 function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   draft: Draft; guests: Guest[]; sent: Record<string, number>; linkFor: (g?: Guest) => string; markSent: (id: string) => void;
 }) {
+  const ui = useUI();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [allCopied, flashAll] = useFlash();
   const done = guests.filter((g) => sent[g.id]).length;
@@ -187,9 +189,9 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-auto text-sm text-muted">{O.progress(done, guests.length)}</span>
+        <span className="mr-auto text-sm text-muted">{ui.out.progress(done, guests.length)}</span>
         <SketchButton size="sm" onClick={() => copy(guests.map((g) => `${g.name}: ${linkFor(g)}`).join("\n")).then((ok) => ok && flashAll())}>
-          {allCopied ? <Check size={15} /> : <Copy size={15} />} {O.copyAll}
+          {allCopied ? <Check size={15} /> : <Copy size={15} />} {ui.out.copyAll}
         </SketchButton>
         <SketchButton size="sm" onClick={csv}><FileSpreadsheet size={15} /> CSV</SketchButton>
       </div>
@@ -200,20 +202,20 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
           return (
             <li key={g.id} className="flex items-center gap-1.5 py-1.5">
               <span className="min-w-0 flex-1 truncate text-lg">{g.name}</span>
-              {sent[g.id] && <span className="flex items-center gap-1 text-sm text-violet"><Check size={14} /> {O.sent}</span>}
-              <button type="button" aria-label={`${UI.copy} — ${g.name}`} title={UI.copy} onClick={() => copyOne(g)}
+              {sent[g.id] && <span className="flex items-center gap-1 text-sm text-violet"><Check size={14} /> {ui.out.sent}</span>}
+              <button type="button" aria-label={`${ui.copy} — ${g.name}`} title={ui.copy} onClick={() => copyOne(g)}
                 className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
                 {copiedId === g.id ? <Check size={16} /> : <Copy size={16} />}
               </button>
               <SketchButton size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, title, linkFor(g)).then((copied) => copied && flashGuest(g.id)); markSent(g.id); }}>
-                {channel} {O.sendTo}
+                {channel} {ui.out.sendTo}
               </SketchButton>
             </li>
           );
         })}
       </ul>
       <details className="text-sm text-muted">
-        <summary className="cursor-pointer select-none">{O.generic}</summary>
+        <summary className="cursor-pointer select-none">{ui.out.generic}</summary>
         <div className="pt-3"><SingleLink draft={draft} url={linkFor()} /></div>
       </details>
     </div>
@@ -222,6 +224,7 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
 
 /** Flat PNGs: one generic image, one per guest, or all of them zipped. */
 function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Guest[]; linkFor: (g?: Guest) => string; markSent: (id: string) => void }) {
+  const ui = useUI();
   const img = useLetterImages();
   const [progress, setProgress] = useState<number | null>(null);
   const [err, setErr] = useState(false);
@@ -254,30 +257,30 @@ function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Gu
   return (
     <div className="space-y-4">
       {img.stage}
-      <p className="text-sm text-muted">{O.imageNote}</p>
+      <p className="text-sm text-muted">{ui.out.imageNote}</p>
       <div className="flex flex-wrap gap-2">
         {guests.length > 0 && (
           <SketchButton tone="wax" disabled={img.busy || progress !== null} onClick={all}>
-            {progress !== null ? <><Loader2 size={16} className="animate-spin" /> {O.rendering(progress, guests.length)}</> : <><Download size={18} /> {O.zip(guests.length)}</>}
+            {progress !== null ? <><Loader2 size={16} className="animate-spin" /> {ui.out.rendering(progress, guests.length)}</> : <><Download size={18} /> {ui.out.zip(guests.length)}</>}
           </SketchButton>
         )}
         <SketchButton tone={guests.length ? "plain" : "wax"} disabled={img.busy || progress !== null} onClick={() => one()}>
-          {img.busy && progress === null ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={18} />} {guests.length ? O.generic : O.download}
+          {img.busy && progress === null ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={18} />} {guests.length ? ui.out.generic : ui.out.download}
         </SketchButton>
-        <SketchLink external href={`${linkFor()}?print=1`} size="icon" aria-label={UI.print} title={UI.print}><Printer size={18} /></SketchLink>
+        <SketchLink external href={`${linkFor()}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
       </div>
       {guests.length > 0 && (
         <ul className="divide-y divide-ink/10">
           {guests.map((g) => (
             <li key={g.id} className="flex items-center gap-2 py-1.5">
               <span className="min-w-0 flex-1 truncate text-lg">{g.name}</span>
-              {draft.sent?.[g.id] && <Check size={15} className="text-violet" aria-label={O.sent} />}
-              <SketchButton size="sm" disabled={img.busy || progress !== null} onClick={() => one(g)}><Share2 size={15} /> {O.shareImage}</SketchButton>
+              {draft.sent?.[g.id] && <Check size={15} className="text-violet" aria-label={ui.out.sent} />}
+              <SketchButton size="sm" disabled={img.busy || progress !== null} onClick={() => one(g)}><Share2 size={15} /> {ui.out.shareImage}</SketchButton>
             </li>
           ))}
         </ul>
       )}
-      {err && <p className="text-sm text-wax">{UI.error}</p>}
+      {err && <p className="text-sm text-wax">{ui.error}</p>}
     </div>
   );
 }

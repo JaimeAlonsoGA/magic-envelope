@@ -2,7 +2,8 @@
  * Letter languages: everything a *guest* reads (template copy, action buttons on the card, the envelope).
  * App UI copy lives in lib/ui.ts and is always English.
  */
-import { LANGS, type Kind, type Lang } from "./model";
+import { detectLang } from "./lang";
+import type { Kind, Lang } from "./model";
 
 type Guest = {
   to: string; open: string; tapToOpen: string; share: string; copied: string; print: string;
@@ -156,8 +157,5 @@ export const t = (lang: Lang) => DICTS[lang];
 export const FLAGS: Record<Lang, string> = { es: "🇪🇸", en: "🇬🇧", fr: "🇫🇷", pt: "🇧🇷", it: "🇮🇹", de: "🇩🇪" };
 
 /** Best default letter language for this device. */
-export function guessLang(): Lang {
-  if (typeof navigator === "undefined") return "en";
-  const l = navigator.language.slice(0, 2) as Lang;
-  return LANGS.includes(l) ? l : "en";
-}
+/** Default letter language for a new letter: the language this person reads the app in. */
+export const guessLang = (): Lang => detectLang();

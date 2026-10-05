@@ -1,11 +1,11 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { Check, RotateCcw } from "lucide-react";
 import { FLAGS } from "@/lib/i18n";
 import { ENVELOPE_PAPERS } from "@/lib/mail";
 import { LANGS, type Card } from "@/lib/model";
 import { FONTS, FONT_IDS, STYLES, STYLE_IDS, resolveStyle, type Custom, type FontId } from "@/lib/styles";
-import { UI } from "@/lib/ui";
 import { cardStyle } from "../card/card-view";
 import { SketchButton } from "../sketch";
 import { StyleSwatch } from "../style-swatch";
@@ -47,6 +47,7 @@ function FontPicker({ label, value, onChange }: { label: string; value: FontId; 
 
 /** How a letter looks: its style, colors, fonts and language. (The envelope is edited on its own canvas.) */
 export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: Partial<Card>) => void; link: boolean }) {
+  const ui = useUI();
   const s = cardStyle(card);
   const custom = card.custom ?? {};
   const setCustom = (patch: Custom) => {
@@ -57,7 +58,7 @@ export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: P
 
   return (
     <div className="space-y-6">
-      <Section title={UI.theme}>
+      <Section title={ui.theme}>
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
           {STYLE_IDS.map((id) => {
             const on = card.style === id;
@@ -73,25 +74,25 @@ export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: P
         </div>
       </Section>
 
-      <Section title="Customize" action={card.custom && (
+      <Section title={ui.customize} action={card.custom && (
         <button type="button" onClick={() => setCard({ custom: undefined })} className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
           <RotateCcw size={13} /> Reset
         </button>
       )}>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <ColorField label="Accent" value={s.accent} onChange={(accent) => setCustom({ accent })} />
-          <ColorField label="Paper" value={s.paper} onChange={(paper) => setCustom({ paper })} />
-          <ColorField label="Text" value={s.ink} onChange={(ink) => setCustom({ ink })} />
+          <ColorField label={ui.accent} value={s.accent} onChange={(accent) => setCustom({ accent })} />
+          <ColorField label={ui.paper} value={s.paper} onChange={(paper) => setCustom({ paper })} />
+          <ColorField label={ui.ink} value={s.ink} onChange={(ink) => setCustom({ ink })} />
         </div>
         {/* envelopes only exist for links; their paper comes from a curated set so it always looks right */}
         {link && (
           <div className="space-y-1.5">
-            <span className="text-sm text-muted">Envelope</span>
-            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Envelope paper">
-              <button type="button" role="radio" aria-checked={!custom.envelope} title="Style default" onClick={() => setCustom({ envelope: undefined })}
+            <span className="text-sm text-muted">{ui.envelope}</span>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={ui.envelopePaper}>
+              <button type="button" role="radio" aria-checked={!custom.envelope} title={ui.styleDefault} onClick={() => setCustom({ envelope: undefined })}
                 className={`h-9 w-12 rounded-md text-xs ring-offset-2 ring-offset-sheet ${!custom.envelope ? "ring-2 ring-violet" : "ring-1 ring-ink/15"}`}
                 style={{ background: STYLES[card.style].envelope }}>
-                <span className="rounded bg-white/70 px-1 text-[10px] text-ink">auto</span>
+                <span className="rounded bg-white/70 px-1 text-[10px] text-ink">{ui.auto}</span>
               </button>
               {ENVELOPE_PAPERS.map((p) => (
                 <button key={p.id} type="button" role="radio" aria-checked={custom.envelope === p.color} aria-label={p.label} title={p.label}
@@ -102,12 +103,12 @@ export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: P
             </div>
           </div>
         )}
-        <FontPicker label="Titles" value={s.head} onChange={(head) => setCustom({ head })} />
-        <FontPicker label="Text" value={s.body} onChange={(body) => setCustom({ body })} />
+        <FontPicker label={ui.fontTitles} value={s.head} onChange={(head) => setCustom({ head })} />
+        <FontPicker label={ui.fontText} value={s.body} onChange={(body) => setCustom({ body })} />
       </Section>
 
-      <Section title={UI.language}>
-        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={UI.language}>
+      <Section title={ui.language}>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={ui.language}>
           {LANGS.map((l) => (
             <SketchButton key={l} size="sm" active={card.lang === l} role="radio" aria-checked={card.lang === l} onClick={() => setCard({ lang: l })}>
               {FLAGS[l]} <span className="uppercase">{l}</span>

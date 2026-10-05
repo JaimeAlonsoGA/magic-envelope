@@ -1,6 +1,13 @@
-/** App UI copy. The app is always in English; only the letters themselves are multilingual (lib/i18n.ts). */
-import type { BlockType, Kind } from "./model";
+/**
+ * App UI copy, in every language the app speaks. Components read it with useUI() (lib/locale.ts);
+ * the letters themselves have their own dictionary (lib/i18n.ts). English is the source: every
+ * other language is typed against it, so a missing string is a compile error.
+ */
+import type { BlockType, Kind, Lang } from "./model";
+import type { STYLE_GROUPS } from "./styles";
+import { de, es, fr, it, pt } from "./ui-locales";
 
+/** English names, also used by the API and agent docs (stable, not translated). */
 export const KIND_LABEL: Record<Kind, string> = {
   birthday: "Birthday", wedding: "Wedding", party: "Party", baby: "Baby shower",
   dinner: "Dinner", graduation: "Graduation", event: "Event", letter: "Letter",
@@ -12,7 +19,10 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   dress: "Dress code", gift: "Gifts", signature: "Signature", divider: "Divider", music: "Music", stamp: "Stamp",
 };
 
-export const UI = {
+const en = {
+  kinds: KIND_LABEL,
+  blocks: BLOCK_LABEL,
+  groups: { Classic: "Classic", Elegant: "Elegant", Modern: "Modern", Playful: "Playful", Retro: "Retro" } as Record<(typeof STYLE_GROUPS)[number], string>,
   create: "New letter",
   blank: "Blank",
   letters: "Your letters",
@@ -44,7 +54,49 @@ export const UI = {
   to: "To",
   seal: "Seal",
   language: "Letter language",
+  format: "Format",
+  linkOnly: "link only",
+  steps: ["Language", "Style", "Start"] as string[],
+  stepOf: (n: number, of: number, name: string) => `Step ${n} of ${of}: ${name}`,
+  envelopesForLinks: "Envelopes are for links",
+  exampleGuest: "Example guest",
+  useAsExample: "Use as example",
+  turnOver: "Turn over",
+  front: "Front",
+  firstInitial: "First initial",
+  secondInitial: "Second initial",
+  email: "Email",
+  emojiSets: { wear: "Wear", colors: "Colors", nature: "Nature", mood: "Mood" },
+  replay: "Replay",
+  saveQr: "Save QR code",
+  clear: "Clear",
+  // style panel
+  customize: "Customize",
+  accent: "Accent",
+  paper: "Paper",
+  ink: "Text",
+  envelope: "Envelope",
+  envelopePaper: "Envelope paper",
+  styleDefault: "Style default",
+  auto: "auto",
+  fontTitles: "Titles",
+  fontText: "Text",
+  // seal
+  shape: "Shape",
+  mark: "Mark",
+  noSeal: "No seal",
+  plainWax: "Plain wax",
+  initials: "Initials",
   // block editors
+  size: "Size",
+  alignment: "Alignment",
+  countdownTarget: "Countdown target",
+  icon: "Icon",
+  replyChannel: "Reply channel",
+  dividerStyle: "Divider style",
+  stamp: "Stamp",
+  boardWordPh: "Linen",
+  illustrationStyle: "Illustration style",
   imagine: "Generate",
   imagining: "Generating…",
   describe: "Describe a picture… e.g. a dragon blowing out candles",
@@ -108,4 +160,24 @@ export const UI = {
   },
   view: { link: "Link", image: "Image" },
   interactive: "Show buttons in the link",
+  // public site
+  site: {
+    tagline: "Free invitations that arrive in a sealed envelope",
+    makeInvitation: "Make an invitation",
+    forAgents: "For agents",
+    apiDocs: "API & MCP docs",
+    freeForever: "Free, forever",
+    noAds: "No account, no ads. If it made someone smile:",
+    coffee: "Buy me a coffee",
+    madeBy: "made by",
+    createFree: "Create yours — free",
+    languages: "Languages",
+  },
 };
+
+export type UIText = typeof en;
+
+export const UI_TEXT: Record<Lang, UIText> = { en, es, fr, pt, it, de };
+
+/** English copy, for server code that has no locale (API errors, agent docs). */
+export const UI = en;

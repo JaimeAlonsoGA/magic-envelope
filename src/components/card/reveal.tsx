@@ -1,5 +1,6 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { Check, PenLine, Printer, Share2, Sparkles } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cardTitle } from "@/lib/blocks";
@@ -115,6 +116,12 @@ function playOpening(envelope: HTMLElement, sheet: HTMLElement): Animation[] {
 
 /** Guest experience: sealed envelope → opens → the letter comes out of it into its place, with live actions. */
 /** `bare`: no footer (the preview page brings its own controls). */
+/**
+ * The growth loop: a guest who liked this letter starts their own from it — same occasion, same
+ * style, same language — one tap from the wizard's presets. `ref` tells where creators come from.
+ */
+const makeYourOwn = (card: Card) => `/new?kind=${card.kind}&style=${card.style}&lang=${card.lang}&ref=letter`;
+
 export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, bare = false }: { card: Card; guestName?: string; shareUrl: string; print?: boolean; ownerHref?: string; bare?: boolean }) {
   // sealed: letter hidden · ready: the letter waits in the pocket, behind the closed flap · opening · open
   const [phase, setPhase] = useState<"sealed" | "ready" | "opening" | "open">(print ? "open" : "sealed");
@@ -123,6 +130,7 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
   const letterRef = useRef<HTMLDivElement>(null);
   const anims = useRef<Animation[]>([]);
   const g = t(card.lang).guest;
+  const ui = useUI();
   const s = cardStyle(card);
 
   // As soon as the back shows, slip the letter into the pocket (first frame of the opening, paused): it's
@@ -190,8 +198,8 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
           <SketchButton size="icon" onClick={onShare} aria-label={g.share}>{copied ? <Check size={18} /> : <Share2 size={18} />}</SketchButton>
           <SketchButton size="icon" onClick={() => window.print()} aria-label={g.print}><Printer size={18} /></SketchButton>
           {ownerHref
-            ? <SketchLink href={ownerHref} tone="primary"><PenLine size={18} /> Edit</SketchLink>
-            : <SketchLink href="/new" tone="primary"><Sparkles size={18} /> {g.makeYourOwn}</SketchLink>}
+            ? <SketchLink href={ownerHref} tone="primary"><PenLine size={18} /> {ui.edit}</SketchLink>
+            : <SketchLink href={makeYourOwn(card)} tone="primary"><Sparkles size={18} /> {g.makeYourOwn}</SketchLink>}
         </footer>}
       </div>
     </div>

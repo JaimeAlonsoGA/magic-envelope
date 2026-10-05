@@ -1,9 +1,9 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { ImageIcon, Link2 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Draft } from "@/lib/model";
-import { UI } from "@/lib/ui";
 
 type Save = (p: Partial<Draft>, touch?: boolean) => void;
 
@@ -26,8 +26,9 @@ function Segmented<V extends string>({ value, options, onChange, label }: { valu
  * it drives the editor canvas, the preview and the default of the Send panel.
  */
 export function FormatToggle({ draft, save }: { draft: Draft; save: Save }) {
+  const ui = useUI();
   return (
-    <Segmented label="Format" value={draft.view ?? "link"} onChange={(view) => save({ view }, false)}
-      options={[["link", <Link2 key="l" size={14} />, UI.view.link], ["image", <ImageIcon key="i" size={14} />, UI.view.image]]} />
+    <Segmented label={ui.format} value={draft.view ?? "link"} onChange={(view) => save({ view }, false)}
+      options={[["link", <Link2 key="l" size={14} />, ui.view.link], ["image", <ImageIcon key="i" size={14} />, ui.view.image]]} />
   );
 }

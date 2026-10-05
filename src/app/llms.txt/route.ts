@@ -1,5 +1,6 @@
 import { catalog } from "@/lib/api.server";
-import { KINDS } from "@/lib/model";
+import { KINDS, LANGS } from "@/lib/model";
+import { occasionPath } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 import { KIND_LABEL } from "@/lib/ui";
 
@@ -20,7 +21,8 @@ Agents can do everything through the API, without a browser.
 - [REST API](${SITE_URL}/api/v1): POST /api/v1/letters to create and publish; GET/PATCH /api/v1/letters/{id} with "Authorization: Bearer <editKey>"
 - [OpenAPI](${SITE_URL}/api/v1/openapi.json): full schema
 - [Catalog](${SITE_URL}/api/v1/catalog): styles, presets, block types with examples, envelope slots, stamps, seals
-- [Developer docs](${SITE_URL}/developers)
+- [Developer docs with copy-ready examples](${SITE_URL}/developers): Claude, ChatGPT, Cursor, VS Code, n8n, Zapier, Google Sheets, curl, JS, Python
+- [MCP Server Card](${SITE_URL}/api/mcp/server-card) and [AI Catalog](${SITE_URL}/.well-known/ai-catalog.json)
 
 Minimal request:
 
@@ -44,7 +46,7 @@ ${c.styles.map((s) => `- ${s.id}: ${s.name} (${s.group})`).join("\n")}
 
 ## Occasions (presets)
 
-${KINDS.map((k) => `- ${k}: ${KIND_LABEL[k]} — [make one](${SITE_URL}/for/${k})`).join("\n")}
+${KINDS.map((k) => `- ${k}: ${KIND_LABEL[k]} — ${LANGS.map((l) => `[${l}](${SITE_URL}${occasionPath(l, k)})`).join(" · ")}`).join("\n")}
 
 ## Rules
 

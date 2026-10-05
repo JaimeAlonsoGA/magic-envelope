@@ -1,5 +1,6 @@
 "use client";
 
+import { useLang, useUI } from "@/lib/locale";
 import { CopyPlus, Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,8 +10,6 @@ import { deleteDraft, duplicateDraft, useDrafts } from "@/lib/drafts";
 import { useFlash } from "@/lib/hooks";
 import type { Draft } from "@/lib/model";
 import { haptic, isNative } from "@/lib/native";
-import { TAGLINE } from "@/lib/seo";
-import { UI } from "@/lib/ui";
 import { envelopeOf } from "./card/card-view";
 import { EnvelopeBack, envelopeLift, envelopeStill, type EnvModel } from "./craft";
 import { SiteFooter } from "./site-footer";
@@ -39,6 +38,7 @@ const focusRing = "rounded-md focus-visible:outline-2 focus-visible:outline-dash
 
 /** A letter in the list: the same envelope, sealed once published. */
 function DraftTile({ dr }: { dr: Draft }) {
+  const ui = useUI();
   const router = useRouter();
   const [armed, arm] = useFlash(2500);
   const del = () => {
@@ -56,16 +56,16 @@ function DraftTile({ dr }: { dr: Draft }) {
       <div className="mt-2 flex items-center gap-1">
         <Link href={`/edit/${dr.id}`} className="min-w-0 flex-1 truncate text-lg leading-tight hover:text-wax">
           {cardTitle(dr.card)}
-          {!!dr.guests?.length && <span className="ml-1.5 text-sm text-muted">· {UI.guests.count(dr.guests.length)}</span>}
+          {!!dr.guests?.length && <span className="ml-1.5 text-sm text-muted">· {ui.guests.count(dr.guests.length)}</span>}
           {dr.publishedId && <span className="ml-1.5 text-sm text-violet">· live</span>}
         </Link>
         <div className="flex shrink-0 transition-opacity sm:opacity-0 sm:group-focus-within/tile:opacity-100 sm:group-hover/tile:opacity-100">
-          <button type="button" aria-label={UI.duplicate} title={UI.duplicate}
+          <button type="button" aria-label={ui.duplicate} title={ui.duplicate}
             onClick={() => { const id = duplicateDraft(dr.id); if (id) router.push(`/edit/${id}`); }}
             className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
             <CopyPlus size={16} />
           </button>
-          <button type="button" aria-label={armed ? UI.confirmDelete : UI.delete} title={armed ? UI.confirmDelete : UI.delete} onClick={del}
+          <button type="button" aria-label={armed ? ui.confirmDelete : ui.delete} title={armed ? ui.confirmDelete : ui.delete} onClick={del}
             className={`grid h-9 w-9 place-items-center rounded-md transition-colors ${armed ? "bg-wax text-white" : "text-muted hover:bg-ink/5 hover:text-wax"}`}>
             <Trash2 size={16} />
           </button>
@@ -76,20 +76,22 @@ function DraftTile({ dr }: { dr: Draft }) {
 }
 
 export function Home() {
+  const ui = useUI();
+  const lang = useLang();
   const drafts = useDrafts();
   const install = useInstall();
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-4xl flex-col items-center px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(.75rem,env(safe-area-inset-top))]">
       <nav className="flex h-11 w-full justify-end">
-        {install && <SketchButton size="sm" onClick={install}><Download size={16} /> {UI.install}</SketchButton>}
+        {install && <SketchButton size="sm" onClick={install}><Download size={16} /> {ui.install}</SketchButton>}
       </nav>
 
       {/* wordmark in the app's own hand: Kalam + a hand-drawn wax-red stroke (letters keep their own styles) */}
       <h1 className="mt-6 text-center font-hand text-5xl font-bold leading-none tracking-tight sm:text-7xl">
         Magic <span className="relative inline-block">Envelope<RoughUnderline seed="wordmark" stroke="var(--wax)" /></span>
       </h1>
-      <p className="mt-5 text-center font-hand text-lg text-muted">{TAGLINE}</p>
+      <p className="mt-5 text-center font-hand text-lg text-muted">{ui.site.tagline}</p>
 
       {/* the CTA is the envelope itself: still, solid, and it answers the pointer */}
       <Link href="/new" className={`group mt-12 block w-72 sm:w-96 ${focusRing}`}>
@@ -97,20 +99,20 @@ export function Home() {
           <EnvelopeBack env={CTA_ENVELOPE} />
         </div>
         <span className="mt-6 flex items-center justify-center gap-2 font-hand text-2xl transition-colors group-hover:text-wax">
-          <Plus size={22} /> {UI.create}
+          <Plus size={22} /> {ui.create}
         </span>
       </Link>
 
       {drafts.length > 0 && (
         <section className="mt-20 w-full">
-          <h2 className="mb-5 font-hand text-xl text-muted">{UI.letters}</h2>
+          <h2 className="mb-5 font-hand text-xl text-muted">{ui.letters}</h2>
           <ul className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
             {drafts.map((dr) => <DraftTile key={dr.id} dr={dr} />)}
           </ul>
         </section>
       )}
 
-      <div className="mt-auto w-full"><SiteFooter /></div>
+      <div className="mt-auto w-full"><SiteFooter lang={lang} /></div>
     </div>
   );
 }

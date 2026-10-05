@@ -1,10 +1,10 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { UserPlus } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { FIELD, invalid, type FieldKind } from "@/lib/fields";
 import { NAME_TOKEN } from "@/lib/personalize";
-import { UI } from "@/lib/ui";
 import { SketchButton } from "../sketch";
 
 /* ───────────── Shared inputs ───────────── */
@@ -34,6 +34,7 @@ type FieldProps = {
  * so a value the card would ignore is always flagged here, the same way, everywhere.
  */
 export function Field({ kind = "text", value, onChange, label, placeholder, autoFocus, maxLength, error, guestName }: FieldProps) {
+  const ui = useUI();
   const [touched, setTouched] = useState(false);
   const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
   const insertName = () => {
@@ -60,7 +61,7 @@ export function Field({ kind = "text", value, onChange, label, placeholder, auto
       {message && <span className="mt-1 block text-sm text-wax" role="alert">{message}</span>}
       {guestName && (
         <button type="button" onClick={insertName} className="mt-2 inline-flex items-center gap-1 rounded-full bg-violet-soft/50 px-2.5 py-1 text-sm text-ink hover:bg-violet-soft">
-          <UserPlus size={14} /> {UI.guests.insertName}
+          <UserPlus size={14} /> {ui.guests.insertName}
         </button>
       )}
     </label>

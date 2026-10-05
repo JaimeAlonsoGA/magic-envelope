@@ -1,11 +1,11 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { ArrowDown, ArrowUp, CopyPlus, Eye, Home, Mail, Palette, Plus, Send, Trash2, Users } from "lucide-react";
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { BLOCK_ICON, PALETTE, newBlock } from "@/lib/blocks";
 import { exampleGuest, useDraft } from "@/lib/drafts";
 import { useOrigin } from "@/lib/hooks";
-import { BLOCK_LABEL, UI } from "@/lib/ui";
 import { type Block, type BlockType, type Card, type Guest } from "@/lib/model";
 import { haptic } from "@/lib/native";
 import { CardView } from "../card/card-view";
@@ -47,6 +47,7 @@ function useHistory(card: Card | undefined, apply: (c: Card) => void) {
 }
 
 export function Editor({ id }: { id: string }) {
+  const ui = useUI();
   const [draft, save] = useDraft(id);
   const [selected, setSelected] = useState<string | null>(null); // a letter block
   const [canvasPick, setCanvas] = useState<"letter" | "envelope">("letter");
@@ -133,20 +134,20 @@ export function Editor({ id }: { id: string }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="no-print sticky top-0 z-20 flex items-center gap-2 bg-bg/85 px-3 pb-2 pt-[max(.5rem,env(safe-area-inset-top))] backdrop-blur">
-        <SketchLink href="/" size="icon" aria-label={UI.home}><Home size={20} /></SketchLink>
+        <SketchLink href="/" size="icon" aria-label={ui.home}><Home size={20} /></SketchLink>
         <div className="flex-1" />
-        <SketchButton aria-label={UI.guests.title} title={UI.guests.title} active={shown === "guests"} onClick={() => openPanel("guests")} className="!px-3">
+        <SketchButton aria-label={ui.guests.title} title={ui.guests.title} active={shown === "guests"} onClick={() => openPanel("guests")} className="!px-3">
           <Users size={19} />{guests.length > 0 && <span className="text-base tabular-nums">{guests.length}</span>}
         </SketchButton>
-        <SketchButton size="icon" aria-label={UI.theme} title={UI.theme} active={shown === "theme"} onClick={() => openPanel("theme")}><Palette size={20} /></SketchButton>
+        <SketchButton size="icon" aria-label={ui.theme} title={ui.theme} active={shown === "theme"} onClick={() => openPanel("theme")}><Palette size={20} /></SketchButton>
         {/* the envelope is a second canvas, only for link letters */}
-        <SketchButton size="icon" aria-label="Envelope" title={view === "link" ? "Envelope" : "Envelopes are for links"} disabled={view !== "link"}
+        <SketchButton size="icon" aria-label={ui.envelope} title={view === "link" ? ui.envelope : ui.envelopesForLinks} disabled={view !== "link"}
           active={canvas === "envelope"} onClick={() => { close(); setCanvas(canvas === "envelope" ? "letter" : "envelope"); }}>
           <Mail size={20} />
         </SketchButton>
-        <SketchLink href={`/edit/${id}/preview`} size="icon" aria-label={UI.preview} title={UI.preview}><Eye size={20} /></SketchLink>
+        <SketchLink href={`/edit/${id}/preview`} size="icon" aria-label={ui.preview} title={ui.preview}><Eye size={20} /></SketchLink>
         <SketchButton tone="wax" onClick={() => { openPanel("share"); if (pub.stale) pub.run(); }}>
-          <Send size={18} /> <span className="max-[360px]:hidden">{UI.send}</span>
+          <Send size={18} /> <span className="max-[360px]:hidden">{ui.send}</span>
           {draft.publishedId && pub.stale && <span className="absolute -right-2.5 -top-2.5 h-3 w-3 rounded-full bg-wax ring-2 ring-bg" aria-hidden />}
         </SketchButton>
       </header>
@@ -162,7 +163,7 @@ export function Editor({ id }: { id: string }) {
         )}
         {canvas === "letter" && (
           <div className="mt-6 flex justify-center">
-            <SketchButton shape="ellipse" tone="primary" size="icon" className="!h-16 !w-16" aria-label={UI.add} active={shown === "add"} onClick={() => openPanel("add")}>
+            <SketchButton shape="ellipse" tone="primary" size="icon" className="!h-16 !w-16" aria-label={ui.add} active={shown === "add"} onClick={() => openPanel("add")}>
               <Plus size={28} />
             </SketchButton>
           </div>
@@ -176,11 +177,11 @@ export function Editor({ id }: { id: string }) {
             <>
               <div className="mb-3 flex items-center gap-0.5">
                 <SelIcon size={20} className="mr-1.5 shrink-0 text-violet" />
-                <span className="mr-auto truncate font-hand text-lg text-muted">{BLOCK_LABEL[sel.type]}</span>
-                <IconBtn label={UI.moveUp} onClick={() => move(-1)} disabled={idx === 0}><ArrowUp size={18} /></IconBtn>
-                <IconBtn label={UI.moveDown} onClick={() => move(1)} disabled={idx === card.blocks.length - 1}><ArrowDown size={18} /></IconBtn>
-                <IconBtn label={UI.duplicate} onClick={duplicate}><CopyPlus size={18} /></IconBtn>
-                <IconBtn label={UI.delete} onClick={remove} danger><Trash2 size={18} /></IconBtn>
+                <span className="mr-auto truncate font-hand text-lg text-muted">{ui.blocks[sel.type]}</span>
+                <IconBtn label={ui.moveUp} onClick={() => move(-1)} disabled={idx === 0}><ArrowUp size={18} /></IconBtn>
+                <IconBtn label={ui.moveDown} onClick={() => move(1)} disabled={idx === card.blocks.length - 1}><ArrowDown size={18} /></IconBtn>
+                <IconBtn label={ui.duplicate} onClick={duplicate}><CopyPlus size={18} /></IconBtn>
+                <IconBtn label={ui.delete} onClick={remove} danger><Trash2 size={18} /></IconBtn>
               </div>
               <BlockEditor key={sel.id} b={sel} set={patchBlock} card={card} />
             </>
@@ -191,7 +192,7 @@ export function Editor({ id }: { id: string }) {
                 const I = BLOCK_ICON[type];
                 return (
                   <SketchButton key={type} seed={type} className="!flex-col !py-3" onClick={() => add(type)}>
-                    <span className="flex flex-col items-center gap-1.5"><I size={24} /><span className="text-sm">{BLOCK_LABEL[type]}</span></span>
+                    <span className="flex flex-col items-center gap-1.5"><I size={24} /><span className="text-sm">{ui.blocks[type]}</span></span>
                   </SketchButton>
                 );
               })}

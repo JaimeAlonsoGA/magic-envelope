@@ -1,5 +1,6 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { ArrowLeft, Loader2, RotateCcw, Send } from "lucide-react";
 import { use, useEffect, useState } from "react";
 import { Reveal } from "@/components/card/reveal";
@@ -11,7 +12,6 @@ import { SketchButton, SketchLink } from "@/components/sketch";
 import { exampleGuest, useDraft } from "@/lib/drafts";
 import { useOrigin } from "@/lib/hooks";
 import type { Card } from "@/lib/model";
-import { UI } from "@/lib/ui";
 
 /** The exact PNG that "Send → Image" produces, rendered live. */
 function ImageResult({ card, shareUrl, guestName }: { card: Card; shareUrl: string; guestName?: string }) {
@@ -51,6 +51,7 @@ function ImageResult({ card, shareUrl, guestName }: { card: Card; shareUrl: stri
  * For any guest, with Send right here.
  */
 export default function PreviewPage({ params }: PageProps<"/edit/[id]/preview">) {
+  const ui = useUI();
   const { id } = use(params);
   const [draft, save] = useDraft(id);
   const origin = useOrigin();
@@ -68,13 +69,13 @@ export default function PreviewPage({ params }: PageProps<"/edit/[id]/preview">)
   return (
     <div className="min-h-dvh" style={page ? { background: page } : undefined}>
       <header className="no-print fixed inset-x-0 top-0 z-40 flex items-center gap-2 px-3 pb-2 pt-[max(.5rem,env(safe-area-inset-top))]">
-        <SketchLink href={`/edit/${id}`} size="icon" aria-label={UI.edit} title={UI.edit} className="bg-bg/90"><ArrowLeft size={20} /></SketchLink>
+        <SketchLink href={`/edit/${id}`} size="icon" aria-label={ui.edit} title={ui.edit} className="bg-bg/90"><ArrowLeft size={20} /></SketchLink>
         <div className="flex-1" />
         {format === "link" && (
-          <SketchButton size="icon" aria-label="Replay" title="Replay" className="bg-bg/90" onClick={() => setTake(take + 1)}><RotateCcw size={18} /></SketchButton>
+          <SketchButton size="icon" aria-label={ui.replay} title={ui.replay} className="bg-bg/90" onClick={() => setTake(take + 1)}><RotateCcw size={18} /></SketchButton>
         )}
         <SketchButton tone="wax" className="bg-bg/90" onClick={() => { setSending(true); if (pub.stale) pub.run(); }}>
-          <Send size={18} /> <span className="max-[380px]:hidden">{UI.send}</span>
+          <Send size={18} /> <span className="max-[380px]:hidden">{ui.send}</span>
           {draft.publishedId && pub.stale && <span className="absolute -right-2.5 -top-2.5 h-3 w-3 rounded-full bg-wax ring-2 ring-bg" aria-hidden />}
         </SketchButton>
       </header>

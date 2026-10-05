@@ -2,15 +2,20 @@
  * Search/agent-facing copy. One place for the words that describe Magic Envelope and each occasion,
  * used by metadata, the /for/<occasion> landing pages, the sitemap and structured data.
  */
-import type { Kind } from "./model";
+import { KINDS, LANGS, type Kind, type Lang } from "./model";
+import { LOCALIZED } from "./seo-locales";
+import { SITE_URL } from "./site";
 import type { StyleId } from "./styles";
+
+export type Occasion = { title: string; h1: string; intro: string; styles: StyleId[]; points: string[] };
+export type SiteCopy = { title: string; description: string };
 
 export const SITE_NAME = "Magic Envelope";
 export const TAGLINE = "Free invitations that arrive in a sealed envelope";
 export const DESCRIPTION =
   "Create beautiful invitations and letters for free — weddings, birthdays, parties, baby showers and more. Each guest gets their own link with their name on the envelope, one-tap RSVP, map and calendar. Or download them as images. No account.";
 
-export const OCCASIONS: Record<Kind, { title: string; h1: string; intro: string; styles: StyleId[]; points: string[] }> = {
+export const OCCASIONS: Record<Kind, Occasion> = {
   wedding: {
     title: "Free wedding invitations online",
     h1: "Wedding invitations, sealed with wax",
@@ -68,3 +73,40 @@ export const OCCASIONS: Record<Kind, { title: string; h1: string; intro: string;
     points: ["Opens like real mail", "Wax seal with your initials", "Printable", "Free, no account"],
   },
 };
+
+/* ───────────── Languages ───────────── */
+
+export const siteCopy = (lang: Lang): SiteCopy =>
+  lang === "en" ? { title: `${SITE_NAME} — ${TAGLINE}`, description: DESCRIPTION } : LOCALIZED[lang].site;
+
+export const occasionCopy = (lang: Lang, kind: Kind): Occasion => (lang === "en" ? OCCASIONS[kind] : LOCALIZED[lang].occasions[kind]);
+
+/** English lives at the root (/, /for/wedding); other languages under their code with native slugs. */
+export const homePath = (lang: Lang) => (lang === "en" ? "/" : `/${lang}`);
+export const occasionPath = (lang: Lang, kind: Kind) => (lang === "en" ? `/for/${kind}` : `/${lang}/${LOCALIZED[lang].slugs[kind]}`);
+
+export const kindFromSlug = (lang: Exclude<Lang, "en">, slug: string) =>
+  KINDS.find((k) => LOCALIZED[lang].slugs[k] === slug) ?? null;
+
+/** hreflang links for a page that exists in every language (x-default is the English one). */
+export function languageAlternates(path: (l: Lang) => string, lang: Lang) {
+  const languages: Record<string, string> = Object.fromEntries(LANGS.map((l) => [l, path(l)]));
+  languages["x-default"] = path("en");
+  return { canonical: path(lang), languages };
+}
+
+/** Structured data for the home page: a free web app, in this language. */
+export const siteJsonLd = (lang: Lang) => ({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: SITE_NAME,
+  url: `${SITE_URL}${homePath(lang)}`,
+  description: siteCopy(lang).description,
+  inLanguage: lang,
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web, iOS, Android",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  availableLanguage: LANGS,
+  author: { "@type": "Person", name: "Jaime Alonso", url: "https://jaimealonso.dev" },
+  potentialAction: { "@type": "CreateAction", target: `${SITE_URL}/new` },
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { useUI } from "@/lib/locale";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -10,17 +11,14 @@ import { FLAGS, t } from "@/lib/i18n";
 import { KINDS, LANGS, type Card, type Kind, type Lang } from "@/lib/model";
 import { onBack } from "@/lib/native";
 import { RADIUS, STYLES, STYLE_GROUPS, STYLE_IDS, resolveStyle, styleVars, type StyleId } from "@/lib/styles";
-import { KIND_LABEL, UI } from "@/lib/ui";
 import { CardView } from "./card/card-view";
 import { SketchButton, SketchLink } from "./sketch";
 import { StyleSwatch } from "./style-swatch";
 
-const STEPS = ["Language", "Style", "Start"] as const;
-
-/** Deep links (/new?style=…&kind=…) skip what they already decide; the language is always asked. */
-export function Wizard({ initialStyle, initialKind }: { initialStyle?: StyleId; initialKind?: Kind }) {
+/** Deep links (/new?lang=…&style=…&kind=…) skip the steps they already decide. */
+export function Wizard({ initialStyle, initialKind, initialLang }: { initialStyle?: StyleId; initialKind?: Kind; initialLang?: Lang }) {
   // The default language comes from localStorage, so render only on the client.
-  return useHydrated() ? <Steps initialStyle={initialStyle} initialKind={initialKind} /> : null;
+  return useHydrated() ? <Steps initialStyle={initialStyle} initialKind={initialKind} initialLang={initialLang} /> : null;
 }
 
 const tile = "cursor-pointer rounded-md transition-transform duration-200 ease-out hover:-translate-y-1 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-4 focus-visible:outline-violet";
@@ -37,10 +35,12 @@ function Preview({ card }: { card: Card }) {
 }
 
 /** Create a letter: language → style (how it looks) → blank or a preset (what's in it). */
-function Steps({ initialStyle, initialKind }: { initialStyle?: StyleId; initialKind?: Kind }) {
+function Steps({ initialStyle, initialKind, initialLang }: { initialStyle?: StyleId; initialKind?: Kind; initialLang?: Lang }) {
+  const ui = useUI();
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [lang, setLang] = useState<Lang>(getLastLang);
+  // a link that already decides the language (and style) starts past those steps
+  const [step, setStep] = useState(initialLang ? (initialStyle ? 2 : 1) : 0);
+  const [lang, setLang] = useState<Lang>(() => initialLang ?? getLastLang());
   const [style, setStyle] = useState<StyleId>(initialStyle ?? "parchment");
 
   // Android back button steps back before leaving the wizard.
@@ -59,17 +59,17 @@ function Steps({ initialStyle, initialKind }: { initialStyle?: StyleId; initialK
     <div className="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 pb-10 pt-[max(.75rem,env(safe-area-inset-top))]">
       <header className="grid h-14 grid-cols-[2.75rem_1fr_2.75rem] items-center">
         {step > 0
-          ? <SketchButton size="icon" aria-label={UI.back} onClick={() => setStep(step - 1)}><ArrowLeft size={20} /></SketchButton>
-          : <SketchLink href="/" size="icon" aria-label={UI.home}><ArrowLeft size={20} /></SketchLink>}
-        <ol className="flex justify-center gap-2" aria-label={`Step ${step + 1} of 3: ${STEPS[step]}`}>
-          {STEPS.map((x, i) => (
+          ? <SketchButton size="icon" aria-label={ui.back} onClick={() => setStep(step - 1)}><ArrowLeft size={20} /></SketchButton>
+          : <SketchLink href="/" size="icon" aria-label={ui.home}><ArrowLeft size={20} /></SketchLink>}
+        <ol className="flex justify-center gap-2" aria-label={ui.stepOf(step + 1, 3, ui.steps[step])}>
+          {ui.steps.map((x, i) => (
             <li key={x} className={`h-2 rounded-full transition-all duration-300 ${i === step ? "w-8 bg-violet" : i < step ? "w-2 bg-violet/60" : "w-2 bg-ink/15"}`} />
           ))}
         </ol>
       </header>
 
       <section key={step} className="pop flex flex-1 flex-col justify-center py-6">
-        <h1 className="mb-8 text-center font-hand text-2xl text-muted">{STEPS[step]}</h1>
+        <h1 className="mb-8 text-center font-hand text-2xl text-muted">{ui.steps[step]}</h1>
 
         {step === 0 && (
           <div className="mx-auto grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
@@ -85,7 +85,7 @@ function Steps({ initialStyle, initialKind }: { initialStyle?: StyleId; initialK
           <div className="space-y-8">
             {STYLE_GROUPS.map((g) => (
               <div key={g}>
-                <h2 className="mb-3 text-sm text-muted">{g}</h2>
+                <h2 className="mb-3 text-sm text-muted">{ui.groups[g]}</h2>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   {STYLE_IDS.filter((id) => STYLES[id].group === g).map((id) => (
                     <button key={id} type="button" onClick={() => { setStyle(id); setStep(2); }} className={`${tile} text-left`}>
@@ -110,14 +110,14 @@ function Steps({ initialStyle, initialKind }: { initialStyle?: StyleId; initialK
                   </span>
                 </div>
               </div>
-              <span className="mt-1 block px-3 text-base sm:text-lg">{UI.blank}</span>
+              <span className="mt-1 block px-3 text-base sm:text-lg">{ui.blank}</span>
             </button>
             {/* optional presets (not <button>: the inert preview contains buttons, and buttons can't nest) */}
             {presets.map((card) => (
-              <div key={card.kind} role="button" tabIndex={0} aria-label={`${KIND_LABEL[card.kind]} preset`} className={tile}
+              <div key={card.kind} role="button" tabIndex={0} aria-label={`${ui.kinds[card.kind]} preset`} className={tile}
                 onClick={() => start(card)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), start(card))}>
                 <Preview card={card} />
-                <span className="mt-1 block truncate px-3 text-base sm:text-lg">{KIND_EMOJI[card.kind]} {KIND_LABEL[card.kind]}</span>
+                <span className="mt-1 block truncate px-3 text-base sm:text-lg">{KIND_EMOJI[card.kind]} {ui.kinds[card.kind]}</span>
               </div>
             ))}
           </div>
