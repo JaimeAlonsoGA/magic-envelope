@@ -39,7 +39,7 @@ export function OccasionLanding({ kind, lang }: { kind: Kind; lang: Lang }) {
             {o.points.map((p) => <li key={p} className="flex items-center gap-1.5"><Check size={16} className="text-violet" /> {p}</li>)}
           </ul>
           <Link href={start()}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-wax px-6 py-3 font-hand text-xl text-white shadow-sm transition-transform hover:-translate-y-0.5">
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-wax px-6 py-3 font-hand text-xl text-on-wax shadow-sm transition-transform hover:-translate-y-0.5">
             <Plus size={20} /> {ui.site.createFree}
           </Link>
         </header>

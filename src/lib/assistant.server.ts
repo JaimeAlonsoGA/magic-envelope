@@ -81,6 +81,7 @@ ${Object.entries(STYLE_MOOD).map(([id, mood]) => `  - ${id}: ${mood}`).join("\n"
 
 Rules:
 - Only use facts the person gave. Never invent phone numbers, emails, links, times or addresses: leave them empty and say in notes what to fill in.
+- Only add a link, QR, RSVP, schedule, dress code or gifts when the person mentions or asks for them (null otherwise). Date, place and a warm message are always welcome.
 - Write in the person's language, warmly and briefly, like the host would.
 - If they'll invite several people or ask for a template with different names, put {name} in the title.
 - In notes, never write {name}: say that each guest's name appears on their own letter once they add guests.

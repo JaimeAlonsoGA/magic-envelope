@@ -6,10 +6,11 @@ import { DESCRIPTION, SITE_NAME, TAGLINE } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const kalam = Kalam({ variable: "--font-kalam", weight: ["300", "400", "700"], subsets: ["latin"] });
-const medieval = MedievalSharp({ variable: "--font-medieval", weight: "400", subsets: ["latin"] });
-const fell = IM_Fell_English({ variable: "--font-fell", weight: "400", style: ["normal", "italic"], subsets: ["latin"] });
+// The app's own hand is the only preloaded face; it draws every page's headline.
+const kalam = Kalam({ variable: "--font-kalam", weight: ["400", "700"], subsets: ["latin"] });
 // Letter-style fonts: not preloaded, fetched only when a letter uses them.
+const medieval = MedievalSharp({ variable: "--font-medieval", weight: "400", subsets: ["latin"], preload: false, display: "swap" });
+const fell = IM_Fell_English({ variable: "--font-fell", weight: "400", style: ["normal", "italic"], subsets: ["latin"], preload: false, display: "swap" });
 // (next/font needs literal options: no shared object spread.)
 const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], preload: false, display: "swap" });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], preload: false, display: "swap" });

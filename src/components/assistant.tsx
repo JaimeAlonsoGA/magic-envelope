@@ -57,7 +57,7 @@ export function Assistant() {
           {state === "failed" && <span className="text-sm text-wax">{a.failed}</span>}
           {state === "limited" && <span className="text-sm text-wax">{a.limited}</span>}
           <button type="submit" disabled={text.trim().length < 8 || state === "busy"}
-            className="inline-flex items-center gap-2 rounded-full bg-violet px-4 py-1.5 font-hand text-lg text-white transition-opacity disabled:opacity-40">
+            className="inline-flex items-center gap-2 rounded-full bg-violet px-4 py-1.5 font-hand text-lg text-on-violet transition-opacity disabled:opacity-40">
             {state === "busy" ? <><Loader2 size={17} className="animate-spin" /> {a.working}</> : <><Sparkles size={17} /> {a.go}</>}
           </button>
         </div>

@@ -7,8 +7,10 @@
   --muted: #6b6458;
   --violet: #6965db;
   --violet-soft: #c9c7f5;
+  --on-violet: #ffffff;
   --wax: #a3172b;
   --wax-soft: #f2c7cd;
+  --on-wax: #ffffff; /* text on a wax-coloured fill */
   --highlight: #fff1a8;
   --sheet: #ffffff;
 }
@@ -21,8 +23,10 @@
     --muted: #a19b90;
     --violet: #a8a5ff;
     --violet-soft: #3a3870;
+    --on-violet: #15142e;
     --wax: #ef5a6e;
     --wax-soft: #5a1f29;
+    --on-wax: #1e1e1e; /* the dark-mode wax is light: dark text keeps contrast */
     --highlight: #5b5124;
     --sheet: #201f26;
   }
@@ -33,7 +37,9 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-violet: var(--violet);
+  --color-on-violet: var(--on-violet);
   --color-wax: var(--wax);
+  --color-on-wax: var(--on-wax);
   --color-sheet: var(--sheet);
   --font-hand: var(--font-kalam);
   --font-medieval: var(--font-medieval);
@@ -73,10 +79,10 @@
   background-image:
     radial-gradient(ellipse at 20% 10%, rgb(255 255 255 / .35), transparent 50%),
     radial-gradient(ellipse at 80% 90%, rgb(120 80 30 / .12), transparent 55%),
-    url("/textures/parchment.png");
+    url("/textures/parchment.webp");
   background-size: auto, auto, 200px 200px;
 }
-.tex-grain { background-image: url("/textures/grain.png"); background-size: 200px 200px; }
+.tex-grain { background-image: url("/textures/grain.webp"); background-size: 200px 200px; }
 .tex-scanlines { background-image: repeating-linear-gradient(0deg, var(--c-ink) 0 1px, transparent 1px 3px); }
 .tex-dots { background-image: radial-gradient(currentColor .8px, transparent .8px); background-size: 18px 18px; background-blend-mode: normal; }
 

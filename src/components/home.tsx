@@ -50,7 +50,7 @@ function DraftTile({ dr }: { dr: Draft }) {
             <CopyPlus size={16} />
           </button>
           <button type="button" aria-label={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} title={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} onClick={del}
-            className={`grid h-9 w-9 place-items-center rounded-md transition-colors ${armed ? "bg-wax text-white" : "text-muted hover:bg-ink/5 hover:text-wax"}`}>
+            className={`grid h-9 w-9 place-items-center rounded-md transition-colors ${armed ? "bg-wax text-on-wax" : "text-muted hover:bg-ink/5 hover:text-wax"}`}>
             <Trash2 size={16} />
           </button>
         </div>
