@@ -1,0 +1,11 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.magic-envelope/invitations",
+  "title": "Magic Envelope",
+  "description": "Create and send invitations and letters in a sealed envelope, one personal link per guest.",
+  "version": "1.0.0",
+  "websiteUrl": "https://magic-envelope.com",
+  "repository": { "url": "https://github.com/JaimeAlonsoGA/magic-envelope", "source": "github" },
+  "icons": [{ "src": "https://magic-envelope.com/icon-512.png", "mimeType": "image/png", "sizes": ["512x512"] }],
+  "remotes": [{ "type": "streamable-http", "url": "https://magic-envelope.com/api/mcp" }]
+}
