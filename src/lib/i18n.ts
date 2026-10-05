@@ -10,6 +10,8 @@ type Guest = {
   calendar: string; map: string; attending: string; notAttending: string; maybe: string; deadline: string;
   days: string; hours: string; minutes: string; seconds: string; scan: string; makeYourOwn: string; today: string;
   friend: string; // default {name} when there's no guest
+  /** The message a guest sends back from an RSVP button: thanks (naming the host when known) + the answer. */
+  reply: { thanks: (host?: string) => string; yes: string; maybe: string; no: string };
   rsvpFlat: string; // printed RSVP line, e.g. "Please confirm"
 };
 type Dict = {
@@ -28,6 +30,7 @@ const es: Dict = {
     deadline: "Responde antes del", days: "días", hours: "horas", minutes: "min", seconds: "seg", scan: "Escanéame",
     makeYourOwn: "Crea tu sobre mágico", today: "¡Es hoy!",
     friend: "Querido Invitado", rsvpFlat: "Confirma tu asistencia",
+    reply: { thanks: (h?: string) => (h ? `¡Gracias por la invitación, ${h}!` : "¡Gracias por la invitación!"), yes: "Allí estaré.", maybe: "Puede que vaya; te lo confirmo pronto.", no: "Por desgracia, no podré ir." },
   },
   tpl: {
     birthday: { h: "¡Cumplo años!", t: "Ven a celebrarlo conmigo. Habrá tarta, música y magia.", sign: "Con cariño" },
@@ -50,6 +53,7 @@ const en: Dict = {
     deadline: "Please reply by", days: "days", hours: "hours", minutes: "min", seconds: "sec", scan: "Scan me",
     makeYourOwn: "Make your own magic envelope", today: "It's today!",
     friend: "Dear Guest", rsvpFlat: "Please RSVP",
+    reply: { thanks: (h?: string) => (h ? `Thanks for inviting me, ${h}!` : "Thanks for the invitation!"), yes: "I'll be there.", maybe: "I might make it — I'll let you know soon.", no: "Sadly, I can't make it." },
   },
   tpl: {
     birthday: { h: "It's my birthday!", t: "Come celebrate with me. There will be cake, music and magic.", sign: "With love" },
@@ -72,6 +76,7 @@ const fr: Dict = {
     deadline: "Répondez avant le", days: "jours", hours: "heures", minutes: "min", seconds: "s", scan: "Scannez-moi",
     makeYourOwn: "Créez votre enveloppe magique", today: "C'est aujourd'hui !",
     friend: "Cher Invité", rsvpFlat: "Merci de confirmer",
+    reply: { thanks: (h?: string) => (h ? `Merci pour l’invitation, ${h} !` : "Merci pour l’invitation !"), yes: "Je serai là.", maybe: "Je viendrai peut-être, je te confirme bientôt.", no: "Malheureusement, je ne pourrai pas venir." },
   },
   tpl: {
     birthday: { h: "C'est mon anniversaire !", t: "Viens fêter ça avec moi. Gâteau, musique et magie.", sign: "Bises" },
@@ -94,6 +99,7 @@ const pt: Dict = {
     deadline: "Responda até", days: "dias", hours: "horas", minutes: "min", seconds: "seg", scan: "Escaneie",
     makeYourOwn: "Crie seu envelope mágico", today: "É hoje!",
     friend: "Querido Convidado", rsvpFlat: "Confirme presença",
+    reply: { thanks: (h?: string) => (h ? `Obrigado pelo convite, ${h}!` : "Obrigado pelo convite!"), yes: "Estarei lá.", maybe: "Talvez eu vá — te confirmo em breve.", no: "Infelizmente, não vou poder ir." },
   },
   tpl: {
     birthday: { h: "É meu aniversário!", t: "Vem comemorar comigo. Bolo, música e magia.", sign: "Com carinho" },
@@ -116,6 +122,7 @@ const it: Dict = {
     deadline: "Rispondi entro il", days: "giorni", hours: "ore", minutes: "min", seconds: "sec", scan: "Scansionami",
     makeYourOwn: "Crea la tua busta magica", today: "È oggi!",
     friend: "Caro Ospite", rsvpFlat: "Conferma la tua presenza",
+    reply: { thanks: (h?: string) => (h ? `Grazie per l’invito, ${h}!` : "Grazie per l’invito!"), yes: "Ci sarò.", maybe: "Forse riesco a venire, ti confermo presto.", no: "Purtroppo non riesco a esserci." },
   },
   tpl: {
     birthday: { h: "È il mio compleanno!", t: "Vieni a festeggiare con me. Torta, musica e magia.", sign: "Con affetto" },
@@ -138,6 +145,7 @@ const de: Dict = {
     deadline: "Bitte antworte bis", days: "Tage", hours: "Std", minutes: "Min", seconds: "Sek", scan: "Scan mich",
     makeYourOwn: "Erstelle deinen magischen Umschlag", today: "Heute ist es so weit!",
     friend: "Lieber Gast", rsvpFlat: "Bitte gib Bescheid",
+    reply: { thanks: (h?: string) => (h ? `Danke für die Einladung, ${h}!` : "Danke für die Einladung!"), yes: "Ich bin dabei.", maybe: "Vielleicht schaffe ich es – ich sage dir bald Bescheid.", no: "Leider kann ich nicht kommen." },
   },
   tpl: {
     birthday: { h: "Ich habe Geburtstag!", t: "Feier mit mir. Es gibt Kuchen, Musik und Magie.", sign: "Alles Liebe" },

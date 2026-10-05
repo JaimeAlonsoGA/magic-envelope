@@ -1,17 +1,18 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { Check, PenLine, Printer, Share2, Sparkles } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cardTitle } from "@/lib/blocks";
+import { cardStyle, envelopeOf } from "@/lib/envelope";
 import { useFlash } from "@/lib/hooks";
 import { t } from "@/lib/i18n";
+import { useUI } from "@/lib/locale";
 import type { Card } from "@/lib/model";
 import { hasFront } from "@/lib/mail";
 import { share } from "@/lib/native";
 import { EnvelopeOpener, LAYER, POCKET } from "../craft";
 import { SketchButton, SketchLink } from "../sketch";
-import { CardView, cardStyle, envelopeOf } from "./card-view";
+import { CardView } from "./card-view";
 
 /* ───────────── The opening ─────────────
  * ONE sheet of paper from start to end: the letter on the page *is* the paper in the envelope. It is
@@ -122,7 +123,7 @@ function playOpening(envelope: HTMLElement, sheet: HTMLElement): Animation[] {
  */
 const makeYourOwn = (card: Card) => `/new?kind=${card.kind}&style=${card.style}&lang=${card.lang}&ref=letter`;
 
-export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, bare = false }: { card: Card; guestName?: string; shareUrl: string; print?: boolean; ownerHref?: string; bare?: boolean }) {
+export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, bare = false, rsvpKey }: { card: Card; guestName?: string; shareUrl: string; print?: boolean; ownerHref?: string; bare?: boolean; rsvpKey?: { id: string; g?: string } }) {
   // sealed: letter hidden · ready: the letter waits in the pocket, behind the closed flap · opening · open
   const [phase, setPhase] = useState<"sealed" | "ready" | "opening" | "open">(print ? "open" : "sealed");
   const [envelope, setEnvelope] = useState<HTMLDivElement | null>(null);
@@ -191,7 +192,7 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
       <div aria-hidden={phase !== "open" || undefined} inert={phase !== "open"}
         className={`flex flex-col [justify-content:safe_center] px-3 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-16 ${phase === "open" ? "min-h-dvh" : "h-dvh overflow-hidden"} ${phase === "sealed" ? "invisible" : ""}`}>
         <div ref={letterRef} className="relative" style={{ zIndex: LAYER.letter }}>
-          <CardView card={card} shareUrl={shareUrl} style={s} guestName={guestName} flat={print} />
+          <CardView card={card} shareUrl={shareUrl} style={s} guestName={guestName} flat={print} rsvpKey={rsvpKey} />
         </div>
         {!bare && <footer className={`no-print mx-auto mt-10 flex max-w-[36rem] flex-wrap items-center justify-center gap-2 transition-opacity duration-300 ${phase === "open" ? "" : "opacity-0"}`}
           style={s.page && s.dark ? ({ color: "#f4f1ea", "--ink": "#f4f1ea" } as React.CSSProperties) : undefined}>

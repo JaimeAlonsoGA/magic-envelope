@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SEAL_SHAPES } from "./craft";
 import { STAMP_IDS, type StampId } from "./mail";
 import { FONT_IDS, STYLE_IDS, type FontId, type StyleId } from "./styles";
+import { parseWhen } from "./when";
 
 /* ───────────── Card languages (the app UI itself is always English) ───────────── */
 
@@ -33,7 +34,10 @@ const id = z.string().min(1).max(32);
 const short = z.string().max(200);
 const long = z.string().max(4000);
 const url = z.string().max(2048);
-const when = z.string().max(40); // local ISO "2026-11-14T19:30"
+// local wall-clock time at the venue: "2026-11-14T19:30", or a whole day "2026-11-14" (lib/when.ts)
+const when = z.string().max(40).refine((s) => s === "" || parseWhen(s) !== null, {
+  message: 'Use a local date "YYYY-MM-DD" or date and time "YYYY-MM-DDTHH:mm", without a timezone',
+});
 
 export const HeadingBlock = z.object({ id, type: z.literal("heading"), text: short, size: z.enum(["md", "lg", "xl"]).default("xl") });
 export const TextBlock = z.object({ id, type: z.literal("text"), text: long, align: z.enum(["left", "center"]).default("center") });
@@ -118,7 +122,15 @@ export const Envelope = z.object({ blocks: z.partialRecord(z.enum(ENV_SLOTS), Bl
  * before validation — components only ever see the current shape.
  */
 type Raw = Record<string, unknown>;
-function migrateBlock(b: Raw): Raw {
+/** Dates saved before they were validated (free text, UTC "Z" strings) read as unset, never as a crash. */
+const DATE_FIELDS: Record<string, string[]> = { date: ["start", "end"], countdown: ["to"], rsvp: ["deadline"] };
+function migrateDates(b: Raw): Raw {
+  const bad = (DATE_FIELDS[b.type as string] ?? []).filter((k) => typeof b[k] === "string" && b[k] !== "" && !parseWhen(b[k] as string));
+  return bad.length ? { ...b, ...Object.fromEntries(bad.map((k) => [k, k === "start" || k === "to" ? "" : undefined])) } : b;
+}
+
+function migrateBlock(raw: Raw): Raw {
+  const b = migrateDates(raw);
   if (b.type === "rsvp" && !b.contacts) {
     const channel = (b.channel as string) ?? "whatsapp";
     return { ...b, contacts: { whatsapp: "", sms: "", email: "", [channel]: b.to ?? "" } };
@@ -206,3 +218,9 @@ export type Draft = {
   editKey?: string; // lets this device re-publish to the same link
   publishedAt?: number;
 };
+
+/* ───────────── RSVP ───────────── */
+
+/** A guest's answer, as recorded for the host (the message itself goes out on the host's channel). */
+export const RSVP_ANSWERS = ["yes", "maybe", "no"] as const;
+export type RsvpAnswer = (typeof RSVP_ANSWERS)[number];

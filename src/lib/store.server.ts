@@ -1,9 +1,11 @@
 import "server-only";
-import { createHash, timingSafeEqual } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { get, put } from "@vercel/blob";
-import { Card, PublicGuest } from "./model";
+import { del, get, list, put } from "@vercel/blob";
+import { Card, PublicGuest, RSVP_ANSWERS, type RsvpAnswer } from "./model";
+
+export { RSVP_ANSWERS, type RsvpAnswer };
 
 /**
  * Storage for published cards and images.
@@ -64,12 +66,98 @@ export async function loadPublished(id: string, guestId?: string): Promise<{ car
   return { card: parsed.data, guestName: guest?.name };
 }
 
-export async function loadCardForEdit(id: string, editKey: string): Promise<Card | null> {
+const keyMatches = (raw: Stored, editKey: string) => !!editKey && timingSafeEqual(Buffer.from(raw.key), Buffer.from(hashKey(editKey)));
+
+/** The stored letter, only for the holder of its edit key. */
+async function owned(id: string, editKey: string): Promise<Stored | null> {
   if (!/^[\w-]{6,32}$/.test(id) || !editKey) return null;
   const raw = (await readJson(`cards/${id}.json`)) as Stored | null;
-  if (!raw || !timingSafeEqual(Buffer.from(raw.key), Buffer.from(hashKey(editKey)))) return null;
-  const parsed = Card.safeParse(raw.card);
-  return parsed.success ? parsed.data : null;
+  return raw && keyMatches(raw, editKey) ? raw : null;
+}
+
+export async function loadCardForEdit(id: string, editKey: string): Promise<Card | null> {
+  const raw = await owned(id, editKey);
+  const parsed = Card.safeParse(raw?.card);
+  return raw && parsed.success ? parsed.data : null;
+}
+
+/** When the letter last changed (cache key for rendered images). */
+export async function letterVersion(id: string): Promise<number | null> {
+  if (!/^[\w-]{6,32}$/.test(id)) return null;
+  const raw = (await readJson(`cards/${id}.json`)) as Stored | null;
+  return raw ? raw.updatedAt : null;
+}
+
+/* ───────────── Deleting ───────────── */
+
+/** Uploaded/generated images a letter uses (they're per-upload, so they go with it). */
+function imagesOf(card: unknown): string[] {
+  const names = new Set<string>();
+  JSON.stringify(card ?? {}, (_k, v) => {
+    const m = typeof v === "string" && v.match(/^\/api\/file\/([\w-]+\.\w+)$/);
+    if (m) names.add(m[1]);
+    return v;
+  });
+  return [...names];
+}
+
+async function removePaths(paths: string[]) {
+  if (!paths.length) return;
+  if (useBlob) await del(paths);
+  else await Promise.all(paths.map((p) => rm(path.join(LOCAL, p), { force: true })));
+}
+
+/** Delete a published letter for good: the card, its guest list, its RSVP answers and its images. */
+export async function deleteCard(id: string, editKey: string): Promise<boolean> {
+  const raw = await owned(id, editKey);
+  if (!raw) return false;
+  const answers = (await listPaths(`rsvp/${id}/`)).map((a) => a.pathname);
+  await removePaths([...answers, ...imagesOf(raw.card).map((n) => `img/${n}`), `cards/${id}.json`]);
+  return true;
+}
+
+/* ───────────── RSVP answers ─────────────
+ * One file per guest: rsvp/<letter>/<guest>~<answer>. The answer lives in the name, so the whole
+ * log is a single listing (no reads, no read-modify-write races); answering again replaces it.
+ */
+export type RsvpRecord = { guestId: string | null; answer: RsvpAnswer; at: string };
+
+async function listPaths(prefix: string): Promise<{ pathname: string; at: Date }[]> {
+  if (useBlob) {
+    const out: { pathname: string; at: Date }[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await list({ prefix, cursor, limit: 1000 });
+      out.push(...page.blobs.map((b) => ({ pathname: b.pathname, at: b.uploadedAt })));
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+    return out;
+  }
+  const dir = path.join(LOCAL, prefix);
+  const files = await readdir(dir).catch(() => [] as string[]);
+  return Promise.all(files.map(async (f) => ({ pathname: `${prefix}${f}`, at: (await stat(path.join(dir, f))).mtime })));
+}
+
+/** Record a guest's answer (guestId null = someone on the generic link). */
+export async function saveRsvp(id: string, guestId: string | null, answer: RsvpAnswer) {
+  const who = guestId ?? `anon-${randomBytes(5).toString("hex")}`;
+  const prefix = `rsvp/${id}/${who}~`;
+  const old = (await listPaths(`rsvp/${id}/`)).filter((p) => p.pathname.startsWith(prefix)).map((p) => p.pathname);
+  await removePaths(old);
+  const pathname = `${prefix}${answer}`;
+  if (useBlob) await put(pathname, new Date().toISOString(), { access: "private", contentType: "text/plain", addRandomSuffix: false, allowOverwrite: true });
+  else {
+    await mkdir(path.join(LOCAL, `rsvp/${id}`), { recursive: true });
+    await writeFile(path.join(LOCAL, pathname), new Date().toISOString());
+  }
+}
+
+export async function listRsvps(id: string): Promise<RsvpRecord[]> {
+  return (await listPaths(`rsvp/${id}/`)).flatMap(({ pathname, at }) => {
+    const [who, answer] = pathname.slice(`rsvp/${id}/`.length).split("~");
+    if (!RSVP_ANSWERS.includes(answer as RsvpAnswer)) return [];
+    return [{ guestId: who.startsWith("anon-") ? null : who, answer: answer as RsvpAnswer, at: at.toISOString() }];
+  });
 }
 
 /** A published letter's guest list (names + ids). Server-side only: never sent to a guest page. */
@@ -82,7 +170,7 @@ export async function loadGuests(id: string): Promise<PublicGuest[] | null> {
 /** Create (no existing) or overwrite (matching edit key) a published card. */
 export async function saveCard(id: string, card: Card, editKey: string, guests: PublicGuest[] = []) {
   const existing = (await readJson(`cards/${id}.json`)) as Stored | null;
-  if (existing && !timingSafeEqual(Buffer.from(existing.key), Buffer.from(hashKey(editKey)))) return false;
+  if (existing && !keyMatches(existing, editKey)) return false;
   const now = Date.now();
   await writeJson(`cards/${id}.json`, {
     card, guests, key: hashKey(editKey), createdAt: existing?.createdAt ?? now, updatedAt: now,

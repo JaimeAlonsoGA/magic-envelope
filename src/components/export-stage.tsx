@@ -1,13 +1,18 @@
 "use client";
 
-import { getFontEmbedCSS, toBlob } from "html-to-image";
+import { getFontEmbedCSS, toCanvas } from "html-to-image";
 import JSZip from "jszip";
 import { useEffect, useRef, useState } from "react";
+import { cardStyle } from "@/lib/envelope";
 import type { Card } from "@/lib/model";
 import { FONTS, type FontId } from "@/lib/styles";
-import { CardView, cardStyle } from "./card/card-view";
+import { CardView } from "./card/card-view";
 
-type Job = { card: Card; guestName?: string; shareUrl: string; resolve: (b: Blob) => void; reject: (e: unknown) => void };
+/** JPG: light, for phones and chats (textured paper makes PNGs heavy). PNG: lossless, for print. */
+export type ImageFormat = "jpeg" | "png";
+export const EXT: Record<ImageFormat, string> = { jpeg: "jpg", png: "png" };
+
+type Job = { card: Card; guestName?: string; shareUrl: string; format: ImageFormat; resolve: (b: Blob) => void; reject: (e: unknown) => void };
 
 const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
 
@@ -39,7 +44,7 @@ function fontsFor(card: Card) {
 export const slug = (s: string) => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "letter";
 
 /**
- * Renders letters to PNG. A hidden stage mounts the letter in its *flat* variant (no buttons, maps or
+ * Renders letters to JPG or PNG. A hidden stage mounts the letter in its *flat* variant (no buttons, maps or
  * live counters), waits for fonts/images, and rasterizes it at 2×. Fonts are embedded once per session.
  */
 export function useLetterImages() {
@@ -58,7 +63,9 @@ export function useLetterImages() {
         await new Promise((r) => setTimeout(r, 120)); // QR codes render asynchronously
         const fontEmbedCSS = await fontsFor(job.card);
         // the letter is centred with auto margins on screen; the capture must start at its own edge
-        const blob = await toBlob(el, { pixelRatio: 2, fontEmbedCSS, cacheBust: true, style: { margin: "0" } });
+        // JPG has no transparency: the corners outside the letter's radius take the app's page colour
+        const canvas = await toCanvas(el, { pixelRatio: 2, fontEmbedCSS, cacheBust: true, style: { margin: "0" }, ...(job.format === "jpeg" ? { backgroundColor: "#fbf8f1" } : {}) });
+        const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, `image/${job.format}`, 0.9));
         if (!blob) throw new Error("render");
         job.resolve(blob);
       } catch (e) {
@@ -70,22 +77,22 @@ export function useLetterImages() {
     return () => { alive = false; };
   }, [job]);
 
-  /** One PNG. Calls are serialized by awaiting them. */
-  const render = (card: Card, shareUrl: string, guestName?: string) =>
-    new Promise<Blob>((resolve, reject) => setJob({ card, guestName, shareUrl, resolve, reject }));
+  /** One image. Calls are serialized by awaiting them. */
+  const render = (card: Card, shareUrl: string, guestName: string | undefined, format: ImageFormat) =>
+    new Promise<Blob>((resolve, reject) => setJob({ card, guestName, shareUrl, format, resolve, reject }));
 
-  /** Many PNGs (one per guest) in a ZIP. */
-  const renderZip = async (card: Card, items: { name?: string; shareUrl: string }[], onProgress?: (done: number) => void) => {
+  /** Many images (one per guest) in a ZIP. */
+  const renderZip = async (card: Card, items: { name?: string; shareUrl: string }[], format: ImageFormat, onProgress?: (done: number) => void) => {
     const zip = new JSZip();
     const used = new Set<string>();
     for (const [i, it] of items.entries()) {
       let file = slug(it.name ?? "letter");
       while (used.has(file)) file += "-2";
       used.add(file);
-      zip.file(`${file}.png`, await render(card, it.shareUrl, it.name));
+      zip.file(`${file}.${EXT[format]}`, await render(card, it.shareUrl, it.name, format));
       onProgress?.(i + 1);
     }
-    return zip.generateAsync({ type: "blob" });
+    return zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
   };
 
   const stageEl = job && (

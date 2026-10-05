@@ -1,35 +1,18 @@
 "use client";
 
-import { useLang, useUI } from "@/lib/locale";
-import { CopyPlus, Download, Plus, Trash2 } from "lucide-react";
+import { CopyPlus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { cardTitle } from "@/lib/blocks";
 import { deleteDraft, duplicateDraft, useDrafts } from "@/lib/drafts";
+import { envelopeOf } from "@/lib/envelope";
 import { useFlash } from "@/lib/hooks";
+import { useLang, useUI } from "@/lib/locale";
 import type { Draft } from "@/lib/model";
-import { haptic, isNative } from "@/lib/native";
-import { envelopeOf } from "./card/card-view";
+import { haptic } from "@/lib/native";
 import { EnvelopeBack, envelopeLift, envelopeStill, type EnvModel } from "./craft";
 import { SiteFooter } from "./site-footer";
-import { RoughUnderline, SketchButton } from "./sketch";
-
-type InstallEvent = Event & { prompt: () => Promise<void> };
-
-/** Chrome/Android "Add to home screen" prompt, when the browser offers it. */
-function useInstall() {
-  const [evt, setEvt] = useState<InstallEvent | null>(null);
-  useEffect(() => {
-    if (isNative()) return;
-    const on = (e: Event) => { e.preventDefault(); setEvt(e as InstallEvent); };
-    const done = () => setEvt(null);
-    addEventListener("beforeinstallprompt", on);
-    addEventListener("appinstalled", done);
-    return () => { removeEventListener("beforeinstallprompt", on); removeEventListener("appinstalled", done); };
-  }, []);
-  return evt ? () => evt.prompt().finally(() => setEvt(null)) : null;
-}
+import { RoughUnderline } from "./sketch";
 
 /** The home CTA: a classic sealed envelope. */
 const CTA_ENVELOPE: EnvModel = { paper: "#e9d6ad", letter: "#f6ecd3", wax: "#a3172b", ink: "#3b2a1a", seal: "icon:sparkle", sealShape: "scallop", trim: "none", hand: "var(--font-kalam)", slots: {} };
@@ -65,7 +48,7 @@ function DraftTile({ dr }: { dr: Draft }) {
             className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
             <CopyPlus size={16} />
           </button>
-          <button type="button" aria-label={armed ? ui.confirmDelete : ui.delete} title={armed ? ui.confirmDelete : ui.delete} onClick={del}
+          <button type="button" aria-label={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} title={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} onClick={del}
             className={`grid h-9 w-9 place-items-center rounded-md transition-colors ${armed ? "bg-wax text-white" : "text-muted hover:bg-ink/5 hover:text-wax"}`}>
             <Trash2 size={16} />
           </button>
@@ -79,13 +62,11 @@ export function Home() {
   const ui = useUI();
   const lang = useLang();
   const drafts = useDrafts();
-  const install = useInstall();
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-4xl flex-col items-center px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(.75rem,env(safe-area-inset-top))]">
-      <nav className="flex h-11 w-full justify-end">
-        {install && <SketchButton size="sm" onClick={install}><Download size={16} /> {ui.install}</SketchButton>}
-      </nav>
+      {/* browsers offer "Install" themselves; the top stays clear */}
+      <div className="h-11" />
 
       {/* wordmark in the app's own hand: Kalam + a hand-drawn wax-red stroke (letters keep their own styles) */}
       <h1 className="mt-6 text-center font-hand text-5xl font-bold leading-none tracking-tight sm:text-7xl">

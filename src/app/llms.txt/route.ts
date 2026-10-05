@@ -51,7 +51,11 @@ ${KINDS.map((k) => `- ${k}: ${KIND_LABEL[k]} — ${LANGS.map((l) => `[${l}](${SI
 ## Rules
 
 - ${c.personalization}
-- Blocks may be partial: missing fields take the editor's defaults. Dates are local ISO, e.g. 2026-11-14T18:00.
+- Blocks may be partial: missing fields take the editor's defaults.
+- Dates are the local time at the venue, without a timezone: "2026-11-14T18:00", or "2026-11-14" for a whole day. Anything else is a 400.
+- PATCH changes only the fields you send. \`guests\` replaces the list but keeps every existing guest's id and link (matched by id, then name); \`addGuests\` appends.
+- Images: each letter and guest has an \`image\` URL (PNG, or &format=jpeg); \`imagesZip\` gives them all (editKey). \`previewImage\` is the link preview with the guest's envelope.
+- RSVP answers tapped by guests come back in GET /api/v1/letters/{id} (\`rsvps\`). DELETE /api/v1/letters/{id} erases a letter for good.
 - Envelope slots have fixed block types and limits: ${c.envelope.slots.map((s) => `${s.slot} (${s.role}: ${s.block}${s.maxChars ? `, ≤${s.maxChars} chars` : ""})`).join("; ")}.
 - Languages: ${c.languages.map((l) => l.id).join(", ")}.
 

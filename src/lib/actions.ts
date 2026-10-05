@@ -1,6 +1,7 @@
 /** Pure helpers that turn blocks into real-world actions (calendar, maps, RSVP) and safe URLs. */
 
 import type { BlockOf, RsvpChannel } from "./model";
+import { parseWhen } from "./when";
 
 /* ───────────── URLs ─────────────
  * Cards are user content shown on our origin, so every href/src goes through here.
@@ -26,41 +27,45 @@ export const hostOf = (href: string) => {
   }
 };
 
-/* ───────────── Dates ───────────── */
+/* ───────────── Dates (local wall-clock times, see lib/when.ts) ───────────── */
 
 const pad = (n: number) => String(n).padStart(2, "0");
-const valid = (d: Date) => !Number.isNaN(d.getTime());
+const ymd = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 
-/** "2026-11-14T19:30" (local) → "20261114T193000" (floating local time). */
-function icsLocal(s: string) {
-  const d = new Date(s);
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+/** Event start/end as floating local times; a whole-day event ends the next day (exclusive). */
+function span(b: BlockOf<"date">) {
+  const start = parseWhen(b.start)!;
+  const end = parseWhen(b.end);
+  if (start.allDay) {
+    const last = end && end.date > start.date ? end.date : start.date;
+    return { allDay: true, start: start.date, end: new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1) };
+  }
+  // explicit end if it's after start, otherwise start + 3h
+  return { allDay: false, start: start.date, end: end && end.date > start.date ? end.date : new Date(start.date.getTime() + 3 * 36e5) };
 }
 
-/** Event end: explicit end if it's after start, otherwise start + 3h. */
-function endOf(b: BlockOf<"date">) {
-  if (b.end && new Date(b.end) > new Date(b.start)) return b.end;
-  const d = new Date(new Date(b.start).getTime() + 3 * 36e5);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+const icsTime = (d: Date, allDay: boolean) => (allDay ? ymd(d) : `${ymd(d)}T${pad(d.getHours())}${pad(d.getMinutes())}00`);
 
 export function googleCalendarUrl(b: BlockOf<"date">, title: string, where?: string) {
+  const s = span(b);
   const q = new URLSearchParams({
     action: "TEMPLATE",
     text: b.title || title,
-    dates: `${icsLocal(b.start)}/${icsLocal(endOf(b))}`,
+    dates: `${icsTime(s.start, s.allDay)}/${icsTime(s.end, s.allDay)}`,
     ...(where ? { location: where } : {}),
   });
   return `https://calendar.google.com/calendar/render?${q}`;
 }
 
 export function icsFile(b: BlockOf<"date">, title: string, where?: string, url?: string) {
-  const esc = (s: string) => s.replace(/[\\,;]/g, (m) => `\\${m}`).replace(/\n/g, "\\n");
+  const esc = (x: string) => x.replace(/[\\,;]/g, (m) => `\\${m}`).replace(/\n/g, "\\n");
+  const s = span(b);
+  const dt = (k: string, d: Date) => (s.allDay ? `${k};VALUE=DATE:${icsTime(d, true)}` : `${k}:${icsTime(d, false)}`);
   const lines = [
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Magic Envelope//EN", "BEGIN:VEVENT",
     `UID:${b.id}@magic-envelope`,
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
-    `DTSTART:${icsLocal(b.start)}`, `DTEND:${icsLocal(endOf(b))}`,
+    dt("DTSTART", s.start), dt("DTEND", s.end),
     `SUMMARY:${esc(b.title || title)}`,
     ...(where ? [`LOCATION:${esc(where)}`] : []),
     ...(url ? [`URL:${url}`] : []),
@@ -69,20 +74,20 @@ export function icsFile(b: BlockOf<"date">, title: string, where?: string, url?:
   return new Blob([lines.join("\r\n")], { type: "text/calendar" });
 }
 
-/** Split a date into display parts, independent of locale word order. */
-export function dateParts(iso: string, lang: string) {
-  const d = new Date(iso);
-  if (!valid(d)) return null;
+/** Display parts in the letter's language; `time` is empty for a whole-day date. */
+export function dateParts(s: string, lang: string) {
+  const w = parseWhen(s);
+  if (!w) return null;
   return {
-    weekday: d.toLocaleDateString(lang, { weekday: "long" }),
-    date: d.toLocaleDateString(lang, { day: "numeric", month: "long", year: "numeric" }),
-    time: d.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }),
+    weekday: w.date.toLocaleDateString(lang, { weekday: "long" }),
+    date: w.date.toLocaleDateString(lang, { day: "numeric", month: "long", year: "numeric" }),
+    time: w.allDay ? "" : w.date.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" }),
   };
 }
 
-export function formatDate(iso: string, lang: string, opts: Intl.DateTimeFormatOptions) {
-  const d = new Date(iso);
-  return valid(d) ? d.toLocaleString(lang, opts) : "";
+export function formatDate(s: string, lang: string, opts: Intl.DateTimeFormatOptions) {
+  const w = parseWhen(s);
+  return w ? w.date.toLocaleString(lang, opts) : "";
 }
 
 /* ───────────── Maps / RSVP / music ───────────── */

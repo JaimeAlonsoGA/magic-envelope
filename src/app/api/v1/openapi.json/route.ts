@@ -35,11 +35,30 @@ export function GET() {
       },
       "/api/v1/letters/{id}": {
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
-        get: { operationId: "getLetter", summary: "Read a letter", security: auth, responses: { 200: { description: "Letter and links" }, 403: { description: "Unknown letter or wrong key" } } },
+        get: { operationId: "getLetter", summary: "Read a letter: content, links, images and RSVP answers", security: auth, responses: { 200: { description: "Letter, links and rsvps { counts, answers }" }, 403: { description: "Unknown letter or wrong key" } } },
         patch: {
-          operationId: "updateLetter", summary: "Update a letter (links keep working)", security: auth,
+          operationId: "updateLetter", summary: "Update a letter: only the fields sent change; links and guest ids are kept", security: auth,
           requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/LetterPatch" } } } },
-          responses: { 200: { description: "Updated letter and links" }, 403: { description: "Unknown letter or wrong key" } },
+          responses: { 200: { description: "Updated letter and links (plus warnings, e.g. duplicate guest names)" }, 403: { description: "Unknown letter or wrong key" } },
+        },
+        delete: { operationId: "deleteLetter", summary: "Delete for good: links stop working; guest names, answers and images are erased", security: auth, responses: { 204: { description: "Deleted" }, 403: { description: "Unknown letter or wrong key" } } },
+      },
+      "/api/v1/letters/{id}/image": {
+        get: {
+          operationId: "getLetterImage", summary: "The letter as an image, for one guest (g) or without a name",
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "string" } },
+            { name: "g", in: "query", schema: { type: "string" }, description: "Guest id" },
+            { name: "format", in: "query", schema: { type: "string", enum: ["png", "jpeg"], default: "png" } },
+          ],
+          responses: { 200: { description: "Image", content: { "image/png": {}, "image/jpeg": {} } }, 404: { description: "Unknown letter or guest" } },
+        },
+      },
+      "/api/v1/letters/{id}/images.zip": {
+        get: {
+          operationId: "getLetterImagesZip", summary: "Every guest's letter as an image, zipped (up to 150 guests)", security: auth,
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }, { name: "format", in: "query", schema: { type: "string", enum: ["png", "jpeg"], default: "png" } }],
+          responses: { 200: { description: "ZIP", content: { "application/zip": {} } }, 403: { description: "Unknown letter or wrong key" } },
         },
       },
     },

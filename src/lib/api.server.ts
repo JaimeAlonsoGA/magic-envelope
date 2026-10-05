@@ -7,7 +7,7 @@ import { t } from "./i18n";
 import { SLOT_LIMIT, SLOT_ROLE, STAMP_IDS } from "./mail";
 import { Block, Card, Custom, ENV_SLOTS, KINDS, LANGS, SLOT_TYPE, type BlockType, type EnvSlot } from "./model";
 import { SITE_URL } from "./site";
-import { loadCardForEdit, loadGuests, saveCard } from "./store.server";
+import { deleteCard, letterVersion, listRsvps, loadCardForEdit, loadGuests, saveCard, type RsvpAnswer } from "./store.server";
 import { FONTS, STYLES, STYLE_IDS, type StyleId } from "./styles";
 import { BLOCK_LABEL, KIND_LABEL } from "./ui";
 
@@ -32,52 +32,99 @@ const EnvelopeInput = z.object({ blocks: z.partialRecord(z.enum(ENV_SLOTS), Part
   }
 });
 
-export const LetterInput = z.object({
-  lang: z.enum(LANGS).default("en").describe("Language guests read the letter in"),
-  style: z.enum(STYLE_IDS as [StyleId, ...StyleId[]]).default("parchment").describe("Look of the letter and envelope (see catalog.styles)"),
-  preset: z.enum(KINDS).optional().describe("Start from an occasion preset (pre-filled blocks). Omit for a blank letter."),
-  blocks: z.array(PartialBlock).max(60).optional().describe("Letter blocks, top to bottom. Replaces the preset's blocks. Use {name} in text to address each guest."),
-  custom: Custom.optional().describe("Overrides on top of the style: accent/paper/ink/envelope colours, head/body fonts"),
-  seal: z.string().max(16).optional().describe('Wax seal mark: "" none, "_" plain, "icon:<id>", "ini:ABC", "duo:A|J"'),
-  sealShape: z.enum(SEAL_SHAPES).optional(),
-  envelope: EnvelopeInput.optional().describe("Envelope slot blocks, partial like letter blocks (see catalog.envelope for each slot's block type)"),
-  nameFallback: z.string().max(60).optional().describe('What {name} reads as without a guest (default: "Dear Guest" in the letter language)'),
-  guests: z.array(z.object({ name: z.string().trim().min(1).max(80) })).max(1000).default([]).describe("Each guest gets their own addressed link"),
+const GuestIn = z.object({ name: z.string().trim().min(1).max(80) });
+
+/** Every field a letter has, none defaulted: the same shape serves create (with defaults) and a true partial update. */
+const LetterFields = z.object({
+  lang: z.enum(LANGS).describe("Language guests read the letter in"),
+  style: z.enum(STYLE_IDS as [StyleId, ...StyleId[]]).describe("Look of the letter and envelope (see catalog.styles)"),
+  preset: z.enum(KINDS).describe("Start from an occasion preset (pre-filled blocks). On update it only changes the occasion."),
+  blocks: z.array(PartialBlock).min(1).max(60).describe("Letter blocks, top to bottom. Replaces all blocks. Use {name} in text to address each guest."),
+  custom: Custom.describe("Overrides on top of the style: accent/paper/ink/envelope colours, head/body fonts"),
+  seal: z.string().max(16).describe('Wax seal mark: "" none, "_" plain, "icon:<id>", "ini:ABC", "duo:A|J"'),
+  sealShape: z.enum(SEAL_SHAPES),
+  envelope: EnvelopeInput.describe("Envelope slot blocks, partial like letter blocks (see catalog.envelope for each slot's block type)"),
+  nameFallback: z.string().max(60).describe('What {name} reads as without a guest (default: "Dear Guest" in the letter language)'),
 });
+
+export const LetterInput = LetterFields.partial().extend({
+  lang: LetterFields.shape.lang.default("en"),
+  style: LetterFields.shape.style.default("parchment"),
+  guests: z.array(GuestIn).max(1000).default([]).describe("Each guest gets their own addressed link"),
+}).refine((l) => l.preset || l.blocks?.length, { message: "Give the letter some content: a preset, blocks, or both.", path: ["blocks"] });
 export type LetterInput = z.input<typeof LetterInput>;
 
-export const LetterPatch = LetterInput.partial().extend({
-  guests: z.array(z.object({ id: z.string().optional(), name: z.string().trim().min(1).max(80) })).max(1000).optional(),
+/** Only the fields present change; everything else (lang, style, blocks…) is kept. */
+export const LetterPatch = LetterFields.partial().extend({
+  guests: z.array(GuestIn.extend({ id: z.string().optional() })).max(1000).optional()
+    .describe("The full guest list. Guests keep their id and link when matched by id or, failing that, by name."),
+  addGuests: z.array(GuestIn).max(1000).optional().describe("Guests to append; existing guests and links are untouched."),
 });
 
 /* ───────────── Output ───────────── */
 
-function links(id: string, key: string, guests: { id: string; name: string }[]) {
+type G = { id: string; name: string };
+
+function links(id: string, key: string, guests: G[], version: number) {
+  const image = (g?: G) => `${SITE_URL}/api/v1/letters/${id}/image?${g ? `g=${g.id}&` : ""}v=${version}`;
   return {
     id,
     editKey: key,
     url: `${SITE_URL}/c/${id}`,
     editUrl: `${SITE_URL}/e/${id}#${key}`,
-    previewImage: `${SITE_URL}/c/${id}/opengraph-image`,
+    previewImage: `${SITE_URL}/c/${id}/preview.png`,
+    image: image(),
+    imagesZip: `${SITE_URL}/api/v1/letters/${id}/images.zip`,
     printUrl: `${SITE_URL}/c/${id}?print=1`,
-    guests: guests.map((g) => ({ id: g.id, name: g.name, url: `${SITE_URL}/c/${id}?g=${g.id}` })),
+    guests: guests.map((g) => ({ id: g.id, name: g.name, url: `${SITE_URL}/c/${id}?g=${g.id}`, previewImage: `${SITE_URL}/c/${id}/preview.png?g=${g.id}`, image: image(g) })),
   };
 }
-export type LetterLinks = ReturnType<typeof links>;
+export type LetterLinks = ReturnType<typeof links> & { warnings?: string[] };
 
-function build(input: z.output<typeof LetterInput>, base?: Card): Card {
-  const start = base ?? (input.preset ? fromPreset(input.preset, input.style, input.lang) : blankCard(input.style, input.lang));
+/** Hints that don't block anything (a duplicate name may be two different people). */
+function warnings(guests: G[]) {
+  const seen = new Map<string, number>();
+  for (const g of guests) seen.set(g.name.toLowerCase(), (seen.get(g.name.toLowerCase()) ?? 0) + 1);
+  const dup = guests.filter((g, i) => (seen.get(g.name.toLowerCase()) ?? 0) > 1 && guests.findIndex((x) => x.name.toLowerCase() === g.name.toLowerCase()) === i);
+  return dup.length ? { warnings: dup.map((g) => `"${g.name}" appears ${seen.get(g.name.toLowerCase())} times: each one gets its own link.`) } : {};
+}
+
+type Fields = Partial<z.output<typeof LetterFields>>;
+
+/** A letter from its fields: on create from a preset or blank; on update from the current letter, changing only what was sent. */
+function build(f: Fields, base?: Card): Card {
+  const lang = f.lang ?? base?.lang ?? "en", style = f.style ?? base?.style ?? "parchment";
+  const start = base ?? (f.preset ? fromPreset(f.preset, style, lang) : blankCard(style, lang));
   return Card.parse({
     ...start,
-    lang: input.lang ?? start.lang,
-    style: input.style ?? start.style,
-    ...(input.blocks ? { blocks: input.blocks } : {}),
-    ...(input.custom ? { custom: input.custom } : {}),
-    ...(input.seal !== undefined ? { seal: input.seal } : {}),
-    ...(input.sealShape ? { sealShape: input.sealShape } : {}),
-    ...(input.envelope ? { envelope: input.envelope } : {}),
-    ...(input.nameFallback ? { nameFallback: input.nameFallback } : {}),
+    lang, style,
+    ...(base && f.preset ? { kind: f.preset } : {}),
+    ...(f.blocks ? { blocks: f.blocks } : {}),
+    ...(f.custom ? { custom: f.custom } : {}),
+    ...(f.seal !== undefined ? { seal: f.seal } : {}),
+    ...(f.sealShape ? { sealShape: f.sealShape } : {}),
+    ...(f.envelope ? { envelope: f.envelope } : {}),
+    ...(f.nameFallback !== undefined ? { nameFallback: f.nameFallback } : {}),
   });
+}
+
+/** New guest list that keeps every existing guest's id (so links already sent keep working). */
+function mergeGuests(current: G[], list?: { id?: string; name: string }[], add?: { name: string }[]): G[] {
+  let next: G[] = current;
+  if (list) {
+    const free = [...current];
+    const take = (pred: (c: G) => boolean) => {
+      const i = free.findIndex(pred);
+      return i < 0 ? undefined : free.splice(i, 1)[0];
+    };
+    // ids first, then names, so a renamed guest sent with its id keeps it
+    const byId = list.map((g) => (g.id ? take((c) => c.id === g.id) : undefined));
+    next = list.map((g, i) => {
+      const kept = byId[i] ?? take((c) => c.name.toLowerCase() === g.name.toLowerCase());
+      return { id: kept?.id ?? nanoid(6), name: g.name };
+    });
+  }
+  return [...next, ...(add ?? []).map((g) => ({ id: nanoid(6), name: g.name }))].slice(0, 1000);
 }
 
 /* ───────────── Operations ───────────── */
@@ -89,26 +136,39 @@ export async function createLetter(raw: unknown): Promise<LetterLinks> {
   const id = nanoid(10), key = nanoid(32);
   const guests = input.guests.map((g) => ({ id: nanoid(6), name: g.name }));
   await saveCard(id, card, key, guests);
-  return links(id, key, guests);
+  return { ...links(id, key, guests, (await letterVersion(id)) ?? 0), ...warnings(guests) };
 }
 
 export async function getLetter(id: string, key: string) {
   const card = await loadCardForEdit(id, key);
   if (!card) return null;
   const guests = (await loadGuests(id)) ?? [];
-  return { card, ...links(id, key, guests) };
+  return { card, ...links(id, key, guests, (await letterVersion(id)) ?? 0), rsvps: await rsvpSummary(id, guests) };
 }
 
-/** Change a published letter (the same links keep working). Guests keep their id (and link) when passed back. */
+/** Change a published letter. Same links; only the fields sent change. */
 export async function updateLetter(id: string, key: string, raw: unknown) {
   const card = await loadCardForEdit(id, key);
   if (!card) return null;
-  const patch = LetterPatch.parse(raw);
-  const next = build({ ...LetterInput.parse({ lang: card.lang, style: card.style }), ...patch } as z.output<typeof LetterInput>, card);
-  const current = (await loadGuests(id)) ?? [];
-  const guests = patch.guests ? patch.guests.map((g) => ({ id: g.id && current.some((c) => c.id === g.id) ? g.id : nanoid(6), name: g.name })) : current;
+  const { guests: list, addGuests, ...fields } = LetterPatch.parse(raw);
+  const next = build(fields, card);
+  const guests = mergeGuests((await loadGuests(id)) ?? [], list, addGuests);
   await saveCard(id, next, key, guests);
-  return { card: next, ...links(id, key, guests) };
+  return { card: next, ...links(id, key, guests, (await letterVersion(id)) ?? 0), ...warnings(guests) };
+}
+
+/** Delete a letter for good (links stop working; guest names, answers and images are erased). */
+export const deleteLetter = (id: string, key: string) => deleteCard(id, key);
+
+/** Who answered what. Answers from the generic link have no guest. */
+export async function rsvpSummary(id: string, guests: G[]) {
+  const records = await listRsvps(id);
+  const name = new Map(guests.map((g) => [g.id, g.name]));
+  const count = (a: RsvpAnswer) => records.filter((r) => r.answer === a).length;
+  return {
+    counts: { yes: count("yes"), maybe: count("maybe"), no: count("no"), pending: guests.filter((g) => !records.some((r) => r.guestId === g.id)).length },
+    answers: records.map((r) => ({ guestId: r.guestId, name: r.guestId ? name.get(r.guestId) ?? null : null, answer: r.answer, at: r.at })),
+  };
 }
 
 /** Everything an agent needs to compose a good letter, in one call. */

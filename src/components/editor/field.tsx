@@ -1,9 +1,9 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { UserPlus } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { FIELD, invalid, type FieldKind } from "@/lib/fields";
+import { useUI } from "@/lib/locale";
 import { NAME_TOKEN } from "@/lib/personalize";
 import { SketchButton } from "../sketch";
 
@@ -68,3 +68,15 @@ export function Field({ kind = "text", value, onChange, label, placeholder, auto
   );
 }
 
+
+/** On/off option, the same everywhere in the editor. */
+export function Switch({ checked, onChange, children, className = "" }: { checked: boolean; onChange: (on: boolean) => void; children: ReactNode; className?: string }) {
+  return (
+    <label className={`flex cursor-pointer items-center gap-3 text-base ${className}`}>
+      <input type="checkbox" className="peer sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span className="relative h-6 w-11 shrink-0 rounded-full bg-ink/15 transition-colors peer-checked:bg-violet peer-focus-visible:outline-2 peer-focus-visible:outline-dashed peer-focus-visible:outline-offset-2 peer-focus-visible:outline-violet
+        after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+      {children}
+    </label>
+  );
+}

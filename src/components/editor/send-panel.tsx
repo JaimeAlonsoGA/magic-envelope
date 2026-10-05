@@ -1,21 +1,22 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import {
   Check, Copy, Download, FileSpreadsheet, ImageIcon, KeyRound, Link2, Loader2, Mail, MessageCircle, Printer,
-  RefreshCw, Send, Share2, WifiOff,
+  HelpCircle, RefreshCw, Send, Share2, Smartphone, WifiOff, X,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cardTitle } from "@/lib/blocks";
+import { cardStyle } from "@/lib/envelope";
 import { val } from "@/lib/fields";
 import { useFlash, useOnline } from "@/lib/hooks";
-import type { Draft, Guest } from "@/lib/model";
+import { useUI } from "@/lib/locale";
+import type { Draft, Guest, RsvpAnswer } from "@/lib/model";
 import { copy, haptic, openLink, saveFile, share, shareFile } from "@/lib/native";
-import { cardStyle } from "../card/card-view";
 import { Seal } from "../craft";
-import { slug, useLetterImages } from "../export-stage";
+import { EXT, slug, useLetterImages, type ImageFormat } from "../export-stage";
 import { SketchButton, SketchLink } from "../sketch";
+import { Choice } from "./field";
 
 /** Publishing is idempotent: same id + edit key overwrites the published copy (guest names included). */
 export function usePublish(draft: Draft | undefined, save: (p: Partial<Draft>, touch?: boolean) => void) {
@@ -171,6 +172,25 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
   );
 }
 
+const ANSWER_ICON: Record<RsvpAnswer, ReactNode> = { yes: <Check size={14} />, maybe: <HelpCircle size={14} />, no: <X size={14} /> };
+const ANSWER_TONE: Record<RsvpAnswer, string> = { yes: "text-[#2f7d46]", maybe: "text-muted", no: "text-wax" };
+
+/** What each guest answered with the letter's RSVP buttons (published letters only; fetched when the panel opens). */
+function useAnswers(draft: Draft) {
+  const [answers, setAnswers] = useState<Record<string, RsvpAnswer>>({});
+  useEffect(() => {
+    if (!draft.publishedId || !draft.editKey) return;
+    const ac = new AbortController();
+    fetch(`/api/card/${draft.publishedId}`, { headers: { "x-edit-key": draft.editKey }, signal: ac.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { rsvps?: { answers: { guestId: string | null; answer: RsvpAnswer }[] } } | null) =>
+        d?.rsvps && setAnswers(Object.fromEntries(d.rsvps.answers.filter((a) => a.guestId).map((a) => [a.guestId!, a.answer]))))
+      .catch(() => {});
+    return () => ac.abort();
+  }, [draft.publishedId, draft.editKey]);
+  return answers;
+}
+
 /** One row per guest: their own link, sent from the channel we know for them, with sent tracking. */
 function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   draft: Draft; guests: Guest[]; sent: Record<string, number>; linkFor: (g?: Guest) => string; markSent: (id: string) => void;
@@ -178,6 +198,7 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   const ui = useUI();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [allCopied, flashAll] = useFlash();
+  const answers = useAnswers(draft);
   const done = guests.filter((g) => sent[g.id]).length;
   const flashGuest = (id: string) => { setCopiedId(id); setTimeout(() => setCopiedId(null), 1400); };
   const copyOne = (g: Guest) => copy(linkFor(g)).then((ok) => ok && flashGuest(g.id));
@@ -202,7 +223,9 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
           return (
             <li key={g.id} className="flex items-center gap-1.5 py-1.5">
               <span className="min-w-0 flex-1 truncate text-lg">{g.name}</span>
-              {sent[g.id] && <span className="flex items-center gap-1 text-sm text-violet"><Check size={14} /> {ui.out.sent}</span>}
+              {answers[g.id]
+                ? <span className={`flex items-center gap-1 text-sm ${ANSWER_TONE[answers[g.id]]}`}>{ANSWER_ICON[answers[g.id]]} {ui.rsvp[answers[g.id]]}</span>
+                : sent[g.id] && <span className="flex items-center gap-1 text-sm text-violet"><Check size={14} /> {ui.out.sent}</span>}
               <button type="button" aria-label={`${ui.copy} — ${g.name}`} title={ui.copy} onClick={() => copyOne(g)}
                 className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
                 {copiedId === g.id ? <Check size={16} /> : <Copy size={16} />}
@@ -228,14 +251,15 @@ function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Gu
   const img = useLetterImages();
   const [progress, setProgress] = useState<number | null>(null);
   const [err, setErr] = useState(false);
+  const [format, setFormat] = useState<ImageFormat>("jpeg");
   const card = draft.card;
   const title = cardTitle(card);
 
   const one = async (g?: Guest) => {
     setErr(false);
     try {
-      const blob = await img.render(card, linkFor(g), g?.name);
-      await shareFile(`${slug(g?.name ?? title)}.png`, blob, cardTitle(card, g?.name));
+      const blob = await img.render(card, linkFor(g), g?.name, format);
+      await shareFile(`${slug(g?.name ?? title)}.${EXT[format]}`, blob, cardTitle(card, g?.name));
       if (g) markSent(g.id);
     } catch {
       setErr(true);
@@ -245,7 +269,7 @@ function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Gu
     setErr(false);
     setProgress(0);
     try {
-      const zip = await img.renderZip(card, guests.map((g) => ({ name: g.name, shareUrl: linkFor(g) })), setProgress);
+      const zip = await img.renderZip(card, guests.map((g) => ({ name: g.name, shareUrl: linkFor(g) })), format, setProgress);
       await saveFile(`${slug(title)}.zip`, zip);
     } catch {
       setErr(true);
@@ -258,6 +282,8 @@ function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Gu
     <div className="space-y-4">
       {img.stage}
       <p className="text-sm text-muted">{ui.out.imageNote}</p>
+      <Choice label={ui.format} value={format} onChange={setFormat}
+        options={[["jpeg", <><Smartphone size={15} /> {ui.out.formatLight}</>], ["png", <><Printer size={15} /> {ui.out.formatPrint}</>]]} />
       <div className="flex flex-wrap gap-2">
         {guests.length > 0 && (
           <SketchButton tone="wax" disabled={img.busy || progress !== null} onClick={all}>

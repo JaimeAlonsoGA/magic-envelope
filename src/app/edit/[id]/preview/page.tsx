@@ -1,16 +1,16 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { ArrowLeft, Loader2, RotateCcw, Send } from "lucide-react";
 import { use, useEffect, useState } from "react";
 import { Reveal } from "@/components/card/reveal";
-import { cardStyle } from "@/components/card/card-view";
 import { SendPanel, usePublish } from "@/components/editor/send-panel";
 import { useLetterImages } from "@/components/export-stage";
 import { Sheet } from "@/components/sheet";
 import { SketchButton, SketchLink } from "@/components/sketch";
 import { exampleGuest, useDraft } from "@/lib/drafts";
+import { cardStyle } from "@/lib/envelope";
 import { useOrigin } from "@/lib/hooks";
+import { useUI } from "@/lib/locale";
 import type { Card } from "@/lib/model";
 
 /** The exact PNG that "Send → Image" produces, rendered live. */
@@ -22,7 +22,7 @@ function ImageResult({ card, shareUrl, guestName }: { card: Card; shareUrl: stri
     let url: string | null = null;
     let live = true;
     const t = setTimeout(() => {
-      img.render(card, shareUrl, guestName).then((b) => {
+      img.render(card, shareUrl, guestName, "png").then((b) => {
         if (!live) return;
         url = URL.createObjectURL(b);
         setSrc(url);

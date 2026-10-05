@@ -2,42 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { cardTitle } from "@/lib/blocks";
-import { luminance, shade } from "@/lib/color";
-import { isEmpty } from "@/lib/blocks";
-import { STYLE_MAIL, envelopeBlocks } from "@/lib/mail";
-import type { Block, EnvSlot } from "@/lib/model";
-import { fillName } from "@/lib/personalize";
-import type { EnvModel } from "../craft";
+import { cardStyle } from "@/lib/envelope";
 import type { Card } from "@/lib/model";
-import { FONTS, RADIUS, resolveStyle, styleVars, type Frame, type Resolved, type Texture } from "@/lib/styles";
+import { RADIUS, styleVars, type Frame, type Resolved, type Texture } from "@/lib/styles";
 import { selectableClass, selectableStyle } from "../selectable";
 import { RenderBlock, type Ctx } from "./blocks";
-
-export const cardStyle = (card: Card) => resolveStyle(card.style, card.custom);
-
-/**
- * Everything an envelope needs for a letter, in one place: colors from its style, its seal ("" = none),
- * and what's written on it for a given guest. Every envelope in the app renders from this.
- */
-export function envelopeOf(card: Card, guestName?: string): EnvModel {
-  const s = cardStyle(card);
-  const slots: EnvModel["slots"] = {};
-  for (const [slot, b] of Object.entries(envelopeBlocks(card)) as [EnvSlot, Block][]) {
-    if (isEmpty(b, card)) continue; // same rule as the letter: blank slots draw nothing for guests
-    if (b.type === "heading") slots[slot] = { kind: "heading", text: fillName(b.text.trim(), card, guestName), size: b.size };
-    else if (b.type === "text") slots[slot] = { kind: "text", text: fillName(b.text.trim(), card, guestName), align: b.align };
-    else if (b.type === "stamp" && b.stamp) slots[slot] = { kind: "stamp", id: b.stamp };
-  }
-  return {
-    paper: s.envelope, letter: s.paper, wax: s.wax,
-    ink: luminance(s.envelope) < 0.3 ? "#f4f1ea" : shade(s.envelope, -0.72), // legible on its own stock
-    seal: card.seal,
-    sealShape: card.sealShape,
-    trim: STYLE_MAIL[card.style].trim,
-    hand: FONTS[s.sign].css,
-    slots,
-  };
-}
 
 /** Paper texture overlays. Static, subtle, and never interactive. */
 function TextureLayer({ texture }: { texture: Texture }) {
@@ -93,14 +62,16 @@ type Props = {
   /** Render for an image/print: no buttons, maps, embeds or live counters. */
   flat?: boolean;
   guestName?: string;
+  /** On a guest's page: where RSVP answers are recorded for the host. */
+  rsvpKey?: Ctx["rsvpKey"];
 };
 
 /** The letter: a sheet of paper in its style, stacking typed blocks. */
-export function CardView({ card, shareUrl, selected, onSelect, ghosts, className = "", style, flat = false, guestName }: Props) {
+export function CardView({ card, shareUrl, selected, onSelect, ghosts, className = "", style, flat = false, guestName, rsvpKey }: Props) {
   const s = style ?? cardStyle(card);
   const place = card.blocks.find((b) => b.type === "place");
   const ctx: Ctx = {
-    card, style: s, title: cardTitle(card, guestName), shareUrl, flat, guestName, editing: !!onSelect,
+    card, style: s, title: cardTitle(card, guestName), shareUrl, flat, guestName, rsvpKey, editing: !!onSelect,
     where: place?.type === "place" ? place.address.trim() || undefined : undefined,
   };
   const selRef = useRef<HTMLDivElement>(null);

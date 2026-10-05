@@ -1,8 +1,8 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { ImageIcon, Link2 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useUI } from "@/lib/locale";
 import type { Draft } from "@/lib/model";
 
 type Save = (p: Partial<Draft>, touch?: boolean) => void;

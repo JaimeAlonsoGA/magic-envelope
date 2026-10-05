@@ -1,8 +1,8 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { Check } from "lucide-react";
 import { useEffect, useEffectEvent, type ReactNode } from "react";
+import { useUI } from "@/lib/locale";
 import { onBack } from "@/lib/native";
 import { SketchBox } from "./sketch";
 

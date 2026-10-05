@@ -84,9 +84,13 @@ export const exampleGuest = (d: Draft) => {
   return guests.find((g) => g.id === d.previewGuest) ?? guests[0];
 };
 
-export const deleteDraft = (id: string) => write(read().filter((d) => d.id !== id));
+/** Delete a letter here; a published one is also taken down (its links stop working). */
+export function deleteDraft(id: string) {
+  const d = read().find((x) => x.id === id);
+  write(read().filter((x) => x.id !== id));
+  if (d?.publishedId && d.editKey) void fetch(`/api/card/${d.publishedId}`, { method: "DELETE", headers: { "x-edit-key": d.editKey }, keepalive: true }).catch(() => {});
+}
 
-/** Import a published card + its edit key (edit link from another device). Reuses an existing local copy. */
 /** Opens a published letter here. Guests come along with their ids, so their links stay the same. */
 export function importDraft(publishedId: string, editKey: string, card: Card, guests: PublicGuest[] = []) {
   const existing = read().find((d) => d.publishedId === publishedId);

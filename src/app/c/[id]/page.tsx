@@ -14,12 +14,21 @@ const guestParam = (v: string | string[] | undefined) => (typeof v === "string" 
 export async function generateMetadata({ params, searchParams }: PageProps<"/c/[id]">): Promise<Metadata> {
   const data = await get((await params).id, guestParam((await searchParams).g));
   if (!data) return {};
+  const { id } = await params;
+  const g = guestParam((await searchParams).g);
   const { card, guestName } = data;
   const to = envelopeLine(card, guestName);
+  const title = cardTitle(card, guestName);
+  const description = `✉ ${to ? `${to} · ` : ""}${t(card.lang).guest.tapToOpen}`;
+  // the link's own preview: this guest's envelope, not the site's
+  const q = guestName && g ? `?g=${g}` : "";
+  const image = { url: `${SITE_URL}/c/${id}/preview.png${q}`, width: 1200, height: 630, alt: to || title };
   return {
-    title: cardTitle(card, guestName),
-    description: `✉ ${to ? `${to} · ` : ""}${t(card.lang).guest.tapToOpen}`,
+    title,
+    description,
     robots: { index: false, follow: false }, // invitations are private-by-link
+    openGraph: { type: "website", title, description, url: `${SITE_URL}/c/${id}${q}`, siteName: "Magic Envelope", locale: card.lang, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };
 }
 
@@ -31,5 +40,5 @@ export default async function CardPage({ params, searchParams }: PageProps<"/c/[
   const data = await get(id, g);
   if (!data) notFound();
   const shareUrl = `${SITE_URL}/c/${id}${data.guestName ? `?g=${g}` : ""}`;
-  return <Reveal card={data.card} guestName={data.guestName} shareUrl={shareUrl} print={sp.print === "1"} />;
+  return <Reveal card={data.card} guestName={data.guestName} shareUrl={shareUrl} print={sp.print === "1"} rsvpKey={{ id, g: data.guestName ? g : undefined }} />;
 }

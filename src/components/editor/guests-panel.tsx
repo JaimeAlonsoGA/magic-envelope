@@ -1,11 +1,11 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { ClipboardList, Contact, Eye, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
 import { newBlock } from "@/lib/blocks";
 import { val } from "@/lib/fields";
+import { useUI } from "@/lib/locale";
 import type { Card, Draft, Guest } from "@/lib/model";
 import { NAME_TOKEN, fallbackName, usesName } from "@/lib/personalize";
 import { SketchButton } from "../sketch";
@@ -100,9 +100,12 @@ export function GuestsPanel({ draft, setGuests, setCard, previewId, setPreviewId
             const contact = g.email ?? g.phone ?? "";
             const bad = !!contact && !val("phone", contact) && !val("email", contact);
             const watching = previewId === g.id;
+            const twin = g.name.trim() && guests.some((x) => x.id !== g.id && x.name.trim().toLowerCase() === g.name.trim().toLowerCase());
             return (
               <li key={g.id} className="flex items-center gap-1.5 py-1.5">
-                <input className="field min-w-0 flex-[1.2] text-base" value={g.name} aria-label={ui.guests.namePh} maxLength={80}
+                {/* a repeated name is allowed (two Lucías), just flagged so it's not a typo */}
+                <input className={`field min-w-0 flex-[1.2] text-base ${twin ? "!border-[#c98a12]" : ""}`} value={g.name} aria-label={ui.guests.namePh} maxLength={80}
+                  title={twin ? ui.duplicateName : undefined}
                   onChange={(e) => setGuests(guests.map((x) => (x.id === g.id ? { ...x, name: e.target.value } : x)))} />
                 <input className={`field min-w-0 flex-1 text-sm ${bad ? "!border-wax" : ""}`} value={contact} placeholder={ui.guests.contactPh} aria-label={ui.guests.contactPh}
                   aria-invalid={bad || undefined} inputMode="email"

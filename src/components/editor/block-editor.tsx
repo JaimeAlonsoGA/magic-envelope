@@ -1,22 +1,23 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
-import type { UIText } from "@/lib/ui";
 import {
   AlignCenter, AlignLeft, Camera, Image as ImageIcon, Loader2, Mail, MessageCircle, MessageSquare, Palette,
   Plus, Smile, Trash2, Type, Wand2, X,
 } from "lucide-react";
 import { useState } from "react";
 import { musicEmbed } from "@/lib/actions";
-import { countdownTarget } from "@/lib/blocks";
+import { countdownTarget, soon } from "@/lib/blocks";
 import { FIELD, val } from "@/lib/fields";
 import { imagine, uploadImage } from "@/lib/image.client";
+import { useUI } from "@/lib/locale";
 import { RSVP_CHANNELS, type Block, type BlockOf, type BoardItem, type Card } from "@/lib/model";
 import { pickPhoto } from "@/lib/native";
 import { STAMP_IDS } from "@/lib/mail";
+import type { UIText } from "@/lib/ui";
+import { parseWhen, whenTime } from "@/lib/when";
 import { Stamp } from "../craft";
 import { SketchButton } from "../sketch";
-import { Choice, Field } from "./field";
+import { Choice, Field, Switch } from "./field";
 
 type Setter<T extends Block["type"]> = (patch: Partial<BlockOf<T>>) => void;
 
@@ -35,12 +36,9 @@ export function BlockEditor({ b, set, card, limit }: { b: Block; set: (patch: Pa
       <BlockFields b={b} set={bounded} card={card} limit={limit} />
       {/* every block with guest actions gets the same switch; images and print are always flat */}
       {"interactive" in b && (
-        <label className="mt-5 flex cursor-pointer items-center gap-3 border-t border-dashed border-ink/15 pt-4 text-base">
-          <input type="checkbox" className="peer sr-only" checked={b.interactive} onChange={(e) => set({ interactive: e.target.checked } as Partial<Block>)} />
-          <span className="relative h-6 w-11 shrink-0 rounded-full bg-ink/15 transition-colors peer-checked:bg-violet peer-focus-visible:outline-2 peer-focus-visible:outline-dashed peer-focus-visible:outline-offset-2 peer-focus-visible:outline-violet
-            after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+        <Switch className="mt-5 border-t border-dashed border-ink/15 pt-4" checked={b.interactive} onChange={(interactive) => set({ interactive } as Partial<Block>)}>
           {ui.interactive}
-        </label>
+        </Switch>
       )}
     </>
   );
@@ -72,11 +70,20 @@ function BlockFields({ b, set, card, limit }: { b: Block; set: (patch: Partial<B
     case "image":
       return <ImageEditor b={b} set={set} />;
     case "date": {
-      const endBad = !!val("datetime", b.end) && !!val("datetime", b.start) && new Date(b.end!) <= new Date(b.start);
+      const endBad = !!parseWhen(b.end) && !!parseWhen(b.start) && whenTime(b.end) <= whenTime(b.start);
+      const allDay = !!parseWhen(b.start)?.allDay;
+      const kind = allDay ? "date" : "datetime";
+      // whole day ⇄ timed keeps the day and drops or adds a time
+      const toggle = (on: boolean) => set(on
+        ? { start: b.start.slice(0, 10), end: b.end?.slice(0, 10) }
+        : { start: `${b.start.slice(0, 10)}T19:00`, end: b.end ? `${b.end.slice(0, 10)}T23:00` : undefined });
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field kind="datetime" label={ui.start} value={b.start} onChange={(start) => start && set({ start })} />
-          <Field kind="datetime" label={ui.end} value={b.end ?? ""} onChange={(end) => set({ end: end || undefined })} error={endBad && ui.endBeforeStart} />
+        <div className="space-y-4">
+          <div key={kind} className="grid gap-4 sm:grid-cols-2">
+            <Field kind={kind} label={ui.start} value={b.start} onChange={(start) => start && set({ start })} />
+            <Field kind={kind} label={ui.end} value={b.end ?? ""} onChange={(end) => set({ end: end || undefined })} error={endBad && ui.endBeforeStart} />
+          </div>
+          <Switch checked={allDay} onChange={toggle}>{ui.allDay}</Switch>
         </div>
       );
     }
@@ -86,7 +93,7 @@ function BlockFields({ b, set, card, limit }: { b: Block; set: (patch: Partial<B
       return (
         <div className="space-y-4">
           <Choice label={ui.countdownTarget} value={follow ? "follow" : "custom"}
-            onChange={(v) => set({ to: v === "follow" ? "" : followed || new Date(Date.now() + 864e5 * 21).toISOString().slice(0, 16) })}
+            onChange={(v) => set({ to: v === "follow" ? "" : followed || soon() })}
             options={[["follow", ui.followDate], ["custom", ui.customDate]]} />
           {follow
             ? !followed && <p className="text-sm text-wax">{ui.noDateBlock}</p>

@@ -70,10 +70,13 @@ Playful style. Give me one link for each guest: Lucía, Tom, Marco.` }],
   {
     id: "curl",
     title: "curl",
-    intro: "Create and publish a letter. The response has the letter's link, one link per guest, a preview image and the editKey (keep it to make changes).",
+    intro: "Create and publish a letter. The response has the letter's link, one link and one image per guest, and the editKey (keep it to make changes or delete it).",
     snippets: [
       { label: "Create", code: `curl -X POST ${SITE_URL}/api/v1/letters \\\n  -H "content-type: application/json" \\\n  -d '${LETTER}'` },
-      { label: "Change it later (same links)", code: `curl -X PATCH ${SITE_URL}/api/v1/letters/LETTER_ID \\\n  -H "authorization: Bearer EDIT_KEY" \\\n  -H "content-type: application/json" \\\n  -d '{ "style": "midnight" }'` },
+      { label: "Change it later (only what you send changes; same links)", code: `curl -X PATCH ${SITE_URL}/api/v1/letters/LETTER_ID \\\n  -H "authorization: Bearer EDIT_KEY" \\\n  -H "content-type: application/json" \\\n  -d '{ "style": "midnight", "addGuests": [{ "name": "Olivia" }] }'` },
+      { label: "Who's coming", code: `curl ${SITE_URL}/api/v1/letters/LETTER_ID -H "authorization: Bearer EDIT_KEY" | jq .rsvps` },
+      { label: "Every guest's letter as an image", code: `curl -o letters.zip "${SITE_URL}/api/v1/letters/LETTER_ID/images.zip?format=jpeg" \\\n  -H "authorization: Bearer EDIT_KEY"` },
+      { label: "Delete it", code: `curl -X DELETE ${SITE_URL}/api/v1/letters/LETTER_ID -H "authorization: Bearer EDIT_KEY"` },
     ],
   },
   {

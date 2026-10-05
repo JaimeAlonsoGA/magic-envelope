@@ -1,6 +1,5 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -8,6 +7,7 @@ import { KIND_EMOJI, blankCard, fromPreset } from "@/lib/blocks";
 import { createDraft, getLastLang, setLastLang } from "@/lib/drafts";
 import { useHydrated } from "@/lib/hooks";
 import { FLAGS, t } from "@/lib/i18n";
+import { useUI } from "@/lib/locale";
 import { KINDS, LANGS, type Card, type Kind, type Lang } from "@/lib/model";
 import { onBack } from "@/lib/native";
 import { RADIUS, STYLES, STYLE_GROUPS, STYLE_IDS, resolveStyle, styleVars, type StyleId } from "@/lib/styles";

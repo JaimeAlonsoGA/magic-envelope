@@ -1,12 +1,12 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { Check, RotateCcw } from "lucide-react";
+import { cardStyle } from "@/lib/envelope";
 import { FLAGS } from "@/lib/i18n";
+import { useUI } from "@/lib/locale";
 import { ENVELOPE_PAPERS } from "@/lib/mail";
 import { LANGS, type Card } from "@/lib/model";
 import { FONTS, FONT_IDS, STYLES, STYLE_IDS, resolveStyle, type Custom, type FontId } from "@/lib/styles";
-import { cardStyle } from "../card/card-view";
 import { SketchButton } from "../sketch";
 import { StyleSwatch } from "../style-swatch";
 

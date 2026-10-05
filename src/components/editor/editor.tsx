@@ -1,11 +1,11 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { ArrowDown, ArrowUp, CopyPlus, Eye, Home, Mail, Palette, Plus, Send, Trash2, Users } from "lucide-react";
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { BLOCK_ICON, PALETTE, newBlock } from "@/lib/blocks";
 import { exampleGuest, useDraft } from "@/lib/drafts";
 import { useOrigin } from "@/lib/hooks";
+import { useUI } from "@/lib/locale";
 import { type Block, type BlockType, type Card, type Guest } from "@/lib/model";
 import { haptic } from "@/lib/native";
 import { CardView } from "../card/card-view";

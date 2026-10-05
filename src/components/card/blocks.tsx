@@ -1,6 +1,5 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import {
   CalendarPlus, Camera, Check, Copy, Gift, HelpCircle, Link2, Map as MapIcon, MapPin, Music, Shirt, Video, X,
 } from "lucide-react";
@@ -13,10 +12,12 @@ import { BLOCK_ICON, DIGITAL_ONLY, countdownTarget, isEmpty, rsvpContact } from 
 import { val } from "@/lib/fields";
 import { useFlash, useHydrated } from "@/lib/hooks";
 import { t } from "@/lib/i18n";
-import type { Block, BlockOf, Card } from "@/lib/model";
+import { useUI } from "@/lib/locale";
+import type { Block, BlockOf, Card, RsvpAnswer } from "@/lib/model";
 import { copy, haptic, isNative, saveFile } from "@/lib/native";
 import { SHAPE, type Resolved } from "@/lib/styles";
 import { fallbackName, splitName } from "@/lib/personalize";
+import { whenTime } from "@/lib/when";
 import { Stamp } from "../craft";
 import { Placeholder } from "../selectable";
 
@@ -26,6 +27,8 @@ export type Ctx = {
   flat: boolean;
   guestName?: string; // this letter's guest, if any
   editing?: boolean; // show the {name} token as a visible field
+  /** On a guest's page: where an RSVP answer is recorded for the host. */
+  rsvpKey?: { id: string; g?: string };
 };
 
 /** Should this block show its digital actions here? Off in images/print, or when the block opts out. */
@@ -62,10 +65,12 @@ function Framed({ ctx, className = "", children }: { ctx: Ctx; className?: strin
 
 /** Guest action (calendar, directions, RSVP…). Link when `href`, button otherwise. */
 function Action({ ctx, href, onClick, children }: { ctx: Ctx; href?: string; onClick?: () => void; children: ReactNode }) {
+  // web links open beside the letter; mailto/sms hand off to an app and must not leave a blank tab
+  const web = !!href && /^https?:/i.test(href);
   const cls = `inline-flex min-h-10 items-center gap-2 px-5 py-1.5 text-[calc(.95rem*var(--c-body-scale))] transition-[background-color,transform,box-shadow,filter] duration-150
     active:scale-[.97] focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-4 ${SHAPE[ctx.style.shape].action}`;
   const font = { fontFamily: "var(--c-body)" };
-  if (href) return <a href={href} target="_blank" rel="noopener noreferrer" className={cls} style={font} onClick={() => haptic()}>{children}</a>;
+  if (href) return <a href={href} {...(web ? { target: "_blank", rel: "noopener noreferrer" } : {})} className={cls} style={font} onClick={() => { haptic(); onClick?.(); }}>{children}</a>;
   return <button type="button" className={cls} style={font} onClick={() => { haptic(); onClick?.(); }}>{children}</button>;
 }
 
@@ -148,7 +153,7 @@ function Ghost({ b, digitalOnly }: { b: Block; digitalOnly?: boolean }) {
 function DateB({ b, ctx }: { b: BlockOf<"date">; ctx: Ctx }) {
   const { lang } = ctx.card;
   const p = dateParts(b.start, lang)!;
-  const end = val("datetime", b.end) && new Date(b.end!) > new Date(b.start) ? dateParts(b.end!, lang) : null;
+  const end = whenTime(b.end) > whenTime(b.start) ? dateParts(b.end!, lang) : null;
   // Decided at click time (no hydration mismatch): Apple devices & the native app get an .ics, others Google Calendar.
   const add = () => {
     if (isNative() || /iPhone|iPad|Macintosh/.test(navigator.userAgent)) saveFile("invite.ics", icsFile(b, ctx.title, ctx.where, ctx.shareUrl));
@@ -158,10 +163,12 @@ function DateB({ b, ctx }: { b: BlockOf<"date">; ctx: Ctx }) {
     <div className="space-y-1.5 text-center">
       <div className="text-xs uppercase tracking-[.3em] opacity-70">{p.weekday}</div>
       <div className="first-letter:uppercase" style={{ ...subFont, fontSize: "calc(1.5rem * var(--c-sub-scale))" }}>{p.date}</div>
-      <div style={{ fontFamily: "var(--c-body)", color: "var(--c-accent)", fontSize: "calc(1.5rem * var(--c-body-scale))" }}>
-        {p.time}{end && end.date === p.date && ` – ${end.time}`}
-      </div>
-      {end && end.date !== p.date && <div className="opacity-80">→ {end.date}, {end.time}</div>}
+      {p.time && (
+        <div style={{ fontFamily: "var(--c-body)", color: "var(--c-accent)", fontSize: "calc(1.5rem * var(--c-body-scale))" }}>
+          {p.time}{end && end.date === p.date && end.time && ` – ${end.time}`}
+        </div>
+      )}
+      {end && end.date !== p.date && <div className="opacity-80">→ {[end.date, end.time].filter(Boolean).join(", ")}</div>}
       {live(ctx, b) && <div className="no-print pt-2"><Action ctx={ctx} onClick={add}><CalendarPlus size={16} />{t(lang).guest.calendar}</Action></div>}
     </div>
   );
@@ -170,11 +177,14 @@ function DateB({ b, ctx }: { b: BlockOf<"date">; ctx: Ctx }) {
 /** The name is a label; only the address drives the map and directions. */
 function Place({ b, ctx }: { b: BlockOf<"place">; ctx: Ctx }) {
   const address = b.address.trim();
+  // "Finca La Alameda" / "Finca La Alameda": say it once
+  const same = (x: string) => x.trim().toLowerCase().replace(/[\s.,]+/g, " ");
+  const showAddress = address && same(address) !== same(b.name);
   return (
     <div className="space-y-2 text-center">
       <Icon as={MapPin} />
       {b.name.trim() && <div style={{ ...subFont, fontSize: "calc(1.5rem * var(--c-sub-scale))" }}>{b.name}</div>}
-      {address && <div className="opacity-80" style={{ fontFamily: "var(--c-body)", fontSize: "calc(1rem * var(--c-body-scale))" }}>{address}</div>}
+      {showAddress && <div className="opacity-80" style={{ fontFamily: "var(--c-body)", fontSize: "calc(1rem * var(--c-body-scale))" }}>{address}</div>}
       {address && live(ctx, b) && (
         <>
           <iframe title="map" src={mapsEmbed(address)} loading="lazy" className="no-print mt-3 h-44 w-full rounded-sm border-0" />
@@ -188,7 +198,7 @@ function Place({ b, ctx }: { b: BlockOf<"place">; ctx: Ctx }) {
 function Countdown({ b, ctx }: { b: BlockOf<"countdown">; ctx: Ctx }) {
   const hydrated = useHydrated();
   const [now, setNow] = useState(() => Date.now());
-  const target = new Date(countdownTarget(ctx.card, b.to)).getTime();
+  const target = whenTime(countdownTarget(ctx.card, b.to));
   const done = hydrated && now >= target;
   useEffect(() => {
     if (done) return;
@@ -249,14 +259,17 @@ function Rsvp({ b, ctx }: { b: BlockOf<"rsvp">; ctx: Ctx }) {
       </div>
     );
   }
-  // The reply names the guest, so the host knows who answered.
-  const who = ctx.guestName ? ` — ${ctx.guestName}` : "";
-  const opts = [[g.attending, Check], [g.maybe, HelpCircle], [g.notAttending, X]] as const;
+  // A message a person would write: thanks to the host (the signature), the answer, and who it's from.
+  const host = ctx.card.blocks.find((x) => x.type === "signature")?.text.trim() || undefined;
+  const message = (a: RsvpAnswer) => `${g.reply.thanks(host)} ${g.reply[a]}${ctx.guestName ? `\n— ${ctx.guestName}` : ""}`;
+  // the answer is also kept for the host's guest list (sendBeacon survives leaving for WhatsApp)
+  const record = (answer: RsvpAnswer) => ctx.rsvpKey && navigator.sendBeacon?.("/api/rsvp", new Blob([JSON.stringify({ ...ctx.rsvpKey, answer })], { type: "application/json" }));
+  const opts = [["yes", g.attending, Check], ["maybe", g.maybe, HelpCircle], ["no", g.notAttending, X]] as const;
   return (
     <div className="no-print space-y-3 text-center">
       <div className="flex flex-wrap justify-center gap-2">
-        {opts.map(([label, I]) => (
-          <Action key={label} ctx={ctx} href={rsvpUrl(b.channel, contact, `${label}${who} — ${ctx.title}`, ctx.title)}>
+        {opts.map(([answer, label, I]) => (
+          <Action key={answer} ctx={ctx} href={rsvpUrl(b.channel, contact, message(answer), ctx.title)} onClick={() => record(answer)}>
             <I size={16} />{label}
           </Action>
         ))}

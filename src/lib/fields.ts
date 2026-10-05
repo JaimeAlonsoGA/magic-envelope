@@ -4,6 +4,7 @@
  * or flagged in the editor and ignored on the card. No block validates on its own.
  */
 import { safeUrl } from "./actions";
+import { parseWhen } from "./when";
 
 export type FieldKind = "text" | "long" | "phone" | "email" | "url" | "datetime" | "date" | "time" | "emoji";
 
@@ -38,8 +39,8 @@ export const FIELD: Record<FieldKind, Spec> = {
     parse: (s) => safeUrl(s),
     hint: "A web address, e.g. example.com",
   },
-  datetime: { input: { type: "datetime-local" }, parse: (s) => (s && !Number.isNaN(Date.parse(s)) ? s : null) },
-  date: { input: { type: "date" }, parse: (s) => (s && !Number.isNaN(Date.parse(s)) ? s : null) },
+  datetime: { input: { type: "datetime-local" }, parse: (s) => (parseWhen(s) ? s.trim() : null) },
+  date: { input: { type: "date" }, parse: (s) => (parseWhen(s) ? s.trim() : null) },
   time: { input: { type: "time" }, parse: (s) => (/^\d{1,2}:\d{2}$/.test(s.trim()) ? s.trim() : null) },
   emoji: { input: { type: "text" }, parse: (s) => (s.trim() ? [...s.trim()].slice(0, 4).join("") : null) },
 };

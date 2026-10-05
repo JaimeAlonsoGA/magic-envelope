@@ -1,13 +1,13 @@
 "use client";
 
-import { useUI } from "@/lib/locale";
 import { RotateCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { BLOCK_ICON, isEmpty, newBlock } from "@/lib/blocks";
 import { SEAL_ICONS, SEAL_SHAPES, parseSeal, sealValue, type SealMark } from "@/lib/craft";
+import { cardStyle, envelopeOf } from "@/lib/envelope";
+import { useUI } from "@/lib/locale";
 import { SLOT_LIMIT, SLOT_ROLE, envelopeBlocks } from "@/lib/mail";
 import { ENV_SLOTS, SLOT_TYPE, type Block, type Card, type EnvSlot } from "@/lib/model";
-import { cardStyle, envelopeOf } from "../card/card-view";
 import { EnvelopeFlip, SLOT_BOX, Seal, type EnvModel } from "../craft";
 import { Placeholder, selectableClass, selectableStyle } from "../selectable";
 import { BlockEditor } from "./block-editor";
