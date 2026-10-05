@@ -3,7 +3,7 @@
 import { nanoid } from "nanoid";
 import { useCallback, useSyncExternalStore } from "react";
 import { guessLang } from "./i18n";
-import { Card, LANGS, type Draft, type Lang } from "./model";
+import { Card, LANGS, type Draft, type Lang, type PublicGuest } from "./model";
 
 /* Drafts live in localStorage: no account needed. Changes in other tabs are picked up via the storage event. */
 
@@ -87,10 +87,11 @@ export const exampleGuest = (d: Draft) => {
 export const deleteDraft = (id: string) => write(read().filter((d) => d.id !== id));
 
 /** Import a published card + its edit key (edit link from another device). Reuses an existing local copy. */
-export function importDraft(publishedId: string, editKey: string, card: Card) {
+/** Opens a published letter here. Guests come along with their ids, so their links stay the same. */
+export function importDraft(publishedId: string, editKey: string, card: Card, guests: PublicGuest[] = []) {
   const existing = read().find((d) => d.publishedId === publishedId);
   if (existing) return existing.id;
-  return createDraft(card, { publishedId, editKey, publishedAt: Date.now() + 1 });
+  return createDraft(card, { publishedId, editKey, publishedAt: Date.now() + 1, guests });
 }
 
 /* ───────────── Last letter language (wizard default) ───────────── */

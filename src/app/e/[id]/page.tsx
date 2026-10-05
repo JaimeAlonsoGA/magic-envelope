@@ -16,7 +16,7 @@ export default function ImportPage({ params }: PageProps<"/e/[id]">) {
     const ac = new AbortController();
     fetch(`/api/card/${id}`, { headers: { "x-edit-key": key }, signal: ac.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(({ card }) => router.replace(`/edit/${importDraft(id, key, card)}`))
+      .then(({ card, guests }) => router.replace(`/edit/${importDraft(id, key, card, guests)}`))
       .catch(() => !ac.signal.aborted && setFailed(true));
     return () => ac.abort();
   }, [id, router]);

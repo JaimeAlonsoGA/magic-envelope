@@ -5,7 +5,7 @@ import { PRESETS, blankCard, fromPreset, newBlock } from "./blocks";
 import { SEAL_ICONS, SEAL_SHAPES } from "./craft";
 import { t } from "./i18n";
 import { SLOT_LIMIT, SLOT_ROLE, STAMP_IDS } from "./mail";
-import { Block, Card, Custom, ENV_SLOTS, Envelope, KINDS, LANGS, SLOT_TYPE, type BlockType } from "./model";
+import { Block, Card, Custom, ENV_SLOTS, KINDS, LANGS, SLOT_TYPE, type BlockType, type EnvSlot } from "./model";
 import { SITE_URL } from "./site";
 import { loadCardForEdit, loadGuests, saveCard } from "./store.server";
 import { FONTS, STYLES, STYLE_IDS, type StyleId } from "./styles";
@@ -26,6 +26,11 @@ const PartialBlock = z.preprocess((b) => {
   if (!b || typeof b !== "object" || !type || !BLOCK_TYPES.includes(type)) return b; // let Block report the error
   return { ...newBlock(type), ...b, id: (b as { id?: string }).id ?? nanoid(8) };
 }, Block);
+const EnvelopeInput = z.object({ blocks: z.partialRecord(z.enum(ENV_SLOTS), PartialBlock) }).superRefine((env, ctx) => {
+  for (const [slot, b] of Object.entries(env.blocks) as [EnvSlot, Block][]) {
+    if (b.type !== SLOT_TYPE[slot]) ctx.addIssue({ code: "custom", path: ["blocks", slot, "type"], message: `Slot ${slot} holds a "${SLOT_TYPE[slot]}" block` });
+  }
+});
 
 export const LetterInput = z.object({
   lang: z.enum(LANGS).default("en").describe("Language guests read the letter in"),
@@ -35,7 +40,7 @@ export const LetterInput = z.object({
   custom: Custom.optional().describe("Overrides on top of the style: accent/paper/ink/envelope colours, head/body fonts"),
   seal: z.string().max(16).optional().describe('Wax seal mark: "" none, "_" plain, "icon:<id>", "ini:ABC", "duo:A|J"'),
   sealShape: z.enum(SEAL_SHAPES).optional(),
-  envelope: Envelope.optional().describe("Envelope slot blocks (see catalog.envelope)"),
+  envelope: EnvelopeInput.optional().describe("Envelope slot blocks, partial like letter blocks (see catalog.envelope for each slot's block type)"),
   nameFallback: z.string().max(60).optional().describe('What {name} reads as without a guest (default: "Dear Guest" in the letter language)'),
   guests: z.array(z.object({ name: z.string().trim().min(1).max(80) })).max(1000).default([]).describe("Each guest gets their own addressed link"),
 });
