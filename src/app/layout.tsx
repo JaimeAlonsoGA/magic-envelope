@@ -37,6 +37,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: `${SITE_NAME} — ${TAGLINE}`, description: DESCRIPTION },
   appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
   formatDetection: { telephone: false },
+  verification: { google: "0Ry0LUlnmH6gsbo3HStK0rYVFb7n7faZntGZ7T4C53w" },
 };
 
 export const viewport: Viewport = {
