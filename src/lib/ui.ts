@@ -165,6 +165,15 @@ const en = {
   },
   view: { link: "Link", image: "Image" },
   interactive: "Show buttons in the link",
+  assistant: {
+    label: "Describe your invitation",
+    placeholder: "My birthday on Saturday 17 October, at a house in a pine forest by a lake… with a QR to our WhatsApp group, for several friends",
+    go: "Make it",
+    working: "Writing your letter…",
+    failed: "That didn't work. Try again, or start from the envelope.",
+    limited: "Too many tries for now. Start from the envelope below.",
+    note: "From the assistant",
+  },
   // after sending
   thanks: {
     howWasIt: "Sent! How was it?",

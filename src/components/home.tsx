@@ -11,6 +11,7 @@ import { useLang, useUI } from "@/lib/locale";
 import type { Draft } from "@/lib/model";
 import { haptic } from "@/lib/native";
 import { EnvelopeBack, envelopeLift, envelopeStill, type EnvModel } from "./craft";
+import { Assistant } from "./assistant";
 import { SiteFooter } from "./site-footer";
 import { RoughUnderline } from "./sketch";
 
@@ -74,8 +75,11 @@ export function Home() {
       </h1>
       <p className="mt-5 text-center font-hand text-lg text-muted">{ui.site.tagline}</p>
 
+      {/* the fastest way in: say what it's for (on once the model provider is set up) */}
+      {process.env.NEXT_PUBLIC_ASSISTANT === "on" && <div className="mt-10 flex w-full justify-center"><Assistant /></div>}
+
       {/* the CTA is the envelope itself: still, solid, and it answers the pointer */}
-      <Link href="/new" className={`group mt-12 block w-72 sm:w-96 ${focusRing}`}>
+      <Link href="/new" className={`group mt-14 block w-60 sm:w-80 ${focusRing}`}>
         <div className={envelopeStill}>
           <EnvelopeBack env={CTA_ENVELOPE} />
         </div>

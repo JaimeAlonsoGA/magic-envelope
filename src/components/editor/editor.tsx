@@ -8,6 +8,7 @@ import { useOrigin } from "@/lib/hooks";
 import { useUI } from "@/lib/locale";
 import { type Block, type BlockType, type Card, type Guest } from "@/lib/model";
 import { haptic } from "@/lib/native";
+import { AssistantNote } from "../assistant";
 import { CardView } from "../card/card-view";
 import { FormatToggle } from "../preview-controls";
 import { Sheet } from "../sheet";
@@ -154,6 +155,7 @@ export function Editor({ id }: { id: string }) {
 
       <main className="flex-1 px-3 pb-[60dvh] pt-2 sm:pb-48" onClick={(e) => e.target === e.currentTarget && close()}>
         {/* preview as the guest sees it: the interactive link or the flat image */}
+        <AssistantNote draftId={draft.id} />
         <div className="mb-4 flex justify-center"><FormatToggle draft={draft} save={save} /></div>
         {canvas === "envelope" ? (
           <EnvelopeCanvas card={card} guestName={previewGuest?.name} selected={envTarget} onSelect={(t) => { setPanel(null); setSelected(null); setEnvTarget(t); }} />
