@@ -5,6 +5,7 @@ import { z } from "zod";
 import { fromPreset, newBlock } from "./blocks";
 import { Card, KINDS, LANGS, type Block, type Lang } from "./model";
 import { STYLE_IDS, type StyleId } from "./styles";
+import { UI_TEXT } from "./ui";
 import { parseWhen } from "./when";
 
 /**
@@ -38,6 +39,12 @@ const STYLE_MOOD: Record<StyleId, string> = {
 
 const nullable = <T extends z.ZodType>(t: T) => t.nullable();
 
+/** The editor's own words for its parts (in the language the person sees the app in), so the note points at what they see. */
+const sections = (l: Lang) => {
+  const u = UI_TEXT[l];
+  return `guests panel "${u.guests.title}", send "${u.send}", style "${u.theme}", image block "${u.blocks.image}" and its button "${u.imagine}", link button "${u.blocks.link}", QR block "${u.blocks.qr}", signature "${u.blocks.signature}", RSVP "${u.blocks.rsvp}"`;
+};
+
 const Plan = z.object({
   lang: z.enum(LANGS).describe("Language of the person's message: the letter is written in it"),
   kind: z.enum(KINDS),
@@ -57,12 +64,13 @@ const Plan = z.object({
   gifts: nullable(z.string()),
   signature: nullable(z.string().describe("The host's name, if known")),
   initials: nullable(z.string().describe("1-3 letters for the wax seal, from the host's name")),
+  illustration: nullable(z.string()).describe("If the person describes a setting, theme or mood worth picturing, a short English prompt for an illustration of it (scene only, no text or lettering). Otherwise null."),
   guests: z.array(z.string()).describe("Guest names mentioned (empty if none were given)"),
   notes: z.string().describe("Two or three short sentences to the person, in their language: what you prepared, and exactly what they still need to fill in (e.g. paste the WhatsApp group link into the QR block, add guests' names). Answer their questions about how to do things in the app."),
 });
 type Plan = z.infer<typeof Plan>;
 
-const instructions = (today: string) => `You set up invitations and letters in Magic Envelope, a free app where a letter arrives in a sealed envelope and each guest gets their own link with their name.
+const instructions = (today: string, uiLang: Lang) => `You set up invitations and letters in Magic Envelope, a free app where a letter arrives in a sealed envelope and each guest gets their own link with their name.
 Today is ${today}.
 
 What the app can do (so you can answer "can it…?" questions and use it):
@@ -75,36 +83,52 @@ Rules:
 - Only use facts the person gave. Never invent phone numbers, emails, links, times or addresses: leave them empty and say in notes what to fill in.
 - Write in the person's language, warmly and briefly, like the host would.
 - If they'll invite several people or ask for a template with different names, put {name} in the title.
-- In notes, never write {name}: say that each guest's name appears on their own letter once they add guests in "Guests".`;
+- In notes, never write {name}: say that each guest's name appears on their own letter once they add guests.
+- In notes, call the app's parts exactly by these names: ${sections(uiLang)}. Don't name styles or any internal ids.
+- If you suggested an illustration, it is not made yet: say its description is ready and they get it by tapping the image block and its button.
+- A link the person hasn't given yet (e.g. their WhatsApp group) goes in the link button for them to paste; tell them that once pasted they can also add a QR block with it for printed copies.`;
 
 /** Plan → a validated letter (not published: it opens in the editor as a draft). */
-export function letterFrom(p: Plan): { card: Card; guests: { id: string; name: string }[]; notes: string } {
+export function letterFrom(p: Plan): { card: Card; guests: { id: string; name: string }[]; notes: string; imagePrompts: Record<string, string> } {
   const lang: Lang = p.lang;
   const base = fromPreset(p.kind, p.style, lang); // the occasion's seal and envelope; blocks are replaced below
   const block = <T extends Block["type"]>(type: T, fields: object) => ({ ...newBlock(type), ...fields, id: nanoid(8) }) as Block;
   const blocks: Block[] = [block("heading", { text: p.title.slice(0, 200) })];
+  // an illustration is one tap away, not generated unasked: the image block waits with its description ready
+  const imagePrompts: Record<string, string> = {};
+  if (p.illustration?.trim()) {
+    const img = block("image", { src: "" });
+    imagePrompts[img.id] = p.illustration.trim().slice(0, 500);
+    blocks.push(img);
+  }
   if (p.message) blocks.push(block("text", { text: p.message.slice(0, 2000) }));
   if (p.date && parseWhen(p.date.start)) blocks.push(block("date", { start: p.date.start, ...(p.date.end && parseWhen(p.date.end) ? { end: p.date.end } : {}) }));
   if (p.date && parseWhen(p.date.start) && (p.kind === "birthday" || p.kind === "party" || p.kind === "wedding")) blocks.push(block("countdown", { to: "" }));
   if (p.place) blocks.push(block("place", { name: p.place.name.slice(0, 200), address: p.place.address.slice(0, 200) }));
   if (p.schedule?.length) blocks.push(block("agenda", { items: p.schedule.slice(0, 20).map((s) => ({ time: s.time.slice(0, 10), what: s.what.slice(0, 200) })) }));
   if (p.dressCode) blocks.push(block("dress", { text: p.dressCode.slice(0, 200) }));
-  if (p.link) blocks.push(block("link", { label: p.link.label.slice(0, 200), href: p.link.href.slice(0, 2048) }));
-  if (p.qr) blocks.push(block("qr", { data: p.qr.data.slice(0, 2048), caption: p.qr.caption.slice(0, 200) }));
+  // One place to paste a link. An empty QR would encode this letter's own link (the app's default),
+  // so a QR is only added once its destination is known; until then the link button holds the spot.
+  const qrUrl = p.qr?.data.trim() || p.link?.href.trim() || "";
+  if (p.link || (p.qr && !qrUrl)) blocks.push(block("link", { label: (p.link?.label || p.qr?.caption || "").slice(0, 200), href: (p.link?.href || qrUrl).slice(0, 2048) }));
+  if (p.qr && qrUrl) blocks.push(block("qr", { data: qrUrl.slice(0, 2048), caption: p.qr.caption.slice(0, 200) }));
   if (p.gifts) blocks.push(block("gift", { text: p.gifts.slice(0, 200) }));
   if (p.rsvp) blocks.push(block("rsvp", { channel: p.rsvp.channel, contacts: { whatsapp: "", sms: "", email: "", [p.rsvp.channel]: p.rsvp.contact.slice(0, 200) } }));
   // always signed: an unknown host leaves an empty signature to fill (guests never see empty blocks)
   blocks.push(block("signature", { text: (p.signature ?? "").slice(0, 200) }));
-  const seal = p.initials?.replace(/[^\p{L}]/gu, "").slice(0, 3).toUpperCase();
-  const card = Card.parse({ ...base, lang, kind: p.kind, style: p.style, blocks, ...(seal ? { seal: `ini:${seal}` } : {}) });
+  // a couple's two initials go on the paired seal (E♥N); anyone else's on the initials seal
+  const ini = p.initials?.replace(/[^\p{L}]/gu, "").slice(0, 3).toUpperCase();
+  const couple = ini?.length === 2 && /[&+]| y | and | et | e | und /i.test(p.signature ?? "");
+  const seal = ini ? (couple ? `duo:${ini[0]}|${ini[1]}` : `ini:${ini}`) : undefined;
+  const card = Card.parse({ ...base, lang, kind: p.kind, style: p.style, blocks, ...(seal ? { seal } : {}) });
   const guests = p.guests.map((n) => n.trim()).filter(Boolean).slice(0, 200).map((name) => ({ id: nanoid(6), name: name.slice(0, 80) }));
-  return { card, guests, notes: p.notes.slice(0, 600) };
+  return { card, guests, notes: p.notes.slice(0, 600), imagePrompts };
 }
 
-export async function planLetter(description: string, today: string) {
+export async function planLetter(description: string, today: string, uiLang: Lang) {
   const { output } = await generateText({
     model: MODEL,
-    instructions: instructions(today),
+    instructions: instructions(today, uiLang),
     prompt: description,
     output: Output.object({ schema: Plan }),
     maxOutputTokens: 1500,

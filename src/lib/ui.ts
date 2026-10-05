@@ -52,6 +52,7 @@ const en = {
   add: "Add",
   editElsewhere: "Copy edit link for another device",
   error: "Something went wrong. Try again.",
+  limitReached: "Limit reached — try again in a while.",
   offline: "You're offline",
   to: "To",
   seal: "Seal",
@@ -178,8 +179,8 @@ const en = {
   thanks: {
     howWasIt: "Sent! How was it?",
     stars: (n: number) => `${n} star${n === 1 ? "" : "s"}`,
-    thankYou: "Thank you!",
-    free: "Magic Envelope is free and ad-free; if it helped, a coffee keeps it going.",
+    thankYou: "Thank you! Your letter is on its way.",
+    passItOn: "Magic Envelope is free and ad-free, and it travels hand to hand: if someone you know has something to celebrate, pass the envelope on.",
     close: "Close",
   },
   // public site

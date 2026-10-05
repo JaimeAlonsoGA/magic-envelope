@@ -15,6 +15,7 @@ import { pickPhoto } from "@/lib/native";
 import { STAMP_IDS } from "@/lib/mail";
 import type { UIText } from "@/lib/ui";
 import { parseWhen, whenTime } from "@/lib/when";
+import { imagePromptKey } from "../assistant";
 import { Stamp } from "../craft";
 import { SketchButton } from "../sketch";
 import { Choice, Field, Switch } from "./field";
@@ -295,7 +296,8 @@ const STYLES = ["storybook", "medieval", "sketch", "photo"] as const;
 
 function ImageEditor({ b, set }: { b: BlockOf<"image">; set: Setter<"image"> }) {
   const ui = useUI();
-  const [prompt, setPrompt] = useState("");
+  // the assistant may have left a description for this image (see components/assistant.tsx)
+  const [prompt, setPrompt] = useState(() => { try { return sessionStorage.getItem(imagePromptKey(b.id)) ?? ""; } catch { return ""; } });
   const [style, setStyle] = useState<(typeof STYLES)[number]>("storybook");
   const [busy, setBusy] = useState<null | "ai" | "photo">(null);
   const [err, setErr] = useState<string | null>(null);
@@ -307,7 +309,7 @@ function ImageEditor({ b, set }: { b: BlockOf<"image">; set: Setter<"image"> }) 
       const src = await fn();
       if (src) set({ src });
     } catch (e) {
-      setErr((e as Error).message === "429" ? "Limit reached — try again in a while." : ui.error);
+      setErr((e as Error).message === "429" ? ui.limitReached : ui.error);
     } finally {
       setBusy(null);
     }

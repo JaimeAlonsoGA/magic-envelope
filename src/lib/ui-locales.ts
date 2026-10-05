@@ -42,6 +42,7 @@ export const es: UIText = {
   add: "Añadir",
   editElsewhere: "Copiar enlace de edición para otro dispositivo",
   error: "Algo ha fallado. Inténtalo de nuevo.",
+  limitReached: "Has llegado al límite; prueba de nuevo dentro de un rato.",
   offline: "Sin conexión",
   to: "Para",
   seal: "Lacre",
@@ -164,8 +165,8 @@ export const es: UIText = {
   thanks: {
     howWasIt: "¡Enviada! ¿Qué tal?",
     stars: (n: number) => `${n} estrella${n === 1 ? "" : "s"}`,
-    thankYou: "¡Gracias!",
-    free: "Magic Envelope es gratis y sin anuncios; si te ha servido, un café ayuda a mantenerlo.",
+    thankYou: "¡Gracias! Tu carta ya va de camino.",
+    passItOn: "Magic Envelope es gratis y sin anuncios, y viaja de mano en mano: si conoces a alguien con algo que celebrar, pásale el sobre.",
     close: "Cerrar",
   },
   site: {
@@ -219,6 +220,7 @@ export const fr: UIText = {
   add: "Ajouter",
   editElsewhere: "Copier le lien de modification pour un autre appareil",
   error: "Une erreur est survenue. Réessayez.",
+  limitReached: "Limite atteinte ; réessayez dans un moment.",
   offline: "Hors ligne",
   to: "Pour",
   seal: "Cachet",
@@ -341,8 +343,8 @@ export const fr: UIText = {
   thanks: {
     howWasIt: "Envoyée ! Alors ?",
     stars: (n: number) => `${n} étoile${n === 1 ? "" : "s"}`,
-    thankYou: "Merci !",
-    free: "Magic Envelope est gratuit et sans pub ; si ça vous a servi, un café aide à le faire vivre.",
+    thankYou: "Merci ! Votre lettre est en route.",
+    passItOn: "Magic Envelope est gratuit et sans pub, et il voyage de main en main : si quelqu’un autour de vous a quelque chose à fêter, faites-lui passer l’enveloppe.",
     close: "Fermer",
   },
   site: {
@@ -396,6 +398,7 @@ export const pt: UIText = {
   add: "Adicionar",
   editElsewhere: "Copiar link de edição para outro dispositivo",
   error: "Algo deu errado. Tente de novo.",
+  limitReached: "Limite atingido; tente de novo daqui a pouco.",
   offline: "Sem conexão",
   to: "Para",
   seal: "Lacre",
@@ -518,8 +521,8 @@ export const pt: UIText = {
   thanks: {
     howWasIt: "Enviada! Que tal?",
     stars: (n: number) => `${n} estrela${n === 1 ? "" : "s"}`,
-    thankYou: "Obrigado!",
-    free: "O Magic Envelope é grátis e sem anúncios; se ajudou, um café ajuda a mantê-lo.",
+    thankYou: "Obrigado! Sua carta já está a caminho.",
+    passItOn: "O Magic Envelope é grátis e sem anúncios, e viaja de mão em mão: se alguém que você conhece tem algo para celebrar, passe o envelope adiante.",
     close: "Fechar",
   },
   site: {
@@ -573,6 +576,7 @@ export const it: UIText = {
   add: "Aggiungi",
   editElsewhere: "Copia il link di modifica per un altro dispositivo",
   error: "Qualcosa è andato storto. Riprova.",
+  limitReached: "Limite raggiunto; riprova tra un po’.",
   offline: "Sei offline",
   to: "Per",
   seal: "Sigillo",
@@ -695,8 +699,8 @@ export const it: UIText = {
   thanks: {
     howWasIt: "Inviata! Com’è andata?",
     stars: (n: number) => `${n} stell${n === 1 ? "a" : "e"}`,
-    thankYou: "Grazie!",
-    free: "Magic Envelope è gratis e senza pubblicità; se ti è stato utile, un caffè aiuta a mantenerlo.",
+    thankYou: "Grazie! La tua lettera è già in viaggio.",
+    passItOn: "Magic Envelope è gratis e senza pubblicità, e viaggia di mano in mano: se qualcuno che conosci ha qualcosa da festeggiare, passagli la busta.",
     close: "Chiudi",
   },
   site: {
@@ -750,6 +754,7 @@ export const de: UIText = {
   add: "Hinzufügen",
   editElsewhere: "Bearbeitungslink für ein anderes Gerät kopieren",
   error: "Etwas ist schiefgelaufen. Versuch es noch einmal.",
+  limitReached: "Limit erreicht – versuch es später noch einmal.",
   offline: "Du bist offline",
   to: "An",
   seal: "Siegel",
@@ -872,8 +877,8 @@ export const de: UIText = {
   thanks: {
     howWasIt: "Verschickt! Wie war’s?",
     stars: (n: number) => `${n} Stern${n === 1 ? "" : "e"}`,
-    thankYou: "Danke!",
-    free: "Magic Envelope ist kostenlos und werbefrei; wenn es geholfen hat, hält ein Kaffee es am Laufen.",
+    thankYou: "Danke! Dein Brief ist unterwegs.",
+    passItOn: "Magic Envelope ist kostenlos und werbefrei und reist von Hand zu Hand: Wenn jemand, den du kennst, etwas zu feiern hat, gib den Umschlag weiter.",
     close: "Schließen",
   },
   site: {

@@ -4,11 +4,13 @@ import { Loader2, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createDraft, setLastLang } from "@/lib/drafts";
-import { useUI } from "@/lib/locale";
+import { useLang, useUI } from "@/lib/locale";
 import type { Card } from "@/lib/model";
 
 /** The assistant's note travels with the new draft to the editor (this tab only). */
 export const noteKey = (draftId: string) => `me:note:${draftId}`;
+/** A suggested illustration waits in its image block, ready to generate with one tap. */
+export const imagePromptKey = (blockId: string) => `me:imgprompt:${blockId}`;
 
 /**
  * Say what you're celebrating, get a letter: the server turns the description into a draft
@@ -16,6 +18,7 @@ export const noteKey = (draftId: string) => `me:note:${draftId}`;
  */
 export function Assistant() {
   const ui = useUI();
+  const lang = useLang();
   const a = ui.assistant;
   const router = useRouter();
   const [text, setText] = useState("");
@@ -27,13 +30,16 @@ export function Assistant() {
     try {
       const now = new Date();
       const today = `${now.toLocaleDateString("en", { weekday: "long" })} ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      const r = await fetch("/api/assistant", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, today }) });
+      const r = await fetch("/api/assistant", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, today, lang }) });
       if (r.status === 429) return setState("limited");
       if (!r.ok) throw new Error(String(r.status));
-      const { card, guests, notes } = (await r.json()) as { card: Card; guests: { id: string; name: string }[]; notes: string };
+      const { card, guests, notes, imagePrompts } = (await r.json()) as { card: Card; guests: { id: string; name: string }[]; notes: string; imagePrompts: Record<string, string> };
       setLastLang(card.lang);
       const id = createDraft(card, { guests });
-      try { sessionStorage.setItem(noteKey(id), notes); } catch {}
+      try {
+        sessionStorage.setItem(noteKey(id), notes);
+        for (const [blockId, prompt] of Object.entries(imagePrompts ?? {})) sessionStorage.setItem(imagePromptKey(blockId), prompt);
+      } catch {}
       router.push(`/edit/${id}`);
     } catch {
       setState("failed");

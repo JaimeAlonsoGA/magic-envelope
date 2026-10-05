@@ -1,8 +1,11 @@
 "use client";
 
-import { Coffee, Star, X } from "lucide-react";
+import { Check, Coffee, Share2, Star, X } from "lucide-react";
 import { useState } from "react";
-import { useUI } from "@/lib/locale";
+import { useFlash } from "@/lib/hooks";
+import { useLang, useUI } from "@/lib/locale";
+import { share } from "@/lib/native";
+import { homePath } from "@/lib/seo";
 import { COFFEE_URL } from "../site-footer";
 
 const KEY = "me:thanks";
@@ -24,8 +27,8 @@ function remember(m: Memory) {
 
 /**
  * The thank-you after a letter goes out: rate the app in one tap (real ratings back the stars in
- * search results) and, once rated, a quiet invitation to buy a coffee. Closing it keeps it away
- * for a month; it never interrupts anything.
+ * search results), then pass Magic Envelope on (its link, to share) and, below, a coffee. Closing
+ * it keeps it away for a month; it never interrupts anything.
  */
 export function ThanksCard() {
   const ui = useUI();
@@ -66,13 +69,29 @@ export function ThanksCard() {
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-lg">{t.thankYou} <span className="text-muted">{t.free}</span></p>
+          <p className="text-lg leading-snug">{t.thankYou} <span className="text-muted">{t.passItOn}</span></p>
+          <PassItOn />
           <a href={COFFEE_URL} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-[#ffdd00] px-4 py-2 text-[#1e1e1e] shadow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0">
+            className="flex w-fit items-center gap-2 rounded-full bg-[#ffdd00] px-4 py-2 text-[#1e1e1e] shadow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0">
             <Coffee size={18} /> {ui.site.coffee}
           </a>
         </div>
       )}
     </aside>
+  );
+}
+
+/** The app's own link, to pass on: the share sheet on phones, copied on desktops. Opens in the sharer's language. */
+function PassItOn() {
+  const ui = useUI();
+  const lang = useLang();
+  const [copied, flash] = useFlash();
+  const url = `${location.origin}${homePath(lang)}`;
+  return (
+    <button type="button" onClick={() => share({ title: "Magic Envelope", text: ui.site.tagline, url }).then((r) => r === "copied" && flash())}
+      className="flex w-fit items-center gap-2 rounded-full border border-ink/15 bg-sheet px-4 py-1.5 font-mono text-sm hover:border-ink/30">
+      {url.replace(/^https?:\/\//, "")}
+      {copied ? <Check size={16} className="text-violet" /> : <Share2 size={16} />}
+    </button>
   );
 }
