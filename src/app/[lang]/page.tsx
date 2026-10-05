@@ -4,12 +4,14 @@ import { Home } from "@/components/home";
 import { LangProvider } from "@/lib/locale";
 import { LANGS, type Lang } from "@/lib/model";
 import { homePath, languageAlternates, siteCopy, siteJsonLd } from "@/lib/seo";
+import { ratingSummary } from "@/lib/store.server";
 
 type Local = Exclude<Lang, "en">;
 const LOCAL = LANGS.filter((l): l is Local => l !== "en");
 const local = (l: string) => (LOCAL.includes(l as Local) ? (l as Local) : null);
 
 export const dynamicParams = false;
+export const revalidate = 3600; // picks up new ratings
 export const generateStaticParams = () => LOCAL.map((lang) => ({ lang }));
 
 export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
@@ -29,9 +31,10 @@ export async function generateMetadata({ params }: PageProps<"/[lang]">): Promis
 export default async function LocalHome({ params }: PageProps<"/[lang]">) {
   const lang = local((await params).lang);
   if (!lang) notFound();
+  const rating = await ratingSummary().catch(() => undefined);
   return (
     <LangProvider lang={lang}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd(lang)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd(lang, rating)) }} />
       <div lang={lang}><Home /></div>
     </LangProvider>
   );

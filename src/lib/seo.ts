@@ -95,8 +95,11 @@ export function languageAlternates(path: (l: Lang) => string, lang: Lang) {
   return { canonical: path(lang), languages };
 }
 
-/** Structured data for the home page: a free web app, in this language. */
-export const siteJsonLd = (lang: Lang) => ({
+/**
+ * Structured data for the home page: a free web app, in this language. The rating is the real one
+ * people leave after sending a letter, shown once there are enough of them to mean something.
+ */
+export const siteJsonLd = (lang: Lang, rating?: { count: number; average: number }) => ({
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: SITE_NAME,
@@ -109,4 +112,7 @@ export const siteJsonLd = (lang: Lang) => ({
   availableLanguage: LANGS,
   author: { "@type": "Person", name: "Jaime Alonso", url: "https://jaimealonso.dev" },
   potentialAction: { "@type": "CreateAction", target: `${SITE_URL}/new` },
+  ...(rating && rating.count >= 3
+    ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.average.toFixed(1), ratingCount: rating.count, bestRating: 5, worstRating: 1 } }
+    : {}),
 });

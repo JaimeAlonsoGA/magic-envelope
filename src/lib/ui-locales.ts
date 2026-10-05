@@ -152,6 +152,13 @@ export const es: UIText = {
   },
   view: { link: "Enlace", image: "Imagen" },
   interactive: "Mostrar botones en el enlace",
+  thanks: {
+    howWasIt: "¡Enviada! ¿Qué tal?",
+    stars: (n: number) => `${n} estrella${n === 1 ? "" : "s"}`,
+    thankYou: "¡Gracias!",
+    free: "Magic Envelope es gratis y sin anuncios; si te ha servido, un café ayuda a mantenerlo.",
+    close: "Cerrar",
+  },
   site: {
     tagline: "Invitaciones gratis que llegan en un sobre lacrado",
     makeInvitation: "Crea una invitación",
@@ -313,6 +320,13 @@ export const fr: UIText = {
   },
   view: { link: "Lien", image: "Image" },
   interactive: "Afficher les boutons dans le lien",
+  thanks: {
+    howWasIt: "Envoyée ! Alors ?",
+    stars: (n: number) => `${n} étoile${n === 1 ? "" : "s"}`,
+    thankYou: "Merci !",
+    free: "Magic Envelope est gratuit et sans pub ; si ça vous a servi, un café aide à le faire vivre.",
+    close: "Fermer",
+  },
   site: {
     tagline: "Des invitations gratuites qui arrivent dans une enveloppe scellée",
     makeInvitation: "Créer une invitation",
@@ -474,6 +488,13 @@ export const pt: UIText = {
   },
   view: { link: "Link", image: "Imagem" },
   interactive: "Mostrar botões no link",
+  thanks: {
+    howWasIt: "Enviada! Que tal?",
+    stars: (n: number) => `${n} estrela${n === 1 ? "" : "s"}`,
+    thankYou: "Obrigado!",
+    free: "O Magic Envelope é grátis e sem anúncios; se ajudou, um café ajuda a mantê-lo.",
+    close: "Fechar",
+  },
   site: {
     tagline: "Convites grátis que chegam num envelope lacrado",
     makeInvitation: "Crie um convite",
@@ -635,6 +656,13 @@ export const it: UIText = {
   },
   view: { link: "Link", image: "Immagine" },
   interactive: "Mostra i pulsanti nel link",
+  thanks: {
+    howWasIt: "Inviata! Com’è andata?",
+    stars: (n: number) => `${n} stell${n === 1 ? "a" : "e"}`,
+    thankYou: "Grazie!",
+    free: "Magic Envelope è gratis e senza pubblicità; se ti è stato utile, un caffè aiuta a mantenerlo.",
+    close: "Chiudi",
+  },
   site: {
     tagline: "Inviti gratuiti che arrivano in una busta sigillata",
     makeInvitation: "Crea un invito",
@@ -796,6 +824,13 @@ export const de: UIText = {
   },
   view: { link: "Link", image: "Bild" },
   interactive: "Buttons im Link zeigen",
+  thanks: {
+    howWasIt: "Verschickt! Wie war’s?",
+    stars: (n: number) => `${n} Stern${n === 1 ? "" : "e"}`,
+    thankYou: "Danke!",
+    free: "Magic Envelope ist kostenlos und werbefrei; wenn es geholfen hat, hält ein Kaffee es am Laufen.",
+    close: "Schließen",
+  },
   site: {
     tagline: "Kostenlose Einladungen, die im versiegelten Umschlag ankommen",
     makeInvitation: "Einladung erstellen",

@@ -165,6 +165,14 @@ const en = {
   },
   view: { link: "Link", image: "Image" },
   interactive: "Show buttons in the link",
+  // after sending
+  thanks: {
+    howWasIt: "Sent! How was it?",
+    stars: (n: number) => `${n} star${n === 1 ? "" : "s"}`,
+    thankYou: "Thank you!",
+    free: "Magic Envelope is free and ad-free; if it helped, a coffee keeps it going.",
+    close: "Close",
+  },
   // public site
   site: {
     tagline: "Free invitations that arrive in a sealed envelope",

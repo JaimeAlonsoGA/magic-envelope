@@ -17,6 +17,7 @@ import { Seal } from "../craft";
 import { EXT, slug, useLetterImages, type ImageFormat } from "../export-stage";
 import { SketchButton, SketchLink } from "../sketch";
 import { Choice } from "./field";
+import { ThanksCard } from "./thanks-card";
 
 /** Publishing is idempotent: same id + edit key overwrites the published copy (guest names included). */
 export function usePublish(draft: Draft | undefined, save: (p: Partial<Draft>, touch?: boolean) => void) {
@@ -75,6 +76,7 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
   const ui = useUI();
   // opens on the output being previewed
   const [tab, setTab] = useState<"link" | "image">(initialTab ?? draft.view ?? "link");
+  const [delivered, setDelivered] = useState(false);
   const online = useOnline();
   const card = draft.card;
   const guests = (draft.guests ?? []).filter((g) => g.name.trim());
@@ -121,11 +123,15 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
       </div>
       {pub.err && <p className="text-sm text-wax">{ui.error}</p>}
 
-      {tab === "link" ? (
-        guests.length ? <GuestLinks draft={draft} guests={guests} sent={sent} linkFor={linkFor} markSent={markSent} /> : <SingleLink draft={draft} url={base} />
-      ) : (
-        <Images draft={draft} guests={guests} linkFor={linkFor} markSent={markSent} />
-      )}
+      {/* any way of sending it (data-delivers) completes the story: then say thanks */}
+      <div className="space-y-5" onClickCapture={(e) => (e.target as HTMLElement).closest("[data-delivers]") && setDelivered(true)}>
+        {tab === "link" ? (
+          guests.length ? <GuestLinks draft={draft} guests={guests} sent={sent} linkFor={linkFor} markSent={markSent} /> : <SingleLink draft={draft} url={base} />
+        ) : (
+          <Images draft={draft} guests={guests} linkFor={linkFor} markSent={markSent} />
+        )}
+      </div>
+      {delivered && <ThanksCard />}
     </div>
   );
 }
@@ -152,14 +158,14 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
         </button>
       )}
       <div className="w-full min-w-0 flex-1 space-y-3">
-        <button type="button" onClick={() => copy(url).then((ok) => ok && flash())} className="field flex w-full items-center gap-2 text-left font-mono text-sm">
+        <button data-delivers type="button" onClick={() => copy(url).then((ok) => ok && flash())} className="field flex w-full items-center gap-2 text-left font-mono text-sm">
           <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
           {copied ? <Check size={16} className="ml-auto shrink-0 text-violet" /> : <Copy size={16} className="ml-auto shrink-0" />}
         </button>
         <div className="flex flex-wrap gap-2">
-          <SketchButton tone="wax" onClick={() => share({ title, text: title, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {ui.share}</SketchButton>
-          <SketchLink external href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`}><MessageCircle size={18} /> WhatsApp</SketchLink>
-          <SketchLink external href={`${url}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
+          <SketchButton data-delivers tone="wax" onClick={() => share({ title, text: title, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {ui.share}</SketchButton>
+          <SketchLink data-delivers external href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`}><MessageCircle size={18} /> WhatsApp</SketchLink>
+          <SketchLink data-delivers external href={`${url}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
         </div>
         {draft.editKey && (
           <button type="button" onClick={() => copy(`${location.origin}/e/${draft.publishedId}#${draft.editKey}`).then((ok) => ok && flashKey())}
@@ -211,10 +217,10 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="mr-auto text-sm text-muted">{ui.out.progress(done, guests.length)}</span>
-        <SketchButton size="sm" onClick={() => copy(guests.map((g) => `${g.name}: ${linkFor(g)}`).join("\n")).then((ok) => ok && flashAll())}>
+        <SketchButton data-delivers size="sm" onClick={() => copy(guests.map((g) => `${g.name}: ${linkFor(g)}`).join("\n")).then((ok) => ok && flashAll())}>
           {allCopied ? <Check size={15} /> : <Copy size={15} />} {ui.out.copyAll}
         </SketchButton>
-        <SketchButton size="sm" onClick={csv}><FileSpreadsheet size={15} /> CSV</SketchButton>
+        <SketchButton data-delivers size="sm" onClick={csv}><FileSpreadsheet size={15} /> CSV</SketchButton>
       </div>
       <ul className="divide-y divide-ink/10">
         {guests.map((g) => {
@@ -226,11 +232,11 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
               {answers[g.id]
                 ? <span className={`flex items-center gap-1 text-sm ${ANSWER_TONE[answers[g.id]]}`}>{ANSWER_ICON[answers[g.id]]} {ui.rsvp[answers[g.id]]}</span>
                 : sent[g.id] && <span className="flex items-center gap-1 text-sm text-violet"><Check size={14} /> {ui.out.sent}</span>}
-              <button type="button" aria-label={`${ui.copy} — ${g.name}`} title={ui.copy} onClick={() => copyOne(g)}
+              <button data-delivers type="button" aria-label={`${ui.copy} — ${g.name}`} title={ui.copy} onClick={() => copyOne(g)}
                 className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
                 {copiedId === g.id ? <Check size={16} /> : <Copy size={16} />}
               </button>
-              <SketchButton size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, title, linkFor(g)).then((copied) => copied && flashGuest(g.id)); markSent(g.id); }}>
+              <SketchButton data-delivers size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, title, linkFor(g)).then((copied) => copied && flashGuest(g.id)); markSent(g.id); }}>
                 {channel} {ui.out.sendTo}
               </SketchButton>
             </li>
@@ -286,14 +292,14 @@ function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Gu
         options={[["jpeg", <><Smartphone size={15} /> {ui.out.formatLight}</>], ["png", <><Printer size={15} /> {ui.out.formatPrint}</>]]} />
       <div className="flex flex-wrap gap-2">
         {guests.length > 0 && (
-          <SketchButton tone="wax" disabled={img.busy || progress !== null} onClick={all}>
+          <SketchButton data-delivers tone="wax" disabled={img.busy || progress !== null} onClick={all}>
             {progress !== null ? <><Loader2 size={16} className="animate-spin" /> {ui.out.rendering(progress, guests.length)}</> : <><Download size={18} /> {ui.out.zip(guests.length)}</>}
           </SketchButton>
         )}
-        <SketchButton tone={guests.length ? "plain" : "wax"} disabled={img.busy || progress !== null} onClick={() => one()}>
+        <SketchButton data-delivers tone={guests.length ? "plain" : "wax"} disabled={img.busy || progress !== null} onClick={() => one()}>
           {img.busy && progress === null ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={18} />} {guests.length ? ui.out.generic : ui.out.download}
         </SketchButton>
-        <SketchLink external href={`${linkFor()}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
+        <SketchLink data-delivers external href={`${linkFor()}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
       </div>
       {guests.length > 0 && (
         <ul className="divide-y divide-ink/10">

@@ -204,3 +204,22 @@ export async function readImage(name: string): Promise<Uint8Array | null> {
     return null;
   }
 }
+
+/* ───────────── App ratings ─────────────
+ * One file per rating (ratings/<stars>~<random>); the summary is a single listing. Real ratings
+ * from people who just finished a letter: they back the aggregateRating in the home's structured data.
+ */
+export async function saveRating(stars: number) {
+  const pathname = `ratings/${stars}~${randomBytes(6).toString("hex")}`;
+  const at = new Date().toISOString();
+  if (useBlob) await put(pathname, at, { access: "private", contentType: "text/plain", addRandomSuffix: false });
+  else {
+    await mkdir(path.join(LOCAL, "ratings"), { recursive: true });
+    await writeFile(path.join(LOCAL, pathname), at);
+  }
+}
+
+export async function ratingSummary(): Promise<{ count: number; average: number }> {
+  const stars = (await listPaths("ratings/")).map((p) => Number(p.pathname.slice("ratings/".length).split("~")[0])).filter((n) => n >= 1 && n <= 5);
+  return { count: stars.length, average: stars.length ? stars.reduce((a, b) => a + b, 0) / stars.length : 0 };
+}
