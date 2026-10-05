@@ -7,8 +7,8 @@ import { Card, PublicGuest } from "./model";
 
 /**
  * Storage for published cards and images.
- * - With BLOB_READ_WRITE_TOKEN (or Vercel OIDC + BLOB_STORE_ID): Vercel Blob.
- *   Cards are private (they can hold phone numbers); images are public.
+ * - With BLOB_READ_WRITE_TOKEN (or Vercel OIDC + BLOB_STORE_ID): a private Vercel Blob store.
+ *   Cards can hold phone numbers; images are served by /api/file under unguessable names.
  * - Without it (local dev): files under .data/ served by /api/file.
  */
 const useBlob = !!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
@@ -90,20 +90,26 @@ export async function saveCard(id: string, card: Card, editKey: string, guests: 
   return true;
 }
 
-/** Store an image and return a URL usable in <img src>. */
+/** Store an image and return a URL usable in <img src>. Names are random, so the URL is the capability. */
 export async function saveImage(name: string, data: Uint8Array | Blob, contentType: string) {
   if (useBlob) {
-    const blob = await put(`img/${name}`, data instanceof Blob ? data : Buffer.from(data), { access: "public", contentType, addRandomSuffix: true });
-    return blob.url;
+    // one private store for everything; images are served through /api/file like in local dev
+    await put(`img/${name}`, data instanceof Blob ? data : Buffer.from(data), { access: "private", contentType, addRandomSuffix: false });
+  } else {
+    const file = path.join(LOCAL, "img", name);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, data instanceof Blob ? new Uint8Array(await data.arrayBuffer()) : data);
   }
-  const file = path.join(LOCAL, "img", name);
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, data instanceof Blob ? new Uint8Array(await data.arrayBuffer()) : data);
   return `/api/file/${name}`;
 }
 
-export async function readLocalImage(name: string) {
-  if (!/^[\w.-]+$/.test(name)) return null;
+export async function readImage(name: string): Promise<Uint8Array | null> {
+  if (!/^[\w-]+\.\w+$/.test(name)) return null;
+  if (useBlob) {
+    const res = await get(`img/${name}`, { access: "private" });
+    if (!res || res.statusCode !== 200) return null;
+    return new Uint8Array(await new Response(res.stream).arrayBuffer());
+  }
   try {
     return await readFile(path.join(LOCAL, "img", name));
   } catch {
