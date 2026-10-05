@@ -7,14 +7,6 @@ const noop = () => () => {};
 /** false during SSR and hydration, true afterwards. */
 export const useHydrated = () => useSyncExternalStore(noop, () => true, () => false);
 
-const resizeSub = (l: () => void) => {
-  addEventListener("resize", l);
-  return () => removeEventListener("resize", l);
-};
-/** Width a letter gets on the page: its 36rem max, inside the page gutters (px-3, sm:px-6). */
-export const useLetterWidth = () =>
-  useSyncExternalStore(resizeSub, () => Math.min(576, innerWidth - (innerWidth >= 640 ? 48 : 24)), () => 576);
-
 export const useOrigin = () => useSyncExternalStore(noop, () => location.origin, () => "");
 
 const onlineSub = (l: () => void) => {

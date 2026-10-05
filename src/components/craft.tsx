@@ -6,7 +6,6 @@ import { ENV, envelopePalette, parseSeal, sealOutline, sealPalette, type SealMar
 import { SLOT_LIMIT, STAMPS, type StampId, type Trim } from "@/lib/mail";
 import type { EnvSlot } from "@/lib/model";
 import { SEAL_ICON } from "./seal-icons";
-import { useSize } from "./sketch";
 
 /* ───────────── Wax seal ─────────────
  * Symmetric, fully opaque wax in one of four shapes (lib/craft.ts). The mark is drawn from vector
@@ -207,45 +206,39 @@ export function EnvelopeFront({ env, className = "" }: { env: EnvModel; classNam
 /* ───────────── Envelope back (flap side) ───────────── */
 
 /**
- * Stacking order, back to front. The letter always lives *between* the back and the front pockets,
- * so it is hidden by them until it has slid out. The flap is in front while closed and drops
- * behind the letter once it has flipped open.
+ * The back is built from flat layers with their own z-index and NO stacking context around them, so
+ * when the guest opens it the real letter (components/card/reveal.tsx, z = LAYER.letter) slides
+ * between them: in front of the inside and the open flap, behind the pockets. Every layer covers the
+ * same box, so one transform (data-env-piece) moves the whole envelope.
  */
-const LAYER = { inside: 1, flapOpen: 2, letter: 3, pockets: 4, label: 5, flapClosed: 6, seal: 7 } as const;
+export const LAYER = { shadow: 30, inside: 31, flapOpen: 32, letter: 35, pockets: 37, flapClosed: 38 } as const;
 
-type BackProps = {
+/** Where the letter sits in the pocket (fractions of the envelope), shared with the opening timeline. */
+export const POCKET = { x: 0.06, y: 0.05, w: 0.88, hidden: 0.9 } as const; // below `hidden` the pockets cover it
+
+/** Rounded like the SVG's rx (6 of 300×200), as a CSS radius on a box of the same proportions. */
+const ENV_RADIUS = `${(ENV.radius / ENV.w) * 100}% / ${(ENV.radius / ENV.h) * 100}%`;
+
+export function EnvelopeBack({ env, opener = false, ref, className = "" }: {
   env: EnvModel;
-  open?: boolean;
-  /** Hide the paper (the real letter has taken over). */
-  letterGone?: boolean;
-  letterRef?: React.Ref<HTMLDivElement>;
-  /** The real letter, drawn small on the paper inside, so what comes out *is* the letter. */
-  letterContent?: ReactNode;
-  /** Width the full letter will have on screen: the miniature is laid out at it, so nothing reflows on hand-off. */
-  letterWidth?: number;
+  /** For the opener: the layers join the page's stacking context (elsewhere they're isolated) and the
+   *  envelope draws its own shadow as a layer (a filter around it would trap the layers). */
+  opener?: boolean;
+  ref?: React.Ref<HTMLDivElement>;
   className?: string;
-};
-
-export function EnvelopeBack({ env, open = false, letterGone = false, letterRef, letterContent, letterWidth = 576, className = "" }: BackProps) {
+}) {
   const c = envelopePalette(env.paper);
   const clip = `env${useId().replace(/\W/g, "")}`;
   const edge = { stroke: c.edge, strokeWidth: 0.8, strokeLinejoin: "round" as const };
-  /*
-   * Opening timeline (ms after the tap), one continuous gesture:
-   *   0–140    the seal breaks (shrinks a touch and fades) — before anything moves
-   *   120–580  the flap swings open (and drops behind the letter halfway through)
-   *   380–900  the letter rises out of the pocket
-   *   640      the real letter takes over while the paper is still moving and unfolds into place
-   */
-  const flapT = "transform 460ms cubic-bezier(.4,0,.2,1) 120ms, z-index 0s linear 350ms";
-  const [paperRef, { w }] = useSize<HTMLDivElement>();
   const under = env.slots["back-center"];
+  const piece = "absolute inset-0 origin-top-left";
 
   return (
-    <div className={`relative aspect-[3/2] w-full ${className}`} style={{ perspective: 1400 }}>
-      {/* inside of the envelope (its outline belongs to the back panel, so the letter passes in front of it) */}
-      <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full" style={{ zIndex: LAYER.inside }} aria-hidden>
-        {/* depth: light falls in from the opening, the bottom of the pocket is in shade */}
+    <div ref={ref} className={`relative aspect-[3/2] w-full ${opener ? "" : "isolate"} ${className}`}>
+      {opener && <div data-env-piece className={piece} style={{ zIndex: LAYER.shadow, borderRadius: ENV_RADIUS, boxShadow: "0 6px 10px rgb(0 0 0 / .14)" }} aria-hidden />}
+
+      {/* inside of the envelope: light falls in from the opening, the bottom of the pocket is in shade */}
+      <svg data-env-piece viewBox="0 0 300 200" className={`${piece} h-full w-full`} style={{ zIndex: LAYER.inside }} aria-hidden>
         <defs>
           <linearGradient id={`${clip}in`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor={shade(c.inside, 0.1)} /><stop offset="1" stopColor={shade(c.inside, -0.22)} />
@@ -254,82 +247,43 @@ export function EnvelopeBack({ env, open = false, letterGone = false, letterRef,
         <rect x=".4" y=".4" width="299.2" height="199.2" rx={ENV.radius} fill={`url(#${clip}in)`} stroke={c.edge} strokeWidth=".8" />
       </svg>
 
-      {/* the letter */}
-      <div
-        ref={letterRef}
-        className="absolute inset-x-[6%] top-[5%] h-[88%] overflow-hidden will-change-transform [filter:drop-shadow(0_1px_1.5px_rgb(0_0_0/.18))]"
-        style={{
-          // the paper has no box of its own: it IS the letter, folded (its top panel shows, the rest is under the fold)
-          background: letterContent ? undefined : env.letter,
-          transform: open ? "translateY(-104%)" : "none",
-          transition: "transform 520ms cubic-bezier(.25,.8,.25,1) 380ms",
-          visibility: letterGone ? "hidden" : undefined,
-          zIndex: LAYER.letter,
-        }}
-      >
-        <div ref={paperRef} className="absolute inset-0">
-          {letterContent && w > 0 && (
-            <div inert className="pointer-events-none origin-top-left" style={{ width: letterWidth, transform: `scale(${w / letterWidth})` }}>
-              {letterContent}
-            </div>
-          )}
-          {letterContent && <div className="letter-fold absolute inset-x-0 bottom-0 h-[12%]" aria-hidden />}
-        </div>
+      {/* front pockets (+ what's written on them) */}
+      <div data-env-piece className={piece} style={{ zIndex: LAYER.pockets }}>
+        <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full" aria-hidden>
+          <defs><clipPath id={clip}><rect width="300" height="200" rx={ENV.radius} /></clipPath></defs>
+          <g clipPath={`url(#${clip})`}>
+            <path d={ENV.left} fill={c.side} {...edge} />
+            <path d={ENV.right} fill={c.side} {...edge} />
+            <path d={ENV.bottom} fill={c.bottom} {...edge} />
+          </g>
+        </svg>
+        {under && <SlotItem slot="back-center" item={under} env={env} />}
       </div>
 
-      {/* front pockets */}
-      <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full" style={{ zIndex: LAYER.pockets }} aria-hidden>
-        <defs><clipPath id={clip}><rect width="300" height="200" rx={ENV.radius} /></clipPath></defs>
-        <g clipPath={`url(#${clip})`}>
-          <path d={ENV.left} fill={c.side} {...edge} />
-          <path d={ENV.right} fill={c.side} {...edge} />
-          <path d={ENV.bottom} fill={c.bottom} {...edge} />
-        </g>
-      </svg>
-
-      {under && (
-        <div className="absolute inset-0 transition-opacity duration-200" style={{ zIndex: LAYER.label, opacity: open ? 0 : 1 }}>
-          <SlotItem slot="back-center" item={under} env={env} />
+      {/* top flap, hinged on the top edge: outer face (with the seal pressed on it) + the inside on its back */}
+      <div data-env-piece data-env-flap className={piece} style={{ zIndex: LAYER.flapClosed, perspective: 1400 }}>
+        <div data-env-hinge className="absolute inset-0 origin-top [transform-style:preserve-3d]">
+          <div className="absolute inset-0 [backface-visibility:hidden]">
+            <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full" aria-hidden>
+              <path d={ENV.flap} fill={c.flap} {...edge} />
+            </svg>
+            {env.seal && (
+              <Seal value={env.seal} shape={env.sealShape} color={env.wax} className="absolute w-[26%] -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${(ENV.seal.x / ENV.w) * 100}%`, top: `${(ENV.seal.y / ENV.h) * 100}%`, height: "auto" }} />
+            )}
+          </div>
+          {/* The back face is turned around its own centre, so its flap is drawn pre-mirrored
+              (y → h − y); both flips then compose into a flap hinged on the top edge. */}
+          <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full [backface-visibility:hidden]" style={{ transform: "rotateX(180deg)" }} aria-hidden>
+            <defs>
+              <linearGradient id={`${clip}fl`} x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" stopColor={shade(c.inside, -0.12)} /><stop offset="1" stopColor={shade(c.inside, 0.08)} />
+              </linearGradient>
+            </defs>
+            <path d={ENV.flap} transform={`translate(0 ${ENV.h}) scale(1 -1)`} fill={`url(#${clip}fl)`} {...edge} />
+          </svg>
         </div>
-      )}
-
-      {/* top flap: front face + inside on the back face */}
-      <div
-        className="absolute inset-0 origin-top will-change-transform"
-        style={{ transformStyle: "preserve-3d", transform: open ? "rotateX(180deg)" : "none", zIndex: open ? LAYER.flapOpen : LAYER.flapClosed, transition: flapT }}
-      >
-        <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full [backface-visibility:hidden]" aria-hidden>
-          <path d={ENV.flap} fill={c.flap} {...edge} />
-        </svg>
-        {/* The back face is turned around its own centre, so its flap is drawn pre-mirrored
-            (y → h − y); both flips then compose into a flap hinged on the top edge. */}
-        <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full [backface-visibility:hidden]" style={{ transform: "rotateX(180deg)" }} aria-hidden>
-          <defs>
-            <linearGradient id={`${clip}fl`} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0" stopColor={shade(c.inside, -0.12)} /><stop offset="1" stopColor={shade(c.inside, 0.08)} />
-            </linearGradient>
-          </defs>
-          <path d={ENV.flap} transform={`translate(0 ${ENV.h}) scale(1 -1)`} fill={`url(#${clip}fl)`} {...edge} />
-        </svg>
       </div>
-
-      {env.seal && (
-        <Seal
-          value={env.seal}
-          shape={env.sealShape}
-          color={env.wax}
-          className="absolute w-[26%] -translate-x-1/2 -translate-y-1/2"
-          style={{
-            zIndex: LAYER.seal,
-            left: `${(ENV.seal.x / ENV.w) * 100}%`,
-            top: `${(ENV.seal.y / ENV.h) * 100}%`,
-            height: "auto",
-            opacity: open ? 0 : 1,
-            scale: open ? "0.86" : "1",
-            transition: "opacity 140ms ease-in, scale 140ms ease-in",
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -363,48 +317,48 @@ export const envelopeStill = `transition-[filter] duration-300 ease-out ${shadow
 export const envelopeLift = `transition-[transform,filter] duration-300 ease-out ${shadow} group-hover:-translate-y-1 group-active:translate-y-0`;
 
 const FLIP_MS = 700;
-const OPEN_MS = 640; // hand over while the paper still has speed (measured: its last 100ms are a crawl), so motion never stalls
+/** The envelope's resting shadow (same as the CTA's, without the hover). */
+const ENV_SHADOW = "[filter:drop-shadow(0_6px_10px_rgb(0_0_0/.14))]";
 
 /**
- * Guest-facing envelope, centred on screen. Like real mail, in two gestures: the first tap turns the
- * addressed front over; the second breaks the seal, opens the flap and the letter (the real one, in
- * miniature) slides out. `onOpen` receives the paper's rect so the full letter takes over from there.
+ * Guest-facing envelope, centred in its box. Like real mail, in two gestures: the first tap turns the
+ * addressed front over; the second opens it. The opening itself is played by the caller (reveal.tsx):
+ * `onReady` hands it the layered back as soon as it shows (so the letter can be slipped into the pocket
+ * ahead of time), `onOpen` says go. Nothing moves until tapped.
  */
-export function EnvelopeOpener({ env, startFront, letterContent, letterWidth, label, onOpen, leaving = false }: {
-  env: EnvModel; startFront: boolean; letterContent: ReactNode; letterWidth?: number; label: string; onOpen: (paper: DOMRect) => void; leaving?: boolean;
+export function EnvelopeOpener({ env, startFront, label, onReady, onOpen }: {
+  env: EnvModel; startFront: boolean; label: string; onReady: (envelope: HTMLDivElement) => void; onOpen: () => void;
 }) {
   const [phase, setPhase] = useState<"front" | "flipping" | "back" | "open">(startFront ? "front" : "back");
-  const paperRef = useRef<HTMLDivElement>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const backRef = useRef<HTMLDivElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const back = phase === "back" || phase === "open";
+  useEffect(() => {
+    if (back && backRef.current) onReady(backRef.current);
+  }, [back]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = () => {
-    if (phase !== "front" && phase !== "back") return;
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, reduced ? 0 : ms));
-    const open = () => {
-      setPhase("open");
-      later(() => onOpen(paperRef.current!.getBoundingClientRect()), OPEN_MS);
-    };
     if (phase === "front") {
       setPhase("flipping");
-      // the flip ends on the back face; swap in the plain (identical) back, closed, and wait for the next tap
-      later(() => setPhase("back"), FLIP_MS);
-    } else open();
+      // the flip ends on the back face; swap in the layered (identical) back, closed, and wait for the next tap
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      timer.current = setTimeout(() => setPhase("back"), reduced ? 0 : FLIP_MS);
+    } else if (phase === "back") {
+      setPhase("open");
+      onOpen();
+    }
   };
 
   return (
-    <div className={`flex min-h-dvh items-center justify-center overflow-hidden px-6 transition-[opacity,translate] duration-[450ms] ease-out ${leaving ? "pointer-events-none translate-y-4 opacity-0" : ""}`}>
-      {/* sized so the letter has room to slide out above a centred envelope */}
-      {/* not a <button>: the miniature letter inside contains buttons, and buttons can't nest */}
+    // no transform / opacity / filter around the back: its layers must share the page's stacking context
+    <div className="flex h-full items-center justify-center px-6">
       <div role="button" tabIndex={0} onClick={go} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), go())}
         aria-label={label} aria-disabled={phase === "flipping" || phase === "open"}
-        className="group w-[min(100%,28rem,52dvh)] cursor-pointer rounded-md focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-violet">
-        <div className={envelopeStill}>
-          {phase === "front" || phase === "flipping"
-            ? <EnvelopeFlip env={env} side={phase === "flipping" ? "back" : "front"} />
-            : <EnvelopeBack env={env} open={phase === "open"} letterGone={leaving} letterRef={paperRef} letterContent={letterContent} letterWidth={letterWidth} />}
-        </div>
+        className={`w-[min(100%,28rem,52dvh)] rounded-md focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-violet ${phase === "open" ? "" : "cursor-pointer"}`}>
+        {back
+          ? <EnvelopeBack ref={backRef} env={env} opener />
+          : <div className={ENV_SHADOW}><EnvelopeFlip env={env} side={phase === "flipping" ? "back" : "front"} /></div>}
       </div>
     </div>
   );

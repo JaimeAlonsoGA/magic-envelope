@@ -89,15 +89,9 @@
 @keyframes sheet { from { transform: translateY(100%) } to { transform: none } }
 .sheet-in { animation: sheet .26s cubic-bezier(.2,.8,.2,1) both; }
 
-/* The fold of a letter still folded in its envelope (shared by the envelope's paper and the hand-off). */
-.letter-fold {
-  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / .07) 70%, rgb(0 0 0 / .13));
-  box-shadow: inset 0 -1px 0 rgb(255 255 255 / .35);
-}
-
-/* Letter hand-off (components/card/reveal.tsx): the shadow starts as the paper's and grows. */
-.morph-start .print-card { box-shadow: 0 1px 2px rgb(0 0 0 / .12) !important; transition: none !important; }
-.morph-run .print-card { transition: box-shadow 560ms cubic-bezier(.3,.1,.2,1); }
+/* The opening (components/card/reveal.tsx) is played with Web Animations. The gutter is kept so the
+   scrollbar of a long letter, arriving when it's out, can't nudge it sideways at the very end. */
+html:has(.reveal) { scrollbar-gutter: stable; }
 
 @media print {
   body { background: none !important; }
