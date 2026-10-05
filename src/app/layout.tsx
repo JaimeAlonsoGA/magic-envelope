@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Cinzel, Courier_Prime, Fredoka, IM_Fell_English, Inter, Kalam, MedievalSharp, Monoton, Playfair_Display, Press_Start_2P, Righteous, Space_Grotesk, VT323 } from "next/font/google";
 import { NativeShell } from "@/components/native-shell";
+import { Telemetry } from "@/components/telemetry";
 import { DESCRIPTION, SITE_NAME, TAGLINE } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         <NativeShell />
         {children}
+        <Telemetry />
       </body>
     </html>
   );
