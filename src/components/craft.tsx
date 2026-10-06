@@ -351,13 +351,12 @@ export function EnvelopeOpener({ env, startFront, label, onReady, onOpen }: {
   };
 
   return (
-    // no transform / opacity / filter around the back: its layers must share the page's stacking context.
-    // Same generous width as the editor. On a tall window it grows a little more, and sits low
-    // enough that the flap can swing up without leaving the screen.
-    <div className="flex h-full items-center justify-center px-4 sm:px-8">
+    // no transform / opacity / filter around this box: any of those would trap the flap's layers,
+    // and the letter (a higher layer on the page) would paint on top of the sealed envelope.
+    <div className="flex h-full items-center justify-center px-6">
       <div role="button" tabIndex={0} onClick={go} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), go())}
         aria-label={label} aria-disabled={phase === "flipping" || phase === "open"}
-        className={`w-[min(100%,52rem,82dvh)] rounded-md focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-violet sm:translate-y-[10dvh] ${phase === "open" ? "" : "cursor-pointer"}`}>
+        className={`w-[min(100%,32rem,56dvh)] rounded-md focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-violet ${phase === "open" ? "" : "cursor-pointer"}`}>
         {back
           ? <EnvelopeBack ref={backRef} env={env} opener />
           : <div className={ENV_SHADOW}><EnvelopeFlip env={env} side={phase === "flipping" ? "back" : "front"} /></div>}
