@@ -175,12 +175,13 @@ const en = {
     limited: "Too many tries for now. Start from the envelope below.",
     note: "From the assistant",
   },
+  tile: { published: "Published", edited: (when: string) => `Edited ${when}` },
   // after sending
   thanks: {
     howWasIt: "Sent! How was it?",
     stars: (n: number) => `${n} star${n === 1 ? "" : "s"}`,
-    thankYou: "Thank you! Your letter is on its way.",
-    passItOn: "Magic Envelope is free and ad-free, and it travels hand to hand: if someone you know has something to celebrate, pass the envelope on.",
+    thankYou: "Thank you! I'm glad it helped.",
+    passItOn: "Magic Envelope is free and ad-free, and it grows through recommendations: if you liked it, share it.",
     close: "Close",
   },
   // public site

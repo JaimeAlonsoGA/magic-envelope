@@ -1,17 +1,18 @@
 "use client";
 
-import { CopyPlus, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, CopyPlus, Eye, Link2, Plus, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { cardTitle } from "@/lib/blocks";
+import { useState } from "react";
+import { eventDate, listTitle } from "@/lib/blocks";
 import { deleteDraft, duplicateDraft, useDrafts } from "@/lib/drafts";
 import { envelopeOf } from "@/lib/envelope";
 import { useFlash } from "@/lib/hooks";
 import { useLang, useUI } from "@/lib/locale";
 import type { Draft } from "@/lib/model";
 import { haptic } from "@/lib/native";
-import { EnvelopeBack, envelopeLift, envelopeStill, type EnvModel } from "./craft";
 import { Assistant } from "./assistant";
+import { EnvelopeBack, envelopeLift, envelopeStill, type EnvModel } from "./craft";
 import { SiteFooter } from "./site-footer";
 import { RoughUnderline } from "./sketch";
 
@@ -20,41 +21,67 @@ const CTA_ENVELOPE: EnvModel = { paper: "#e9d6ad", letter: "#f6ecd3", wax: "#a31
 
 const focusRing = "rounded-md focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-8 focus-visible:outline-violet";
 
+/** "17 Oct" this year, "17 Oct 2027" otherwise. */
+const shortDate = (d: Date, lang: string) =>
+  d.toLocaleDateString(lang, { day: "numeric", month: "short", ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}) });
+
+/** "2 hours ago", in the reader's language. */
+function relative(at: number, now: number, lang: string) {
+  const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
+  const s = (at - now) / 1000;
+  for (const [unit, size] of [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]] as const)
+    if (Math.abs(s) >= size) return rtf.format(Math.round(s / size), unit);
+  return rtf.format(0, "minute");
+}
+
 /** A letter in the list: the same envelope, sealed once published. */
 function DraftTile({ dr }: { dr: Draft }) {
   const ui = useUI();
   const router = useRouter();
+  const lang = useLang();
   const [armed, arm] = useFlash(2500);
+  const [now] = useState(() => Date.now());
+  const when = eventDate(dr.card);
+  const guests = dr.guests?.filter((g) => g.name.trim()).length ?? 0;
   const del = () => {
     if (!armed) { arm(); haptic("warn"); return; }
     deleteDraft(dr.id);
   };
   return (
-    <li className="group/tile">
+    <li className="group/tile relative">
       <Link href={`/edit/${dr.id}`} className={`group block ${focusRing}`}>
         <div className={envelopeLift}>
           {/* list envelopes show the sealed back only: handwriting doesn't read at thumbnail size */}
           <EnvelopeBack env={{ ...envelopeOf(dr.card), slots: {} }} />
         </div>
       </Link>
-      <div className="mt-2 flex items-center gap-1">
-        <Link href={`/edit/${dr.id}`} className="min-w-0 flex-1 truncate text-lg leading-tight hover:text-wax">
-          {cardTitle(dr.card)}
-          {!!dr.guests?.length && <span className="ml-1.5 text-sm text-muted">· {ui.guests.count(dr.guests.length)}</span>}
-          {dr.publishedId && <span className="ml-1.5 text-sm text-violet">· live</span>}
+      {/* actions sit on the envelope's corner, so the title and details below get the full width */}
+      <div className="absolute right-1.5 top-1.5 flex gap-0.5 rounded-lg bg-bg/85 p-0.5 shadow-sm backdrop-blur transition-opacity sm:opacity-0 sm:group-focus-within/tile:opacity-100 sm:group-hover/tile:opacity-100">
+        <Link href={`/edit/${dr.id}/preview`} aria-label={ui.preview} title={ui.preview}
+          className="grid h-7 w-7 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
+          <Eye size={15} />
         </Link>
-        <div className="flex shrink-0 transition-opacity sm:opacity-0 sm:group-focus-within/tile:opacity-100 sm:group-hover/tile:opacity-100">
-          <button type="button" aria-label={ui.duplicate} title={ui.duplicate}
-            onClick={() => { const id = duplicateDraft(dr.id); if (id) router.push(`/edit/${id}`); }}
-            className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
-            <CopyPlus size={16} />
-          </button>
-          <button type="button" aria-label={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} title={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} onClick={del}
-            className={`grid h-9 w-9 place-items-center rounded-md transition-colors ${armed ? "bg-wax text-on-wax" : "text-muted hover:bg-ink/5 hover:text-wax"}`}>
-            <Trash2 size={16} />
-          </button>
-        </div>
+        <button type="button" aria-label={ui.duplicate} title={ui.duplicate}
+          onClick={() => { const id = duplicateDraft(dr.id); if (id) router.push(`/edit/${id}`); }}
+          className="grid h-7 w-7 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
+          <CopyPlus size={15} />
+        </button>
+        <button type="button" aria-label={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} title={armed ? (dr.publishedId ? ui.confirmUnpublish : ui.confirmDelete) : ui.delete} onClick={del}
+          className={`grid h-7 w-7 place-items-center rounded-md transition-colors ${armed ? "bg-wax text-on-wax" : "text-muted hover:bg-ink/5 hover:text-wax"}`}>
+          <Trash2 size={15} />
+        </button>
       </div>
+      <Link href={`/edit/${dr.id}`} className="mt-2 block hover:text-wax">
+        <span className="line-clamp-2 text-lg leading-tight">{listTitle(dr.card)}</span>
+        {/* when it is, who it's for, whether it's out */}
+        <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-sm text-muted">
+          {when
+            ? <span className="inline-flex items-center gap-1 whitespace-nowrap"><CalendarDays size={13} />{shortDate(when, lang)}</span>
+            : <span>{ui.tile.edited(relative(dr.updatedAt, now, lang))}</span>}
+          {!!guests && <span className="inline-flex items-center gap-1"><Users size={13} />{guests}</span>}
+          {dr.publishedId && <span className="inline-flex items-center gap-1 text-violet"><Link2 size={13} />{ui.tile.published}</span>}
+        </span>
+      </Link>
     </li>
   );
 }

@@ -6,9 +6,10 @@ import {
 import { musicEmbed } from "./actions";
 import { val } from "./fields";
 import { t } from "./i18n";
-import { fillName } from "./personalize";
+import { NAME_TOKEN, fillName } from "./personalize";
 import type { Block, BlockOf, BlockType, Card, Kind, Lang } from "./model";
 import type { StyleId } from "./styles";
+import { parseWhen } from "./when";
 
 export const BLOCK_ICON: Record<BlockType, LucideIcon> = {
   heading: Heading1, text: AlignCenter, image: ImageIcon, date: CalendarDays, place: MapPin,
@@ -102,6 +103,24 @@ export function cardTitle(card: Card, guestName?: string) {
   const h = card.blocks.find((b) => b.type === "heading" && b.text.trim());
   return (h?.type === "heading" && fillName(h.text.trim(), card, guestName)) || t(card.lang).kinds[card.kind];
 }
+
+/**
+ * The letter's title for lists, without the per-guest name: "{name}, ¡ven a mi cumple!" reads
+ * "¡Ven a mi cumple!" rather than "Querido Invitado, ¡ven…".
+ */
+export function listTitle(card: Card) {
+  const h = card.blocks.find((b) => b.type === "heading" && b.text.trim());
+  const bare = h?.type === "heading" ? h.text.replaceAll(NAME_TOKEN, "").replace(/^[\s,;:.·—–-]+|[\s,;:—–-]+$/g, "").replace(/\s{2,}/g, " ") : "";
+  // capitalise the first letter, past any opening "¡", "¿" or quote
+  const i = bare.search(/\p{L}/u);
+  return bare ? (i < 0 ? bare : bare.slice(0, i) + bare[i].toLocaleUpperCase(card.lang) + bare.slice(i + 1)) : t(card.lang).kinds[card.kind];
+}
+
+/** The letter's event date (its first date block), if it has one. */
+export const eventDate = (card: Card) => {
+  const d = card.blocks.find((b) => b.type === "date");
+  return d?.type === "date" ? parseWhen(d.start)?.date ?? null : null;
+};
 
 /** Effective countdown target: its own date, or the card's first event date. */
 export function countdownTarget(card: Card, to: string) {

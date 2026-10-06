@@ -162,11 +162,12 @@ export const es: UIText = {
     limited: "Demasiados intentos por ahora. Empieza desde el sobre.",
     note: "Del asistente",
   },
+  tile: { published: "Publicada", edited: (when: string) => `Editada ${when}` },
   thanks: {
     howWasIt: "¡Enviada! ¿Qué tal?",
     stars: (n: number) => `${n} estrella${n === 1 ? "" : "s"}`,
-    thankYou: "¡Gracias! Tu carta ya va de camino.",
-    passItOn: "Magic Envelope es gratis y sin anuncios, y viaja de mano en mano: si conoces a alguien con algo que celebrar, pásale el sobre.",
+    thankYou: "¡Gracias! Me alegro de que te haya servido.",
+    passItOn: "Magic Envelope es gratis y sin anuncios, y crece gracias a las recomendaciones: si te ha gustado, compártelo.",
     close: "Cerrar",
   },
   site: {
@@ -340,11 +341,12 @@ export const fr: UIText = {
     limited: "Trop d’essais pour l’instant. Partez de l’enveloppe ci-dessous.",
     note: "De l’assistant",
   },
+  tile: { published: "Publiée", edited: (when: string) => `Modifiée ${when}` },
   thanks: {
     howWasIt: "Envoyée ! Alors ?",
     stars: (n: number) => `${n} étoile${n === 1 ? "" : "s"}`,
-    thankYou: "Merci ! Votre lettre est en route.",
-    passItOn: "Magic Envelope est gratuit et sans pub, et il voyage de main en main : si quelqu’un autour de vous a quelque chose à fêter, faites-lui passer l’enveloppe.",
+    thankYou: "Merci ! Ravi qu’il vous ait été utile.",
+    passItOn: "Magic Envelope est gratuit et sans pub, et il grandit grâce au bouche-à-oreille : s’il vous a plu, partagez-le.",
     close: "Fermer",
   },
   site: {
@@ -518,11 +520,12 @@ export const pt: UIText = {
     limited: "Tentativas demais por agora. Comece pelo envelope abaixo.",
     note: "Do assistente",
   },
+  tile: { published: "Publicada", edited: (when: string) => `Editada ${when}` },
   thanks: {
     howWasIt: "Enviada! Que tal?",
     stars: (n: number) => `${n} estrela${n === 1 ? "" : "s"}`,
-    thankYou: "Obrigado! Sua carta já está a caminho.",
-    passItOn: "O Magic Envelope é grátis e sem anúncios, e viaja de mão em mão: se alguém que você conhece tem algo para celebrar, passe o envelope adiante.",
+    thankYou: "Obrigado! Que bom que ajudou.",
+    passItOn: "O Magic Envelope é grátis e sem anúncios, e cresce com recomendações: se você gostou, compartilhe.",
     close: "Fechar",
   },
   site: {
@@ -696,11 +699,12 @@ export const it: UIText = {
     limited: "Troppi tentativi per ora. Parti dalla busta qui sotto.",
     note: "Dall’assistente",
   },
+  tile: { published: "Pubblicata", edited: (when: string) => `Modificata ${when}` },
   thanks: {
     howWasIt: "Inviata! Com’è andata?",
     stars: (n: number) => `${n} stell${n === 1 ? "a" : "e"}`,
-    thankYou: "Grazie! La tua lettera è già in viaggio.",
-    passItOn: "Magic Envelope è gratis e senza pubblicità, e viaggia di mano in mano: se qualcuno che conosci ha qualcosa da festeggiare, passagli la busta.",
+    thankYou: "Grazie! Sono contento che ti sia stato utile.",
+    passItOn: "Magic Envelope è gratis e senza pubblicità, e cresce grazie al passaparola: se ti è piaciuto, condividilo.",
     close: "Chiudi",
   },
   site: {
@@ -874,11 +878,12 @@ export const de: UIText = {
     limited: "Zu viele Versuche. Starte beim Umschlag unten.",
     note: "Vom Assistenten",
   },
+  tile: { published: "Veröffentlicht", edited: (when: string) => `Bearbeitet ${when}` },
   thanks: {
     howWasIt: "Verschickt! Wie war’s?",
     stars: (n: number) => `${n} Stern${n === 1 ? "" : "e"}`,
-    thankYou: "Danke! Dein Brief ist unterwegs.",
-    passItOn: "Magic Envelope ist kostenlos und werbefrei und reist von Hand zu Hand: Wenn jemand, den du kennst, etwas zu feiern hat, gib den Umschlag weiter.",
+    thankYou: "Danke! Schön, dass es geholfen hat.",
+    passItOn: "Magic Envelope ist kostenlos und werbefrei und wächst durch Empfehlungen: Wenn es dir gefallen hat, teile es.",
     close: "Schließen",
   },
   site: {

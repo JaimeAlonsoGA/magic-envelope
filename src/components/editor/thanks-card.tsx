@@ -7,6 +7,7 @@ import { useLang, useUI } from "@/lib/locale";
 import { share } from "@/lib/native";
 import { homePath } from "@/lib/seo";
 import { COFFEE_URL } from "../site-footer";
+import { SketchButton } from "../sketch";
 
 const KEY = "me:thanks";
 type Memory = { rated?: number; hiddenAt?: number };
@@ -70,7 +71,7 @@ export function ThanksCard() {
       ) : (
         <div className="space-y-3">
           <p className="text-lg leading-snug">{t.thankYou} <span className="text-muted">{t.passItOn}</span></p>
-          <PassItOn />
+          <div><PassItOn /></div>
           <a href={COFFEE_URL} target="_blank" rel="noopener noreferrer"
             className="flex w-fit items-center gap-2 rounded-full bg-[#ffdd00] px-4 py-2 text-[#1e1e1e] shadow-sm transition-transform hover:-translate-y-0.5 active:translate-y-0">
             <Coffee size={18} /> {ui.site.coffee}
@@ -81,17 +82,18 @@ export function ThanksCard() {
   );
 }
 
-/** The app's own link, to pass on: the share sheet on phones, copied on desktops. Opens in the sharer's language. */
+/** The app's own link, to pass on: a hand-drawn button with the app's envelope. Share sheet on phones, copied on desktops. */
 function PassItOn() {
   const ui = useUI();
   const lang = useLang();
   const [copied, flash] = useFlash();
   const url = `${location.origin}${homePath(lang)}`;
   return (
-    <button type="button" onClick={() => share({ title: "Magic Envelope", text: ui.site.tagline, url }).then((r) => r === "copied" && flash())}
-      className="flex w-fit items-center gap-2 rounded-full border border-ink/15 bg-sheet px-4 py-1.5 font-mono text-sm hover:border-ink/30">
-      {url.replace(/^https?:\/\//, "")}
+    <SketchButton size="sm" seed="pass-it-on" onClick={() => share({ title: "Magic Envelope", text: ui.site.tagline, url }).then((r) => r === "copied" && flash())}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/icon.svg" alt="" className="h-5 w-5" />
+      <span className="font-hand">{url.replace(/^https?:\/\//, "")}</span>
       {copied ? <Check size={16} className="text-violet" /> : <Share2 size={16} />}
-    </button>
+    </SketchButton>
   );
 }
