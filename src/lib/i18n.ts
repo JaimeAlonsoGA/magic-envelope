@@ -25,7 +25,7 @@ const es: Dict = {
   langName: "Español",
   kinds: { birthday: "Cumpleaños", wedding: "Boda", party: "Fiesta", baby: "Baby shower", dinner: "Cena", graduation: "Graduación", event: "Evento", letter: "Carta" },
   guest: {
-    to: "Para", open: "Abrir", tapToOpen: "Toca el sobre", share: "Compartir", copied: "¡Copiado!", print: "Imprimir",
+    to: "Para", open: "Abrir", tapToOpen: "Toca el sobre", share: "Compartir", copied: "¡Copiado!", print: "Descargar",
     calendar: "Añadir al calendario", map: "Cómo llegar", attending: "Allí estaré", notAttending: "No podré", maybe: "Quizás",
     deadline: "Responde antes del", days: "días", hours: "horas", minutes: "min", seconds: "seg", scan: "Escanéame",
     makeYourOwn: "Crea tu sobre mágico", today: "¡Es hoy!",
@@ -48,7 +48,7 @@ const en: Dict = {
   langName: "English",
   kinds: { birthday: "Birthday", wedding: "Wedding", party: "Party", baby: "Baby shower", dinner: "Dinner", graduation: "Graduation", event: "Event", letter: "Letter" },
   guest: {
-    to: "To", open: "Open", tapToOpen: "Tap the envelope", share: "Share", copied: "Copied!", print: "Print",
+    to: "To", open: "Open", tapToOpen: "Tap the envelope", share: "Share", copied: "Copied!", print: "Download",
     calendar: "Add to calendar", map: "Directions", attending: "I'll be there", notAttending: "Can't make it", maybe: "Maybe",
     deadline: "Please reply by", days: "days", hours: "hours", minutes: "min", seconds: "sec", scan: "Scan me",
     makeYourOwn: "Make your own magic envelope", today: "It's today!",
@@ -71,7 +71,7 @@ const fr: Dict = {
   langName: "Français",
   kinds: { birthday: "Anniversaire", wedding: "Mariage", party: "Fête", baby: "Baby shower", dinner: "Dîner", graduation: "Diplôme", event: "Événement", letter: "Lettre" },
   guest: {
-    to: "Pour", open: "Ouvrir", tapToOpen: "Touchez l'enveloppe", share: "Partager", copied: "Copié !", print: "Imprimer",
+    to: "Pour", open: "Ouvrir", tapToOpen: "Touchez l'enveloppe", share: "Partager", copied: "Copié !", print: "Télécharger",
     calendar: "Ajouter au calendrier", map: "Itinéraire", attending: "J'y serai", notAttending: "Je ne pourrai pas", maybe: "Peut-être",
     deadline: "Répondez avant le", days: "jours", hours: "heures", minutes: "min", seconds: "s", scan: "Scannez-moi",
     makeYourOwn: "Créez votre enveloppe magique", today: "C'est aujourd'hui !",
@@ -94,7 +94,7 @@ const pt: Dict = {
   langName: "Português",
   kinds: { birthday: "Aniversário", wedding: "Casamento", party: "Festa", baby: "Chá de bebê", dinner: "Jantar", graduation: "Formatura", event: "Evento", letter: "Carta" },
   guest: {
-    to: "Para", open: "Abrir", tapToOpen: "Toque no envelope", share: "Compartilhar", copied: "Copiado!", print: "Imprimir",
+    to: "Para", open: "Abrir", tapToOpen: "Toque no envelope", share: "Compartilhar", copied: "Copiado!", print: "Baixar",
     calendar: "Adicionar à agenda", map: "Como chegar", attending: "Estarei lá", notAttending: "Não poderei", maybe: "Talvez",
     deadline: "Responda até", days: "dias", hours: "horas", minutes: "min", seconds: "seg", scan: "Escaneie",
     makeYourOwn: "Crie seu envelope mágico", today: "É hoje!",
@@ -117,7 +117,7 @@ const it: Dict = {
   langName: "Italiano",
   kinds: { birthday: "Compleanno", wedding: "Matrimonio", party: "Festa", baby: "Baby shower", dinner: "Cena", graduation: "Laurea", event: "Evento", letter: "Lettera" },
   guest: {
-    to: "Per", open: "Apri", tapToOpen: "Tocca la busta", share: "Condividi", copied: "Copiato!", print: "Stampa",
+    to: "Per", open: "Apri", tapToOpen: "Tocca la busta", share: "Condividi", copied: "Copiato!", print: "Scarica",
     calendar: "Aggiungi al calendario", map: "Indicazioni", attending: "Ci sarò", notAttending: "Non potrò", maybe: "Forse",
     deadline: "Rispondi entro il", days: "giorni", hours: "ore", minutes: "min", seconds: "sec", scan: "Scansionami",
     makeYourOwn: "Crea la tua busta magica", today: "È oggi!",
@@ -140,7 +140,7 @@ const de: Dict = {
   langName: "Deutsch",
   kinds: { birthday: "Geburtstag", wedding: "Hochzeit", party: "Party", baby: "Babyparty", dinner: "Abendessen", graduation: "Abschluss", event: "Event", letter: "Brief" },
   guest: {
-    to: "An", open: "Öffnen", tapToOpen: "Umschlag antippen", share: "Teilen", copied: "Kopiert!", print: "Drucken",
+    to: "An", open: "Öffnen", tapToOpen: "Umschlag antippen", share: "Teilen", copied: "Kopiert!", print: "Herunterladen",
     calendar: "Zum Kalender", map: "Route", attending: "Ich komme", notAttending: "Ich kann nicht", maybe: "Vielleicht",
     deadline: "Bitte antworte bis", days: "Tage", hours: "Std", minutes: "Min", seconds: "Sek", scan: "Scan mich",
     makeYourOwn: "Erstelle deinen magischen Umschlag", today: "Heute ist es so weit!",

@@ -37,11 +37,18 @@ export function GET() {
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
         get: { operationId: "getLetter", summary: "Read a letter: content, links, images and RSVP answers", security: auth, responses: { 200: { description: "Letter, links and rsvps { counts, answers }" }, 403: { description: "Unknown letter or wrong key" } } },
         patch: {
-          operationId: "updateLetter", summary: "Update a letter: only the fields sent change; links and guest ids are kept", security: auth,
+          operationId: "updateLetter", summary: "Update a letter. Top-level fields, or the same { card } object GET returns. Unknown-only bodies are 400.", security: auth,
           requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/LetterPatch" } } } },
           responses: { 200: { description: "Updated letter and links (plus warnings, e.g. duplicate guest names)" }, 403: { description: "Unknown letter or wrong key" } },
         },
         delete: { operationId: "deleteLetter", summary: "Delete for good: links stop working; guest names, answers and images are erased", security: auth, responses: { 204: { description: "Deleted" }, 403: { description: "Unknown letter or wrong key" } } },
+      },
+      "/api/v1/media": {
+        post: {
+          operationId: "copyImage", summary: "Copy a public image, or a Drive, Dropbox or Wikimedia link, at full size. Returns a src for an image block.",
+          requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["url"], properties: { url: { type: "string" } } } } } },
+          responses: { 200: { description: "src, width, height, and a warning when the picture is small" }, 422: { description: "Not a public image" } },
+        },
       },
       "/api/v1/letters/{id}/image": {
         get: {

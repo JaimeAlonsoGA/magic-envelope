@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { KINDS, LANGS, type Lang } from "@/lib/model";
-import { homePath, occasionPath } from "@/lib/seo";
+import { faqPath, homePath, occasionPath } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 
 /** Every public page in every language, each listing its translations (hreflang). */
@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }));
   return [
     ...everyLang(homePath, 1),
+    ...everyLang(faqPath, 0.8),
     ...KINDS.flatMap((k) => everyLang((l) => occasionPath(l, k), 0.9)),
     { url: `${SITE_URL}/new`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/developers`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },

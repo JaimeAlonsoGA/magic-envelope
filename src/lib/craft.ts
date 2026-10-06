@@ -16,7 +16,8 @@ export type SealShape = (typeof SEAL_SHAPES)[number];
 /** Marks people actually reach for: weddings, birthdays, parties, babies, graduations, holidays. */
 export const SEAL_ICONS = [
   "heart", "ring", "cake", "cheers", "balloon", "gift", "cap", "note",
-  "star", "sparkle", "moon", "sun", "flower", "olive", "snowflake", "tree", "crown",
+  "star", "sparkle", "moon", "sun", "flower", "snowflake", "tree", "crown",
+  "dragon", "code",
 ] as const;
 export type SealIcon = (typeof SEAL_ICONS)[number];
 
@@ -29,10 +30,10 @@ export type SealMark =
 /** v1–v3 seals were single typographic glyphs: map them onto icons. */
 const LEGACY: Record<string, SealIcon> = {
   "✦": "sparkle", "✶": "sparkle", "★": "star", "✪": "star", "♥": "heart", "☾": "moon", "❦": "flower", "✿": "flower",
-  "⚜": "crown", "♪": "note", "✉": "olive", "✒": "olive", "∞": "heart", "❖": "star", "☘": "olive",
+  "⚜": "crown", "♪": "note", "✉": "flower", "✒": "flower", "∞": "heart", "❖": "star", "☘": "flower",
 };
 /** Icons from the first vector set that were retired. */
-const RETIRED: Record<string, SealIcon> = { rings: "ring", feather: "olive", bird: "sparkle", key: "crown", anchor: "star", infinity: "heart" };
+const RETIRED: Record<string, SealIcon> = { rings: "ring", feather: "flower", bird: "sparkle", key: "crown", anchor: "star", infinity: "heart", olive: "flower", wheat: "flower" };
 
 export function parseSeal(v: string): SealMark {
   if (!v) return { kind: "none" };

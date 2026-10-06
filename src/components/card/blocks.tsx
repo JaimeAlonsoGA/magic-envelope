@@ -4,17 +4,18 @@ import {
   CalendarPlus, Camera, Check, Copy, Gift, HelpCircle, Link2, Map as MapIcon, MapPin, Music, Shirt, Video, X,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import {
-  dateParts, formatDate, googleCalendarUrl, hostOf, icsFile, mapsEmbed, mapsUrl, musicEmbed, rsvpUrl,
+  composeLinks, dateParts, formatDate, googleCalendarUrl, hostOf, icsFile, mapsEmbed, mapsUrl, musicEmbed,
 } from "@/lib/actions";
 import { BLOCK_ICON, DIGITAL_ONLY, countdownTarget, isEmpty, rsvpContact } from "@/lib/blocks";
 import { val } from "@/lib/fields";
+import { displayImageSrc } from "@/lib/media";
 import { useFlash, useHydrated } from "@/lib/hooks";
 import { t } from "@/lib/i18n";
 import { useUI } from "@/lib/locale";
 import type { Block, BlockOf, Card, RsvpAnswer } from "@/lib/model";
-import { copy, haptic, isNative, saveFile } from "@/lib/native";
+import { copy, haptic, isNative, openOutbound, prefersApp, saveFile } from "@/lib/native";
 import { SHAPE, type Resolved } from "@/lib/styles";
 import { fallbackName, splitName } from "@/lib/personalize";
 import { whenTime } from "@/lib/when";
@@ -64,18 +65,18 @@ function Framed({ ctx, className = "", children }: { ctx: Ctx; className?: strin
 }
 
 /** Guest action (calendar, directions, RSVP…). Link when `href`, button otherwise. */
-function Action({ ctx, href, onClick, children }: { ctx: Ctx; href?: string; onClick?: () => void; children: ReactNode }) {
-  // web links open beside the letter; mailto/sms hand off to an app and must not leave a blank tab
+function Action({ ctx, href, onClick, children }: { ctx: Ctx; href?: string; onClick?: (e?: MouseEvent<HTMLAnchorElement>) => void; children: ReactNode }) {
+  // https stays in the browser. mailto/sms are only the phone fallback, so they must not open a blank tab.
   const web = !!href && /^https?:/i.test(href);
   const cls = `inline-flex min-h-10 items-center gap-2 px-5 py-1.5 text-[calc(.95rem*var(--c-body-scale))] transition-[background-color,transform,box-shadow,filter] duration-150
     active:scale-[.97] focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-4 ${SHAPE[ctx.style.shape].action}`;
   const font = { fontFamily: "var(--c-body)" };
-  if (href) return <a href={href} {...(web ? { target: "_blank", rel: "noopener noreferrer" } : {})} className={cls} style={font} onClick={() => { haptic(); onClick?.(); }}>{children}</a>;
+  if (href) return <a href={href} {...(web ? { target: "_blank", rel: "noopener noreferrer" } : {})} className={cls} style={font} onClick={(e) => { haptic(); onClick?.(e); }}>{children}</a>;
   return <button type="button" className={cls} style={font} onClick={() => { haptic(); onClick?.(); }}>{children}</button>;
 }
 
-const Body = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <p className={`leading-relaxed ${className}`} style={{ fontFamily: "var(--c-body)", fontSize: "calc(1.125rem * var(--c-body-scale))" }}>{children}</p>
+const Body = ({ children, className = "", italic = false }: { children: ReactNode; className?: string; italic?: boolean }) => (
+  <p className={`leading-relaxed ${className}`} style={{ fontFamily: "var(--c-body)", fontSize: "calc(1.125rem * var(--c-body-scale))", fontStyle: italic ? "italic" : "normal" }}>{children}</p>
 );
 const Icon = ({ as: I }: { as: typeof Gift }) => <I className="mx-auto" size={22} strokeWidth={1.5} style={{ color: "var(--c-accent)" }} />;
 const headFont = { fontFamily: "var(--c-head)", fontWeight: "var(--c-head-weight)", letterSpacing: "var(--c-head-tracking)", textTransform: "var(--c-head-case)" } as CSSProperties;
@@ -90,17 +91,17 @@ export function RenderBlock({ b, ctx, ghost }: { b: Block; ctx: Ctx; ghost?: boo
       const rem = { md: 1.5, lg: 2.1, xl: 2.8 }[b.size];
       return (
         <h2 className="text-balance break-words text-center leading-[1.2]"
-          style={{ ...headFont, color: "var(--c-accent)", fontSize: `calc(clamp(${rem * 0.8}rem, ${rem * 3.4}vw, ${rem}rem) * var(--c-head-scale))` }}>
+          style={{ ...headFont, fontStyle: b.italic ? "italic" : "normal", color: "var(--c-accent)", fontSize: `calc(clamp(${rem * 0.8}rem, ${rem * 3.4}vw, ${rem}rem) * var(--c-head-scale))` }}>
           <Named text={b.text} ctx={ctx} />
         </h2>
       );
     }
     case "text":
-      return <Body className={`whitespace-pre-line text-pretty break-words ${b.align === "center" ? "text-center" : ""}`}><Named text={b.text} ctx={ctx} /></Body>;
+      return <Body italic={b.italic} className={`whitespace-pre-line text-pretty break-words ${b.align === "center" ? "text-center" : ""}`}><Named text={b.text} ctx={ctx} /></Body>;
     case "image": {
       const shape = { wide: "aspect-video w-full rounded-sm", square: "aspect-square w-full rounded-sm", round: "mx-auto aspect-square w-48 rounded-full" }[b.shape];
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={val("url", b.src)!} alt="" loading="lazy" decoding="async" className={`${shape} bg-black/5 object-cover`} />;
+      return <img src={displayImageSrc(val("url", b.src)!)} alt="" decoding="async" className={`${shape} bg-black/5 object-cover`} />;
     }
     case "date": return <DateB b={b} ctx={ctx} />;
     case "place": return <Place b={b} ctx={ctx} />;
@@ -156,7 +157,8 @@ function DateB({ b, ctx }: { b: BlockOf<"date">; ctx: Ctx }) {
   const end = whenTime(b.end) > whenTime(b.start) ? dateParts(b.end!, lang) : null;
   // Decided at click time (no hydration mismatch): Apple devices & the native app get an .ics, others Google Calendar.
   const add = () => {
-    if (isNative() || /iPhone|iPad|Macintosh/.test(navigator.userAgent)) saveFile("invite.ics", icsFile(b, ctx.title, ctx.where, ctx.shareUrl));
+    // The installed app and iPhone/iPad use the calendar file. A desktop browser, including a Mac, opens Google Calendar.
+    if (isNative() || /iPhone|iPad/.test(navigator.userAgent)) saveFile("invite.ics", icsFile(b, ctx.title, ctx.where, ctx.shareUrl));
     else window.open(googleCalendarUrl(b, ctx.title, ctx.where), "_blank", "noopener");
   };
   return (
@@ -268,11 +270,19 @@ function Rsvp({ b, ctx }: { b: BlockOf<"rsvp">; ctx: Ctx }) {
   return (
     <div className="no-print space-y-3 text-center">
       <div className="flex flex-wrap justify-center gap-2">
-        {opts.map(([answer, label, I]) => (
-          <Action key={answer} ctx={ctx} href={rsvpUrl(b.channel, contact, message(answer), ctx.title)} onClick={() => record(answer)}>
-            <I size={16} />{label}
-          </Action>
-        ))}
+        {opts.map(([answer, label, I]) => {
+          const text = message(answer);
+          const links = composeLinks(b.channel, contact, text, ctx.title);
+          return (
+            <Action key={answer} ctx={ctx} href={links.web || links.app} onClick={(e) => {
+              record(answer);
+              if (!prefersApp() && !links.web) { e?.preventDefault(); copy(text); return; }
+              if (prefersApp() && links.web) { e?.preventDefault(); openOutbound(links.web, links.app); }
+            }}>
+              <I size={16} />{label}
+            </Action>
+          );
+        })}
       </div>
       {deadline}
     </div>
@@ -312,7 +322,7 @@ function Dress({ b }: { b: BlockOf<"dress"> }) {
               {it.kind === "emoji" && <span className="text-4xl">{it.value}</span>}
               {it.kind === "text" && <span className="px-2 text-sm leading-tight" style={{ fontFamily: "var(--c-body)" }}>{it.value}</span>}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {it.kind === "image" && val("url", it.value) && <img src={val("url", it.value)!} alt="" loading="lazy" className="h-full w-full object-cover" />}
+              {it.kind === "image" && val("url", it.value) && <img src={displayImageSrc(val("url", it.value)!)} alt="" className="h-full w-full object-cover" />}
             </li>
           ))}
         </ul>

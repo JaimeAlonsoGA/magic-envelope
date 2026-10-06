@@ -1,22 +1,21 @@
 "use client";
 
 import {
-  Check, Copy, Download, FileSpreadsheet, ImageIcon, KeyRound, Link2, Loader2, Mail, MessageCircle, Printer,
-  HelpCircle, RefreshCw, Send, Share2, Smartphone, WifiOff, X,
+  Check, Copy, Download, FileSpreadsheet, ImageIcon, KeyRound, Link2, Loader2, Mail, MessageCircle,
+  HelpCircle, RefreshCw, Send, Share2, WifiOff, X,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState, type ReactNode } from "react";
-import { cardTitle } from "@/lib/blocks";
+import { composeLinks } from "@/lib/actions";
+import { cardTitle, fileSlug, listTitle } from "@/lib/blocks";
 import { cardStyle } from "@/lib/envelope";
 import { val } from "@/lib/fields";
 import { useFlash, useOnline } from "@/lib/hooks";
 import { useUI } from "@/lib/locale";
 import type { Draft, Guest, RsvpAnswer } from "@/lib/model";
-import { copy, haptic, openLink, saveFile, share, shareFile } from "@/lib/native";
+import { copy, haptic, openOutbound, saveFile, share } from "@/lib/native";
 import { Seal } from "../craft";
-import { EXT, slug, useLetterImages, type ImageFormat } from "../export-stage";
 import { SketchButton, SketchLink } from "../sketch";
-import { Choice } from "./field";
 import { ThanksCard } from "./thanks-card";
 
 /** Publishing is idempotent: same id + edit key overwrites the published copy (guest names included). */
@@ -39,8 +38,8 @@ export function usePublish(draft: Draft | undefined, save: (p: Partial<Draft>, t
         }),
       });
       if (!r.ok) throw new Error(String(r.status));
-      const { id, key } = await r.json();
-      save({ publishedId: id, editKey: key, publishedAt: Date.now() }, false);
+      const { id, key, card } = await r.json();
+      save({ publishedId: id, editKey: key, publishedAt: Date.now(), ...(card ? { card } : {}) }, false);
       haptic("success");
     } catch {
       setErr(true);
@@ -56,9 +55,9 @@ export type Publisher = ReturnType<typeof usePublish>;
 const csvCell = (s: string) => `"${s.replaceAll('"', '""')}"`;
 
 /**
- * How a guest's letter is delivered: their phone (WhatsApp), their email, or the share sheet.
- * WhatsApp and email also copy the message first, so sending never depends on an app being
- * installed: if nothing opens, it's ready to paste anywhere. Resolves true when it was copied.
+ * How a guest's letter is delivered: WhatsApp, email, or the share sheet.
+ * The message is copied first. On a desktop the compose page opens in the browser
+ * (Gmail or WhatsApp Web). A phone uses the app. Resolves true when it was copied.
  */
 async function deliver(guest: Guest, title: string, link: string) {
   const text = `${title}\n${link}`;
@@ -66,9 +65,8 @@ async function deliver(guest: Guest, title: string, link: string) {
   const email = val("email", guest.email);
   if (!phone && !email) return (await share({ title, text: title, url: link })) === "copied";
   const copied = copy(text); // inside the click, before anything takes focus
-  openLink(phone
-    ? `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`
-    : `mailto:${email}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`);
+  const links = composeLinks(phone ? "whatsapp" : "email", phone || email || "", text, title);
+  openOutbound(links.web, links.app);
   return copied;
 }
 
@@ -128,7 +126,7 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
         {tab === "link" ? (
           guests.length ? <GuestLinks draft={draft} guests={guests} sent={sent} linkFor={linkFor} markSent={markSent} /> : <SingleLink draft={draft} url={base} />
         ) : (
-          <Images draft={draft} guests={guests} linkFor={linkFor} markSent={markSent} />
+          <Images draft={draft} guests={guests} markSent={markSent} />
         )}
       </div>
       {delivered && <ThanksCard />}
@@ -164,8 +162,8 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
         </button>
         <div className="flex flex-wrap gap-2">
           <SketchButton data-delivers tone="wax" onClick={() => share({ title, text: title, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {ui.share}</SketchButton>
-          <SketchLink data-delivers external href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`}><MessageCircle size={18} /> WhatsApp</SketchLink>
-          <SketchLink data-delivers external href={`${url}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
+          <SketchLink data-delivers external href={composeLinks("whatsapp", "", `${title}\n${url}`).web} onClick={(e) => { e.preventDefault(); const links = composeLinks("whatsapp", "", `${title}\n${url}`); openOutbound(links.web, links.app); }}><MessageCircle size={18} /> WhatsApp</SketchLink>
+          <SketchLink data-delivers file href={`/api/v1/letters/${draft.publishedId}/image?download=1`} aria-label={ui.out.download} title={ui.out.download}><Download size={18} /> {ui.out.download}</SketchLink>
         </div>
         {draft.editKey && (
           <button type="button" onClick={() => copy(`${location.origin}/e/${draft.publishedId}#${draft.editKey}`).then((ok) => ok && flashKey())}
@@ -208,7 +206,7 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   const done = guests.filter((g) => sent[g.id]).length;
   const flashGuest = (id: string) => { setCopiedId(id); setTimeout(() => setCopiedId(null), 1400); };
   const copyOne = (g: Guest) => copy(linkFor(g)).then((ok) => ok && flashGuest(g.id));
-  const csv = () => saveFile(`${slug(cardTitle(draft.card))}-guests.csv`, new Blob(
+  const csv = () => saveFile(`${fileSlug(listTitle(draft.card))}-guests.csv`, new Blob(
     [["name,phone,email,link", ...guests.map((g) => [g.name, g.phone ?? "", g.email ?? "", linkFor(g)].map(csvCell).join(","))].join("\n")],
     { type: "text/csv" },
   ));
@@ -217,6 +215,13 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="mr-auto text-sm text-muted">{ui.out.progress(done, guests.length)}</span>
+        {guests.some((g) => !sent[g.id]) && (
+          <SketchButton data-delivers size="sm" tone="wax" onClick={() => {
+            const g = guests.find((x) => !sent[x.id])!;
+            deliver(g, cardTitle(draft.card, g.name), linkFor(g)).then((copied) => copied && flashGuest(g.id));
+            markSent(g.id);
+          }}><Send size={15} /> {ui.out.sendNext}</SketchButton>
+        )}
         <SketchButton data-delivers size="sm" onClick={() => copy(guests.map((g) => `${g.name}: ${linkFor(g)}`).join("\n")).then((ok) => ok && flashAll())}>
           {allCopied ? <Check size={15} /> : <Copy size={15} />} {ui.out.copyAll}
         </SketchButton>
@@ -251,55 +256,41 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
   );
 }
 
-/** Flat PNGs: one generic image, one per guest, or all of them zipped. */
-function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Guest[]; linkFor: (g?: Guest) => string; markSent: (id: string) => void }) {
+/** One PNG per guest, named for them. Many guests come as one ZIP, named for the letter — not for the fallback name. */
+function Images({ draft, guests, markSent }: { draft: Draft; guests: Guest[]; markSent: (id: string) => void }) {
   const ui = useUI();
-  const img = useLetterImages();
-  const [progress, setProgress] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
-  const [format, setFormat] = useState<ImageFormat>("jpeg");
-  const card = draft.card;
-  const title = cardTitle(card);
+  const id = draft.publishedId!;
+  const file = (g?: Guest) => `/api/v1/letters/${id}/image?download=1${g ? `&g=${g.id}` : ""}`;
 
-  const one = async (g?: Guest) => {
-    setErr(false);
-    try {
-      const blob = await img.render(card, linkFor(g), g?.name, format);
-      await shareFile(`${slug(g?.name ?? title)}.${EXT[format]}`, blob, cardTitle(card, g?.name));
-      if (g) markSent(g.id);
-    } catch {
-      setErr(true);
-    }
-  };
   const all = async () => {
     setErr(false);
-    setProgress(0);
+    setBusy(true);
     try {
-      const zip = await img.renderZip(card, guests.map((g) => ({ name: g.name, shareUrl: linkFor(g) })), format, setProgress);
-      await saveFile(`${slug(title)}.zip`, zip);
+      const r = await fetch(`/api/v1/letters/${id}/images.zip`, { headers: { authorization: `Bearer ${draft.editKey}` } });
+      if (!r.ok) throw new Error(String(r.status));
+      const name = /filename="([^"]+)"/.exec(r.headers.get("content-disposition") ?? "")?.[1] ?? `${fileSlug(listTitle(draft.card))}.zip`;
+      await saveFile(name, await r.blob());
     } catch {
       setErr(true);
     } finally {
-      setProgress(null);
+      setBusy(false);
     }
   };
 
   return (
     <div className="space-y-4">
-      {img.stage}
       <p className="text-sm text-muted">{ui.out.imageNote}</p>
-      <Choice label={ui.format} value={format} onChange={setFormat}
-        options={[["jpeg", <><Smartphone size={15} /> {ui.out.formatLight}</>], ["png", <><Printer size={15} /> {ui.out.formatPrint}</>]]} />
       <div className="flex flex-wrap gap-2">
         {guests.length > 0 && (
-          <SketchButton data-delivers tone="wax" disabled={img.busy || progress !== null} onClick={all}>
-            {progress !== null ? <><Loader2 size={16} className="animate-spin" /> {ui.out.rendering(progress, guests.length)}</> : <><Download size={18} /> {ui.out.zip(guests.length)}</>}
+          <SketchButton data-delivers tone="wax" disabled={busy} onClick={all}>
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <Download size={18} />} {ui.out.zip(guests.length)}
           </SketchButton>
         )}
-        <SketchButton data-delivers tone={guests.length ? "plain" : "wax"} disabled={img.busy || progress !== null} onClick={() => one()}>
-          {img.busy && progress === null ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={18} />} {guests.length ? ui.out.generic : ui.out.download}
-        </SketchButton>
-        <SketchLink data-delivers external href={`${linkFor()}?print=1`} size="icon" aria-label={ui.print} title={ui.print}><Printer size={18} /></SketchLink>
+        <SketchLink data-delivers file href={file()} tone={guests.length ? "plain" : "wax"}>
+          <ImageIcon size={18} /> {guests.length ? ui.out.generic : ui.out.download}
+        </SketchLink>
       </div>
       {guests.length > 0 && (
         <ul className="divide-y divide-ink/10">
@@ -307,7 +298,7 @@ function Images({ draft, guests, linkFor, markSent }: { draft: Draft; guests: Gu
             <li key={g.id} className="flex items-center gap-2 py-1.5">
               <span className="min-w-0 flex-1 truncate text-lg">{g.name}</span>
               {draft.sent?.[g.id] && <Check size={15} className="text-violet" aria-label={ui.out.sent} />}
-              <SketchButton size="sm" disabled={img.busy || progress !== null} onClick={() => one(g)}><Share2 size={15} /> {ui.out.shareImage}</SketchButton>
+              <SketchLink file href={file(g)} size="sm" onClick={() => markSent(g.id)}><Download size={15} /> {ui.out.download}</SketchLink>
             </li>
           ))}
         </ul>

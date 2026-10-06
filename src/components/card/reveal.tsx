@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, PenLine, Printer, Share2, Sparkles } from "lucide-react";
+import { Check, Download, PenLine, Share2, Sparkles } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cardTitle } from "@/lib/blocks";
 import { cardStyle, envelopeOf } from "@/lib/envelope";
@@ -197,7 +197,7 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
         {!bare && <footer className={`no-print mx-auto mt-10 flex max-w-[36rem] flex-wrap items-center justify-center gap-2 transition-opacity duration-300 ${phase === "open" ? "" : "opacity-0"}`}
           style={s.page && s.dark ? ({ color: "#f4f1ea", "--ink": "#f4f1ea" } as React.CSSProperties) : undefined}>
           <SketchButton size="icon" onClick={onShare} aria-label={g.share}>{copied ? <Check size={18} /> : <Share2 size={18} />}</SketchButton>
-          <SketchButton size="icon" onClick={() => window.print()} aria-label={g.print}><Printer size={18} /></SketchButton>
+          {rsvpKey && <SketchLink file href={`/api/v1/letters/${rsvpKey.id}/image?download=1${rsvpKey.g ? `&g=${rsvpKey.g}` : ""}`} size="icon" aria-label={g.print}><Download size={18} /></SketchLink>}
           {ownerHref
             ? <SketchLink href={ownerHref} tone="primary"><PenLine size={18} /> {ui.edit}</SketchLink>
             : <SketchLink href={makeYourOwn(card)} tone="primary"><Sparkles size={18} /> {g.makeYourOwn}</SketchLink>}

@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { copyCardImages } from "@/lib/media.server";
 import { Card, PublicGuest } from "@/lib/model";
 import { limited } from "@/lib/ratelimit.server";
 import { saveCard } from "@/lib/store.server";
@@ -21,12 +22,13 @@ export async function POST(req: Request) {
     id = nanoid(10);
     key = nanoid(32);
   }
-  const { card, guests } = parsed.data;
-  if (!(await saveCard(id, card, key, guests))) {
+  const { card: stored } = await copyCardImages(parsed.data.card);
+  const { guests } = parsed.data;
+  if (!(await saveCard(id, stored, key, guests))) {
     // Edit key doesn't match: publish as a brand-new card instead.
     id = nanoid(10);
     key = nanoid(32);
-    await saveCard(id, card, key, guests);
+    await saveCard(id, stored, key, guests);
   }
-  return Response.json({ id, key });
+  return Response.json({ id, key, card: stored });
 }

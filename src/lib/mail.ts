@@ -79,9 +79,9 @@ export const FRONT_SLOTS: EnvSlot[] = ["front-tl", "front-tr", "front-center", "
 function defaultBlock(slot: EnvSlot, style: StyleId): Block {
   const id = slot;
   switch (SLOT_TYPE[slot]) {
-    case "heading": return { id, type: "heading", text: "{name}", size: "md" };
+    case "heading": return { id, type: "heading", text: "{name}", size: "md", italic: false };
     case "stamp": return { id, type: "stamp", stamp: STYLE_MAIL[style].stamp };
-    case "text": return { id, type: "text", text: "", align: slot === "back-center" ? "center" : "left" };
+    case "text": return { id, type: "text", text: "", align: slot === "back-center" ? "center" : "left", italic: false };
   }
 }
 

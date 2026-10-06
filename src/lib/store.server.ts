@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { del, get, list, put } from "@vercel/blob";
 import { Card, PublicGuest, RSVP_ANSWERS, type RsvpAnswer } from "./model";
@@ -189,6 +189,13 @@ export async function saveImage(name: string, data: Uint8Array | Blob, contentTy
     await writeFile(file, data instanceof Blob ? new Uint8Array(await data.arrayBuffer()) : data);
   }
   return `/api/file/${name}`;
+}
+
+/** Drop a stored image. Used when a sharper copy replaces a thumbnail of the same source. */
+export async function deleteImage(name: string) {
+  if (!/^[\w-]+\.\w+$/.test(name)) return;
+  if (useBlob) await del(`img/${name}`).catch(() => {});
+  else await unlink(path.join(LOCAL, "img", name)).catch(() => {});
 }
 
 export async function readImage(name: string): Promise<Uint8Array | null> {

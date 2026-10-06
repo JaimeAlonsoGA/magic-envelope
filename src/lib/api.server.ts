@@ -2,6 +2,7 @@ import "server-only";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { PRESETS, blankCard, fromPreset, newBlock } from "./blocks";
+import { copyCardImages } from "./media.server";
 import { SEAL_ICONS, SEAL_SHAPES } from "./craft";
 import { t } from "./i18n";
 import { SLOT_LIMIT, SLOT_ROLE, STAMP_IDS } from "./mail";
@@ -22,9 +23,11 @@ import { BLOCK_LABEL, KIND_LABEL } from "./ui";
 /** Blocks may be partial: `{ type: "date", start: "2026-11-14T19:00" }`. Missing fields come from the editor's defaults. */
 const BLOCK_TYPES = Object.keys(BLOCK_LABEL) as BlockType[];
 const PartialBlock = z.preprocess((b) => {
-  const type = (b as { type?: BlockType })?.type;
+  const raw = b as { type?: BlockType; id?: string; italic?: boolean; fontStyle?: string };
+  const type = raw?.type;
   if (!b || typeof b !== "object" || !type || !BLOCK_TYPES.includes(type)) return b; // let Block report the error
-  return { ...newBlock(type), ...b, id: (b as { id?: string }).id ?? nanoid(8) };
+  const italic = raw.italic === true || raw.fontStyle === "italic";
+  return { ...newBlock(type), ...raw, id: raw.id ?? nanoid(8), ...((type === "text" || type === "heading") ? { italic } : {}) };
 }, Block);
 const EnvelopeInput = z.object({ blocks: z.partialRecord(z.enum(ENV_SLOTS), PartialBlock) }).superRefine((env, ctx) => {
   for (const [slot, b] of Object.entries(env.blocks) as [EnvSlot, Block][]) {
@@ -130,13 +133,18 @@ function mergeGuests(current: G[], list?: { id?: string; name: string }[], add?:
 /* ───────────── Operations ───────────── */
 
 /** Create and publish a letter. Returns its links (and one per guest) and the secret edit key. */
+function mergeWarnings(guests: G[], extra: string[]) {
+  const all = [...(warnings(guests).warnings ?? []), ...extra];
+  return all.length ? { warnings: all } : {};
+}
+
 export async function createLetter(raw: unknown): Promise<LetterLinks> {
   const input = LetterInput.parse(raw);
-  const card = build(input);
+  const { card, warnings: imageWarnings } = await copyCardImages(build(input));
   const id = nanoid(10), key = nanoid(32);
   const guests = input.guests.map((g) => ({ id: nanoid(6), name: g.name }));
   await saveCard(id, card, key, guests);
-  return { ...links(id, key, guests, (await letterVersion(id)) ?? 0), ...warnings(guests) };
+  return { ...links(id, key, guests, (await letterVersion(id)) ?? 0), ...mergeWarnings(guests, imageWarnings) };
 }
 
 export async function getLetter(id: string, key: string) {
@@ -146,15 +154,37 @@ export async function getLetter(id: string, key: string) {
   return { card, ...links(id, key, guests, (await letterVersion(id)) ?? 0), rsvps: await rsvpSummary(id, guests) };
 }
 
+const PATCH_KEYS = ["lang", "style", "preset", "blocks", "custom", "seal", "sealShape", "envelope", "nameFallback", "guests", "addGuests"] as const;
+
+/**
+ * GET returns `{ card, guests, url, … }`. Sending that object back used to parse as an empty patch
+ * and answer 200 while changing nothing. Accept the wrapper, and reject a body that has no letter fields.
+ */
+export function unwrapPatch(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const body = raw as Record<string, unknown>;
+  const pick = (o: Record<string, unknown>) => Object.fromEntries(PATCH_KEYS.filter((k) => k in o).map((k) => [k, o[k]]));
+  const card = body.card;
+  if (card && typeof card === "object" && !Array.isArray(card)) {
+    const top = pick(body);
+    delete top.card;
+    return { ...pick(card as Record<string, unknown>), ...top };
+  }
+  if (Object.keys(pick(body)).length === 0 && Object.keys(body).length > 0)
+    throw new ApiError(400, "wrapped_card", 'Nothing in this body is a letter field, so nothing was changed. GET wraps the letter in "card". Send the fields at the top level (blocks, style, guests…), or send { "card": { … } } — that same wrapper is accepted.');
+  return raw;
+}
+
 /** Change a published letter. Same links; only the fields sent change. */
 export async function updateLetter(id: string, key: string, raw: unknown) {
   const card = await loadCardForEdit(id, key);
   if (!card) return null;
-  const { guests: list, addGuests, ...fields } = LetterPatch.parse(raw);
-  const next = build(fields, card);
+  const { guests: list, addGuests, ...fields } = LetterPatch.parse(unwrapPatch(raw));
+  const built = build(fields, card);
+  const { card: next, warnings: imageWarnings } = await copyCardImages(built);
   const guests = mergeGuests((await loadGuests(id)) ?? [], list, addGuests);
   await saveCard(id, next, key, guests);
-  return { card: next, ...links(id, key, guests, (await letterVersion(id)) ?? 0), ...warnings(guests) };
+  return { card: next, ...links(id, key, guests, (await letterVersion(id)) ?? 0), ...mergeWarnings(guests, imageWarnings) };
 }
 
 /** Delete a letter for good (links stop working; guest names, answers and images are erased). */
@@ -188,6 +218,9 @@ export function catalog() {
     },
     seal: { icons: SEAL_ICONS, shapes: SEAL_SHAPES, formats: ['"" none', '"_" plain', '"icon:<icon>"', '"ini:ABC"', '"duo:A|J"'] },
     personalization: "Write {name} in heading, text, signature or envelope text: each guest's link shows their name.",
+    images: "Give an image block an https src. A public file, a Google Drive or Dropbox share link, or a Wikimedia thumbnail is copied here at full size — no external proxy. A Drive preview URL is replaced with the original file. Or POST /api/v1/media { url } first and use the returned src. Uploading a file: POST /api/upload as multipart field \"file\".",
+    text: "A text block has no character limit. Set italic: true (or fontStyle: \"italic\") for italics. custom.frame is \"none\", \"rule\" (a line) or \"ornate\" (a double border), on top of the style.",
+    patch: "PATCH fields sit at the top level. The object GET returns is also accepted: { card: { … }, guests } applies that card. A body with no letter fields is a 400, not a silent 200.",
   };
 }
 

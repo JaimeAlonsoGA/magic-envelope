@@ -54,7 +54,7 @@ export function Field({ kind = "text", value, onChange, label, placeholder, auto
     <label className="block">
       {label && <span className="mb-0.5 block text-sm text-muted">{label}</span>}
       {kind === "long" ? (
-        <textarea ref={ref} {...common} className={`${common.className} min-h-28 resize-y`} maxLength={maxLength ?? 4000} onChange={(e) => onChange(e.target.value)} />
+        <textarea ref={ref} {...common} className={`${common.className} min-h-28 resize-y`} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
       ) : (
         <input ref={ref} {...common} {...spec.input} maxLength={maxLength ?? (kind === "url" ? 2048 : 200)} onChange={(e) => onChange(e.target.value)} />
       )}

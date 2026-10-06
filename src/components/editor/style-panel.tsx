@@ -9,6 +9,7 @@ import { LANGS, type Card } from "@/lib/model";
 import { FONTS, FONT_IDS, STYLES, STYLE_IDS, resolveStyle, type Custom, type FontId } from "@/lib/styles";
 import { SketchButton } from "../sketch";
 import { StyleSwatch } from "../style-swatch";
+import { Choice } from "./field";
 
 
 const Section = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
@@ -79,6 +80,8 @@ export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: P
           <RotateCcw size={13} /> Reset
         </button>
       )}>
+        <Choice label={ui.border} value={custom.frame ?? "auto"} onChange={(v) => setCustom({ frame: v === "auto" ? undefined : v })}
+          options={[["auto", ui.borders.auto], ["none", ui.borders.none], ["rule", ui.borders.rule], ["ornate", ui.borders.ornate]]} />
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <ColorField label={ui.accent} value={s.accent} onChange={(accent) => setCustom({ accent })} />
           <ColorField label={ui.paper} value={s.paper} onChange={(paper) => setCustom({ paper })} />

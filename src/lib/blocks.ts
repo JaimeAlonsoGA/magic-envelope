@@ -41,8 +41,8 @@ export function soon(days = 21, hour = 19) {
 export function newBlock(type: BlockType): Block {
   const id = uid();
   switch (type) {
-    case "heading": return { id, type, text: "", size: "xl" };
-    case "text": return { id, type, text: "", align: "center" };
+    case "heading": return { id, type, text: "", size: "xl", italic: false };
+    case "text": return { id, type, text: "", align: "center", italic: false };
     case "image": return { id, type, src: "", shape: "wide" };
     case "date": return { id, type, start: soon(), interactive: true };
     case "place": return { id, type, name: "", address: "", interactive: true };
@@ -66,7 +66,7 @@ export function newBlock(type: BlockType): Block {
 
 /** Seal glyph that suits each occasion. */
 const SEAL: Record<Kind, string> = {
-  birthday: "icon:cake", wedding: "icon:ring", party: "icon:cheers", baby: "icon:moon", dinner: "icon:olive",
+  birthday: "icon:cake", wedding: "icon:ring", party: "icon:cheers", baby: "icon:moon", dinner: "icon:flower",
   graduation: "icon:cap", event: "icon:star", letter: "icon:heart",
 };
 
@@ -108,6 +108,10 @@ export function cardTitle(card: Card, guestName?: string) {
  * The letter's title for lists, without the per-guest name: "{name}, ¡ven a mi cumple!" reads
  * "¡Ven a mi cumple!" rather than "Querido Invitado, ¡ven…".
  */
+/** A filename from a title: ASCII, lowercase, no guest-name fallback. */
+export const fileSlug = (s: string) =>
+  s.normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^\w]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "letter";
+
 export function listTitle(card: Card) {
   const h = card.blocks.find((b) => b.type === "heading" && b.text.trim());
   const bare = h?.type === "heading" ? h.text.replaceAll(NAME_TOKEN, "").replace(/^[\s,;:.·—–-]+|[\s,;:—–-]+$/g, "").replace(/\s{2,}/g, " ") : "";

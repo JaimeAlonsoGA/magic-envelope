@@ -1,7 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import { MCP_NAME, MCP_VERSION } from "@/lib/agents";
-import { LetterInput, LetterPatch, catalog, createLetter, deleteLetter, getLetter, updateLetter } from "@/lib/api.server";
+import { ApiError, LetterInput, catalog, createLetter, deleteLetter, getLetter, updateLetter } from "@/lib/api.server";
 
 /**
  * MCP server: the same operations as /api/v1, as tools. Agents can make and send invitations
@@ -33,11 +33,16 @@ const handler = createMcpHandler((server) => {
 
   server.registerTool("update_letter", {
     title: "Update a letter",
-    description: "Change a letter. Only the fields you send change (lang, style… are kept). Links keep working. `guests` replaces the list but keeps each existing guest's id and link (matched by id, then by name); `addGuests` appends without touching anyone else.",
-    inputSchema: LetterPatch.extend({ id: z.string(), editKey: z.string() }),
+    description: "Change a letter. Only the fields you send change (lang, style… are kept). Links keep working. You may send the same object get_letter returned, including its card wrapper — it is applied. A body with no letter fields is an error, not a silent success. `guests` replaces the list but keeps each existing guest's id and link (matched by id, then by name); `addGuests` appends without touching anyone else. Image URLs are copied at full size. Text has no character limit; italic: true (or fontStyle: \"italic\"); custom.frame is none | rule | ornate.",
+    inputSchema: z.object({ id: z.string(), editKey: z.string() }).passthrough(),
   }, async ({ id, editKey, ...patch }) => {
-    const out = await updateLetter(id, editKey, patch);
-    return out ? json(out) : { content: [{ type: "text" as const, text: "Unknown letter or wrong editKey." }], isError: true };
+    try {
+      const out = await updateLetter(id, editKey, patch);
+      return out ? json(out) : { content: [{ type: "text" as const, text: "Unknown letter or wrong editKey." }], isError: true };
+    } catch (e) {
+      const message = e instanceof ApiError ? e.message : e instanceof z.ZodError ? e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") : "The update was rejected.";
+      return { content: [{ type: "text" as const, text: message }], isError: true };
+    }
   });
 
   server.registerTool("delete_letter", {

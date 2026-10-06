@@ -53,6 +53,7 @@ function BlockFields({ b, set, card, limit }: { b: Block; set: (patch: Partial<B
         <div className="space-y-4">
           <Field value={b.text} onChange={(text) => set({ text })} placeholder={ui.headingPh} autoFocus guestName maxLength={limit?.chars} />
           <Choice label={ui.size} value={b.size} onChange={(size) => set({ size })} options={[["md", ui.sizes.md], ["lg", ui.sizes.lg], ["xl", ui.sizes.xl]]} />
+          <Switch checked={b.italic} onChange={(italic) => set({ italic })}>{ui.italic}</Switch>
         </div>
       );
     case "text":
@@ -64,6 +65,7 @@ function BlockFields({ b, set, card, limit }: { b: Block; set: (patch: Partial<B
           <Choice label={ui.alignment} value={b.align} onChange={(align) => set({ align })} options={[
             ["center", <><AlignCenter size={16} /> {ui.align.center}</>], ["left", <><AlignLeft size={16} /> {ui.align.left}</>],
           ]} />
+          <Switch checked={b.italic} onChange={(italic) => set({ italic })}>{ui.italic}</Switch>
         </div>
       );
     case "signature":
@@ -329,6 +331,8 @@ function ImageEditor({ b, set }: { b: BlockOf<"image">; set: Setter<"image"> }) 
           <SketchButton size="sm" onClick={() => set({ src: "" })}><Trash2 size={16} /> {ui.removeImage}</SketchButton>
         </div>
       )}
+
+      <Field kind="url" label={ui.linkUrl} value={b.src} onChange={(src) => set({ src })} placeholder="https://" />
 
       <div className="flex flex-wrap gap-2">
         <SketchButton disabled={!!busy} onClick={() => photo("camera")}><Camera size={18} /> {ui.camera}</SketchButton>

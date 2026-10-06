@@ -144,7 +144,7 @@ export const STYLE_IDS = Object.keys(STYLES) as StyleId[];
 
 /* ───────────── Customization ───────────── */
 
-export type Custom = { accent?: string; paper?: string; ink?: string; envelope?: string; head?: FontId; body?: FontId };
+export type Custom = { accent?: string; paper?: string; ink?: string; envelope?: string; head?: FontId; body?: FontId; frame?: "none" | "rule" | "ornate" };
 
 export type Resolved = Style & { id: StyleId; dark: boolean };
 
@@ -159,6 +159,7 @@ export function resolveStyle(id: StyleId, custom?: Custom): Resolved {
     ...(custom?.envelope ? { envelope: custom.envelope } : {}),
     ...(custom?.head ? { head: custom.head } : {}),
     ...(custom?.body ? { body: custom.body } : {}),
+    ...(custom?.frame ? { frame: custom.frame } : {}),
   };
   if (custom?.accent) s.onAccent = luminance(custom.accent) > 0.45 ? "#141414" : "#ffffff";
   return { ...s, id, dark: luminance(s.paper) < 0.3 };

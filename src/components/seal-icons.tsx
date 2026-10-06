@@ -109,13 +109,17 @@ export const SEAL_ICON: Record<SealIcon, (fill: string) => ReactNode> = {
     </g>
   ),
 
-  // olive branch
-  olive: (f) => (
+  // dragon eye: an almond with a slit pupil cut out of the wax
+  dragon: (f) => (
+    <path fill={f} fillRule="evenodd" d="M1.6 13.4C4.4 7.6 8.6 5.2 12 5.8c3.4-.6 7.6 1.8 10.4 7.6C19.6 18.6 15.4 20.6 12 20c-3.4.6-7.6-1.4-10.4-6.6ZM12 8.2c.85 0 1.35 1.7 1.35 4.2s-.5 4.2-1.35 4.2-1.35-1.7-1.35-4.2.5-4.2 1.35-4.2Z" />
+  ),
+
+  // </> — two chevrons and a slash, thick enough to read in wax
+  code: (f) => (
     <g fill={f}>
-      <path d="M5.2 21.3C7.5 15 11.6 8.6 18.8 3l.9 1C12.9 9.5 9 15.6 6.6 21.8Z" />
-      {[[9.4, 15.2, -70], [7.2, 12.2, 25], [12.5, 10.5, -65], [10.6, 7.8, 30], [15.6, 6.4, -60], [14.6, 3.6, 35]].map(([x, y, r], i) => (
-        <ellipse key={i} cx={x} cy={y} rx="1.5" ry="3.2" transform={`rotate(${r} ${x} ${y})`} />
-      ))}
+      <path d="M9.4 4.6 2.8 12l6.6 7.4 2.1-1.9L6.4 12l5.1-5.5Z" />
+      <path d="M14.6 4.6 21.2 12l-6.6 7.4-2.1-1.9L17.6 12l-5.1-5.5Z" />
+      <path d="M13.8 3.6 10.2 20.2h-2.1L11.7 3.6Z" />
     </g>
   ),
 

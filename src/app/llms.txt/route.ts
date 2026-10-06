@@ -53,8 +53,9 @@ ${KINDS.map((k) => `- ${k}: ${KIND_LABEL[k]} — ${LANGS.map((l) => `[${l}](${SI
 - ${c.personalization}
 - Blocks may be partial: missing fields take the editor's defaults.
 - Dates are the local time at the venue, without a timezone: "2026-11-14T18:00", or "2026-11-14" for a whole day. Anything else is a 400.
-- PATCH changes only the fields you send. \`guests\` replaces the list but keeps every existing guest's id and link (matched by id, then name); \`addGuests\` appends.
-- Images: each letter and guest has an \`image\` URL (PNG, or &format=jpeg); \`imagesZip\` gives them all (editKey). \`previewImage\` is the link preview with the guest's envelope.
+- PATCH changes only the fields you send. You can also send the object GET returns (\`{ "card": { … }, "guests": […] }\`): that wrapper is applied. A body with no letter fields is a 400, not an empty 200. \`guests\` replaces the list but keeps every existing guest's id and link (matched by id, then name); \`addGuests\` appends.
+- Images: put an https URL on an image block. A public file, a Google Drive or Dropbox share link, or a Wikimedia thumbnail is copied here at full size (a Drive preview is replaced with the original file). Or POST /api/v1/media \`{ "url" }\` and use the returned \`src\`. File upload: POST /api/upload, multipart field \`file\`. Each letter and guest has an \`image\` URL (PNG, add \`&download=1\` to save it); \`imagesZip\` gives them all, named after the letter (editKey). \`previewImage\` is the link preview with the guest's envelope.
+- Text blocks have no character limit. \`italic: true\` (or \`fontStyle: "italic"\`) sets italics. \`custom.frame\` is \`"none"\`, \`"rule"\` or \`"ornate"\` (a double border).
 - RSVP answers tapped by guests come back in GET /api/v1/letters/{id} (\`rsvps\`). DELETE /api/v1/letters/{id} erases a letter for good.
 - Envelope slots have fixed block types and limits: ${c.envelope.slots.map((s) => `${s.slot} (${s.role}: ${s.block}${s.maxChars ? `, ≤${s.maxChars} chars` : ""})`).join("; ")}.
 - Languages: ${c.languages.map((l) => l.id).join(", ")}.

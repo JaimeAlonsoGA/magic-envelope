@@ -20,7 +20,12 @@ const hex = z.string().regex(/^#[0-9a-f]{6}$/i);
 const styleId = z.enum(STYLE_IDS as [StyleId, ...StyleId[]]);
 const fontId = z.enum(FONT_IDS as [FontId, ...FontId[]]);
 /** Per-letter overrides on top of the style. */
-export const Custom = z.object({ accent: hex.optional(), paper: hex.optional(), ink: hex.optional(), envelope: hex.optional(), head: fontId.optional(), body: fontId.optional() });
+/** A border on top of the style: none, a single rule, or the double rule used on formal invitations. */
+export const BORDERS = ["none", "rule", "ornate"] as const;
+export const Custom = z.object({
+  accent: hex.optional(), paper: hex.optional(), ink: hex.optional(), envelope: hex.optional(),
+  head: fontId.optional(), body: fontId.optional(), frame: z.enum(BORDERS).optional(),
+});
 
 /* ───────────── Blocks ─────────────
  * Every piece of a card is a typed block. Adding a block type means:
@@ -33,14 +38,17 @@ export const Custom = z.object({ accent: hex.optional(), paper: hex.optional(), 
 const id = z.string().min(1).max(32);
 const short = z.string().max(200);
 const long = z.string().max(4000);
+/** Letter text has no practical cap — a letter can be as long as it needs to be. */
+const letterText = z.string().max(50_000);
 const url = z.string().max(2048);
+const italic = z.boolean().default(false);
 // local wall-clock time at the venue: "2026-11-14T19:30", or a whole day "2026-11-14" (lib/when.ts)
 const when = z.string().max(40).refine((s) => s === "" || parseWhen(s) !== null, {
   message: 'Use a local date "YYYY-MM-DD" or date and time "YYYY-MM-DDTHH:mm", without a timezone',
 });
 
-export const HeadingBlock = z.object({ id, type: z.literal("heading"), text: short, size: z.enum(["md", "lg", "xl"]).default("xl") });
-export const TextBlock = z.object({ id, type: z.literal("text"), text: long, align: z.enum(["left", "center"]).default("center") });
+export const HeadingBlock = z.object({ id, type: z.literal("heading"), text: short, size: z.enum(["md", "lg", "xl"]).default("xl"), italic });
+export const TextBlock = z.object({ id, type: z.literal("text"), text: letterText, align: z.enum(["left", "center"]).default("center"), italic });
 export const ImageBlock = z.object({ id, type: z.literal("image"), src: url, shape: z.enum(["wide", "square", "round"]).default("wide") });
 /**
  * Blocks with guest actions (calendar, directions, RSVP buttons, links) carry `interactive`.
@@ -130,7 +138,9 @@ function migrateDates(b: Raw): Raw {
 }
 
 function migrateBlock(raw: Raw): Raw {
-  const b = migrateDates(raw);
+  let b = migrateDates(raw);
+  // Agents ask for fontStyle: "italic"; the letter stores it as italic.
+  if ((b.type === "text" || b.type === "heading") && b.fontStyle === "italic") b = { ...b, italic: true };
   if (b.type === "rsvp" && !b.contacts) {
     const channel = (b.channel as string) ?? "whatsapp";
     return { ...b, contacts: { whatsapp: "", sms: "", email: "", [channel]: b.to ?? "" } };

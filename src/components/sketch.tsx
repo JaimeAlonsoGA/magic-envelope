@@ -5,7 +5,7 @@ import rough from "roughjs";
 import type { Options } from "roughjs/bin/core";
 import {
   useId, useLayoutEffect, useMemo, useRef, useState,
-  type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode,
+  type ButtonHTMLAttributes, type HTMLAttributes, type MouseEventHandler, type ReactNode,
 } from "react";
 import { haptic } from "@/lib/native";
 
@@ -131,11 +131,12 @@ export function SketchButton({ shape, seed, tone, size, active, className, child
 }
 
 /** Same look as SketchButton, but a real link (internal → next/link, external → new tab). */
-export function SketchLink({ href, external, shape, seed, tone, size, active, className, children, ...rest }: Common & { href: string; external?: boolean; download?: string; "aria-label"?: string; title?: string }) {
+export function SketchLink({ href, external, file, onClick, shape, seed, tone, size, active, className, children, ...rest }: Common & { href: string; external?: boolean; file?: boolean; onClick?: MouseEventHandler<HTMLAnchorElement>; "aria-label"?: string; title?: string; "data-delivers"?: boolean }) {
   const { ref, frame, cls } = useSketch<HTMLAnchorElement>({ shape, seed, tone, size, active, className });
   const body = (<>{frame}<span className="relative inline-flex items-center gap-2">{children}</span></>);
-  if (external) return <a ref={ref} href={href} target="_blank" rel="noopener noreferrer" className={cls} {...rest}>{body}</a>;
-  return <Link ref={ref} href={href} className={cls} {...rest}>{body}</Link>;
+  // file: same-origin download; the server's Content-Disposition sets the filename. external: leave the site.
+  if (file || external) return <a ref={ref} href={href} className={cls} onClick={onClick} {...(file ? {} : { target: "_blank", rel: "noopener noreferrer" })} {...rest}>{body}</a>;
+  return <Link ref={ref} href={href} className={cls} onClick={onClick} {...rest}>{body}</Link>;
 }
 
 /** A single hand-drawn stroke under/through content (wordmarks, emphasis). Deterministic per seed. */

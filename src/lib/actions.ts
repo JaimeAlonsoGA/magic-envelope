@@ -95,16 +95,30 @@ export function formatDate(s: string, lang: string, opts: Intl.DateTimeFormatOpt
 export const mapsUrl = (q: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 export const mapsEmbed = (q: string) => `https://maps.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
 
+/**
+ * Where a message can open. `web` stays in the browser (no mail or chat app required).
+ * `app` is the phone handoff: mailto, WhatsApp, or SMS. Desktop uses `web`.
+ */
+export function composeLinks(channel: "email" | "whatsapp" | "sms", to: string, body: string, subject = "") {
+  const digits = to.replace(/\D/g, "");
+  const text = encodeURIComponent(body);
+  if (channel === "email") {
+    const q = new URLSearchParams({ view: "cm", fs: "1", to, su: subject, body });
+    return { web: `https://mail.google.com/mail/?${q}`, app: `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${text}` };
+  }
+  if (channel === "whatsapp") {
+    return {
+      web: digits ? `https://web.whatsapp.com/send?phone=${digits}&text=${text}` : `https://web.whatsapp.com/send?text=${text}`,
+      app: digits ? `https://wa.me/${digits}?text=${text}` : `https://wa.me/?text=${text}`,
+    };
+  }
+  return { web: "", app: `sms:${to}?&body=${text}` };
+}
+
 /** Reply link for one RSVP answer. `contact` must already be validated with lib/fields.ts. */
 export function rsvpUrl(channel: RsvpChannel, contact: string, message: string, subject: string) {
-  switch (channel) {
-    case "whatsapp":
-      return `https://wa.me/${contact.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
-    case "sms":
-      return `sms:${contact}?&body=${encodeURIComponent(message)}`;
-    case "email":
-      return `mailto:${contact}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
-  }
+  const links = composeLinks(channel, contact, message, subject);
+  return links.web || links.app;
 }
 
 /** Accept "spotify.com/…", "youtu.be/…" etc. and return an embeddable URL, or null. */

@@ -52,8 +52,9 @@ export default function DevelopersPage() {
           <li><code>get_catalog</code>, <code>create_letter</code>, <code>get_letter</code>, <code>update_letter</code>, <code>delete_letter</code> — the MCP tools</li>
           <li><code>GET /api/v1/catalog</code> — styles, presets, block types with examples, envelope slots, stamps, seals</li>
           <li><code>POST /api/v1/letters</code> — create and publish</li>
-          <li><code>GET</code>, <code>PATCH</code> (only the fields sent change) and <code>DELETE /api/v1/letters/:id</code> — with <code>Authorization: Bearer &lt;editKey&gt;</code>; GET includes guests&apos; RSVP answers</li>
-          <li><code>GET /api/v1/letters/:id/image?g=&lt;guest&gt;&amp;format=png|jpeg</code> and <code>/images.zip</code> — the letter as images</li>
+          <li><code>GET</code>, <code>PATCH</code> and <code>DELETE /api/v1/letters/:id</code> — with <code>Authorization: Bearer &lt;editKey&gt;</code>. PATCH takes the fields you want to change, or the same object GET returns. GET includes guests&apos; RSVP answers</li>
+          <li><code>POST /api/v1/media</code> — copy a public image, or a Drive, Dropbox or Wikimedia link, and get a <code>src</code></li>
+          <li><code>GET /api/v1/letters/:id/image?g=&lt;guest&gt;&amp;download=1</code> and <code>/images.zip</code> — one PNG per guest; the ZIP is named after the letter</li>
         </ul>
         <ul className="flex flex-wrap gap-x-4 gap-y-1">
           {specs.map(([label, href]) => <li key={href}><a className="underline underline-offset-4" href={href}>{label}</a></li>)}
@@ -62,7 +63,7 @@ export default function DevelopersPage() {
 
       <section className="mt-12 space-y-2 text-muted">
         <h2 className="font-hand text-2xl text-ink">Good to know</h2>
-        <p>Write <code>{"{name}"}</code> in a title, text, signature or envelope line to address each guest. Blocks may be partial — missing fields take the editor&apos;s defaults. Dates are the local time at the venue: <code>2026-11-14T18:00</code>, or <code>2026-11-14</code> for a whole day. Guest names are stored server-side and each guest page only ever receives its own name. Letters are in English, Spanish, French, Portuguese, Italian or German (<code>lang</code>).</p>
+        <p>Write <code>{"{name}"}</code> in a title, text, signature or envelope line to address each guest. Blocks may be partial — missing fields take the editor&apos;s defaults. A text block has no character limit; set <code>italic: true</code> or <code>fontStyle: &quot;italic&quot;</code> for italics, and <code>custom.frame</code> to <code>none</code>, <code>rule</code> or <code>ornate</code>. Dates are the local time at the venue: <code>2026-11-14T18:00</code>, or <code>2026-11-14</code> for a whole day. Guest names are stored server-side and each guest page only ever receives its own name. Letters are in English, Spanish, French, Portuguese, Italian or German (<code>lang</code>).</p>
       </section>
 
       <SiteFooter />

@@ -83,6 +83,7 @@ export const occasionCopy = (lang: Lang, kind: Kind): Occasion => (lang === "en"
 
 /** English lives at the root (/, /for/wedding); other languages under their code with native slugs. */
 export const homePath = (lang: Lang) => (lang === "en" ? "/" : `/${lang}`);
+export const faqPath = (lang: Lang) => (lang === "en" ? "/faq" : `/${lang}/faq`);
 export const occasionPath = (lang: Lang, kind: Kind) => (lang === "en" ? `/for/${kind}` : `/${lang}/${LOCALIZED[lang].slugs[kind]}`);
 
 export const kindFromSlug = (lang: Exclude<Lang, "en">, slug: string) =>

@@ -2,7 +2,7 @@ import { Bot, Coffee } from "lucide-react";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
 import { KINDS, LANGS, type Lang } from "@/lib/model";
-import { homePath, occasionPath } from "@/lib/seo";
+import { faqPath, homePath, occasionPath } from "@/lib/seo";
 import { UI_TEXT } from "@/lib/ui";
 import { LangLink } from "./lang-link";
 
@@ -22,6 +22,7 @@ export function SiteFooter({ lang = "en", paths = homePath }: { lang?: Lang; pat
           <h2 className="mb-2 text-lg">{ui.site.makeInvitation}</h2>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
             {KINDS.map((k) => <li key={k}><Link className={link} href={occasionPath(lang, k)}>{ui.kinds[k]}</Link></li>)}
+            <li className="col-span-2 mt-2"><Link className={link} href={faqPath(lang)}>{ui.site.faq}</Link></li>
           </ul>
         </nav>
         <nav aria-label={ui.site.forAgents}>

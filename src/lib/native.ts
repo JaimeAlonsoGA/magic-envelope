@@ -59,15 +59,25 @@ export async function share(opts: { title: string; text?: string; url: string })
   return (await copy(opts.url)) ? ("copied" as const) : ("failed" as const);
 }
 
+/** A phone or the installed app. A desktop browser is not one: mailto and wa.me would launch a local app. */
+export const prefersApp = () => isNative() || (typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches);
+
 /**
- * Opens a mail/WhatsApp link without leaving a blank tab behind: mailto goes through the current
- * page (nothing happens if no mail app is set up), web links open in a new tab.
+ * Opens a link from a click. mailto/sms stay on this page (a new tab would be blank).
+ * https opens beside the letter.
  */
 export function openLink(href: string) {
   if (/^(mailto|sms|tel):/.test(href)) {
     const a = Object.assign(document.createElement("a"), { href });
     a.click();
   } else window.open(href, "_blank", "noopener");
+}
+
+/** Desktop stays on `web` (Gmail, WhatsApp Web). A phone uses `app` (mailto, WhatsApp, SMS). */
+export function openOutbound(web: string, app: string) {
+  if (prefersApp() && app) openLink(app);
+  else if (web) openLink(web);
+  else if (app) openLink(app);
 }
 
 /* ───────────── Files (QR png, calendar .ics) ───────────── */

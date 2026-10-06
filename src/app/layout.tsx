@@ -12,8 +12,8 @@ const kalam = Kalam({ variable: "--font-kalam", weight: ["400", "700"], subsets:
 const medieval = MedievalSharp({ variable: "--font-medieval", weight: "400", subsets: ["latin"], preload: false, display: "swap" });
 const fell = IM_Fell_English({ variable: "--font-fell", weight: "400", style: ["normal", "italic"], subsets: ["latin"], preload: false, display: "swap" });
 // (next/font needs literal options: no shared object spread.)
-const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], preload: false, display: "swap" });
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"], preload: false, display: "swap" });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], style: ["normal", "italic"], preload: false, display: "swap" });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], style: ["normal", "italic"], preload: false, display: "swap" });
 const grotesk = Space_Grotesk({ variable: "--font-grotesk", subsets: ["latin"], preload: false, display: "swap" });
 const monoton = Monoton({ variable: "--font-monoton", weight: "400", subsets: ["latin"], preload: false, display: "swap" });
 const righteous = Righteous({ variable: "--font-righteous", weight: "400", subsets: ["latin"], preload: false, display: "swap" });
@@ -21,7 +21,7 @@ const pixel = Press_Start_2P({ variable: "--font-pixel", weight: "400", subsets:
 const vt323 = VT323({ variable: "--font-vt323", weight: "400", subsets: ["latin"], preload: false, display: "swap" });
 const cinzel = Cinzel({ variable: "--font-cinzel", subsets: ["latin"], preload: false, display: "swap" });
 const fredoka = Fredoka({ variable: "--font-fredoka", subsets: ["latin"], preload: false, display: "swap" });
-const courier = Courier_Prime({ variable: "--font-courier", weight: ["400", "700"], subsets: ["latin"], preload: false, display: "swap" });
+const courier = Courier_Prime({ variable: "--font-courier", weight: ["400", "700"], style: ["normal", "italic"], subsets: ["latin"], preload: false, display: "swap" });
 const bebas = Bebas_Neue({ variable: "--font-bebas", weight: "400", subsets: ["latin"], preload: false, display: "swap" });
 const fontVars = [kalam, medieval, fell, playfair, inter, grotesk, monoton, righteous, pixel, vt323, cinzel, fredoka, courier, bebas].map((f) => f.variable).join(" ");
 
