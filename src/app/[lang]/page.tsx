@@ -35,7 +35,7 @@ export default async function LocalHome({ params }: PageProps<"/[lang]">) {
   return (
     <LangProvider lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd(lang, rating)) }} />
-      <div lang={lang}><Home /></div>
+      <div lang={lang}><Home rating={rating} /></div>
     </LangProvider>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CopyPlus, Eye, Link2, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, CopyPlus, Eye, Link2, Plus, Star, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -86,7 +86,7 @@ function DraftTile({ dr }: { dr: Draft }) {
   );
 }
 
-export function Home() {
+export function Home({ rating }: { rating?: { count: number; average: number } }) {
   const ui = useUI();
   const lang = useLang();
   const drafts = useDrafts();
@@ -101,6 +101,13 @@ export function Home() {
         Magic <span className="relative inline-block">Envelope<RoughUnderline seed="wordmark" stroke="var(--wax)" /></span>
       </h1>
       <p className="mt-5 text-center font-hand text-lg text-muted">{ui.site.tagline}</p>
+      {rating && rating.count >= 3 && (
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted">
+          <Star size={14} className="text-[#d29a12]" fill="currentColor" aria-hidden />
+          <span className="text-ink">{rating.average.toFixed(1)}</span>
+          <span>· {ui.site.ratings(rating.count)}</span>
+        </p>
+      )}
 
       {/* the fastest way in: say what it's for (on once the model provider is set up) */}
       {process.env.NEXT_PUBLIC_ASSISTANT === "on" && <div className="mt-10 flex w-full justify-center"><Assistant /></div>}

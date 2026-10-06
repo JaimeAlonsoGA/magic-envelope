@@ -120,6 +120,61 @@ export function listTitle(card: Card) {
   return bare ? (i < 0 ? bare : bare.slice(0, i) + bare[i].toLocaleUpperCase(card.lang) + bare.slice(i + 1)) : t(card.lang).kinds[card.kind];
 }
 
+const fold = (s: string, lang: Lang) =>
+  s.normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim().toLocaleLowerCase(lang);
+
+const signatureOf = (card: Card) => {
+  const b = card.blocks.find((x) => x.type === "signature" && x.text.trim());
+  return b?.type === "signature" ? b.text.trim() : "";
+};
+
+/**
+ * A heading that is only someone's name is not an email subject ("Jaime").
+ * A one-word occasion ("Fiesta", "Boda") still is, and so is a real title.
+ */
+function personalTitle(occasion: string, card: Card, guest: string) {
+  const bare = fold(occasion, card.lang);
+  if (!bare) return true;
+  const sign = fold(signatureOf(card), card.lang);
+  if (sign && bare === sign) return true;
+  if (guest && bare === fold(guest, card.lang)) return true;
+  const raw = occasion.trim();
+  if (/[!?¡¿.…]/.test(raw) || raw.split(/\s+/).length !== 1) return false;
+  if (!/^[\p{L}][\p{L}'’-]*$/u.test(raw)) return false;
+  return !Object.values(t(card.lang).kinds).some((k) => fold(k, card.lang) === bare);
+}
+
+/** listTitle with a name pulled out can leave "¡Nos casamos, !". Close that up for the email only. */
+function mailOccasion(card: Card) {
+  return listTitle(card).replace(/\s*[,;:·—–-]+\s*(?=[!?…]|$)/g, "").replace(/\s{2,}/g, " ").trim();
+}
+
+/** Subject for the email that carries this letter. Never just the host's or guest's name. */
+export function letterSubject(card: Card, guestName?: string) {
+  const dict = t(card.lang);
+  const occasion = mailOccasion(card);
+  const guest = guestName?.trim() ?? "";
+  const kindName = dict.kinds[card.kind];
+  if (!personalTitle(occasion, card, guest) && fold(occasion, card.lang) !== fold(kindName, card.lang)) return occasion;
+  return card.kind === "letter" ? dict.guest.mail.forYou : kindName;
+}
+
+/** The note a host sends with a letter: a short email, and an even shorter chat line. */
+export function letterNote(card: Card, guestName: string | undefined, link: string) {
+  const g = t(card.lang).guest;
+  const guest = guestName?.trim() || undefined;
+  const subject = letterSubject(card, guestName);
+  const occasion = mailOccasion(card);
+  const sign = signatureOf(card);
+  const home = (() => { try { return new URL(link).origin; } catch { return "https://magic-envelope.com"; } })();
+  const parts = [g.mail.hello(guest), ""];
+  if (subject === occasion) parts.push(occasion, "");
+  parts.push(g.mail.lead, link, "");
+  if (sign) parts.push(sign, "");
+  parts.push(g.mail.brand, home);
+  return { subject, email: parts.join("\n"), chat: `${g.mail.chat(guest)}\n${link}` };
+}
+
 /** The letter's event date (its first date block), if it has one. */
 export const eventDate = (card: Card) => {
   const d = card.blocks.find((b) => b.type === "date");

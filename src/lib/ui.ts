@@ -189,6 +189,7 @@ const en = {
   // public site
   site: {
     tagline: "Free invitations that arrive in a sealed envelope",
+    ratings: (n: number) => `${n} rating${n === 1 ? "" : "s"}`,
     makeInvitation: "Make an invitation",
     forAgents: "For agents",
     apiDocs: "API & MCP docs",

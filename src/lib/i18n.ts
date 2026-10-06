@@ -9,9 +9,19 @@ type Guest = {
   to: string; open: string; tapToOpen: string; share: string; copied: string; print: string;
   calendar: string; map: string; attending: string; notAttending: string; maybe: string; deadline: string;
   days: string; hours: string; minutes: string; seconds: string; scan: string; makeYourOwn: string; today: string;
+  /** One tap after the letter is open. Stars rate the app, not the host. */
+  rate: string; rated: string; stars: (n: number) => string;
   friend: string; // default {name} when there's no guest
   /** The message a guest sends back from an RSVP button: thanks (naming the host when known) + the answer. */
   reply: { thanks: (host?: string) => string; yes: string; maybe: string; no: string };
+  /** The note that carries the letter when the host sends it by email or chat. */
+  mail: {
+    forYou: string;
+    hello: (name?: string) => string;
+    lead: string;
+    brand: string;
+    chat: (name?: string) => string;
+  };
   rsvpFlat: string; // printed RSVP line, e.g. "Please confirm"
 };
 type Dict = {
@@ -29,8 +39,16 @@ const es: Dict = {
     calendar: "Añadir al calendario", map: "Cómo llegar", attending: "Allí estaré", notAttending: "No podré", maybe: "Quizás",
     deadline: "Responde antes del", days: "días", hours: "horas", minutes: "min", seconds: "seg", scan: "Escanéame",
     makeYourOwn: "Crea tu sobre mágico", today: "¡Es hoy!",
+    rate: "¿Qué te ha parecido?", rated: "Gracias.", stars: (n) => `${n} de 5`,
     friend: "Querido Invitado", rsvpFlat: "Confirma tu asistencia",
     reply: { thanks: (h?: string) => (h ? `¡Gracias por la invitación, ${h}!` : "¡Gracias por la invitación!"), yes: "Allí estaré.", maybe: "Puede que vaya; te lo confirmo pronto.", no: "Por desgracia, no podré ir." },
+    mail: {
+      forYou: "Una carta para ti",
+      hello: (n) => (n ? `Hola ${n},` : "Hola,"),
+      lead: "Te dejo una carta. Ábrela en este enlace:",
+      brand: "Enviada con Magic Envelope",
+      chat: (n) => (n ? `Hola ${n}, te dejo una carta:` : "Te dejo una carta:"),
+    },
   },
   tpl: {
     birthday: { h: "¡Cumplo años!", t: "Ven a celebrarlo conmigo. Habrá tarta, música y magia.", sign: "Con cariño" },
@@ -52,8 +70,16 @@ const en: Dict = {
     calendar: "Add to calendar", map: "Directions", attending: "I'll be there", notAttending: "Can't make it", maybe: "Maybe",
     deadline: "Please reply by", days: "days", hours: "hours", minutes: "min", seconds: "sec", scan: "Scan me",
     makeYourOwn: "Make your own magic envelope", today: "It's today!",
+    rate: "How was it?", rated: "Thank you.", stars: (n) => `${n} of 5`,
     friend: "Dear Guest", rsvpFlat: "Please RSVP",
     reply: { thanks: (h?: string) => (h ? `Thanks for inviting me, ${h}!` : "Thanks for the invitation!"), yes: "I'll be there.", maybe: "I might make it — I'll let you know soon.", no: "Sadly, I can't make it." },
+    mail: {
+      forYou: "A letter for you",
+      hello: (n) => (n ? `Hello ${n},` : "Hello,"),
+      lead: "I left you a letter. Open it here:",
+      brand: "Sent with Magic Envelope",
+      chat: (n) => (n ? `Hello ${n}, I left you a letter:` : "I left you a letter:"),
+    },
   },
   tpl: {
     birthday: { h: "It's my birthday!", t: "Come celebrate with me. There will be cake, music and magic.", sign: "With love" },
@@ -75,8 +101,16 @@ const fr: Dict = {
     calendar: "Ajouter au calendrier", map: "Itinéraire", attending: "J'y serai", notAttending: "Je ne pourrai pas", maybe: "Peut-être",
     deadline: "Répondez avant le", days: "jours", hours: "heures", minutes: "min", seconds: "s", scan: "Scannez-moi",
     makeYourOwn: "Créez votre enveloppe magique", today: "C'est aujourd'hui !",
+    rate: "Qu'en as-tu pensé ?", rated: "Merci.", stars: (n) => `${n} sur 5`,
     friend: "Cher Invité", rsvpFlat: "Merci de confirmer",
     reply: { thanks: (h?: string) => (h ? `Merci pour l’invitation, ${h} !` : "Merci pour l’invitation !"), yes: "Je serai là.", maybe: "Je viendrai peut-être, je te confirme bientôt.", no: "Malheureusement, je ne pourrai pas venir." },
+    mail: {
+      forYou: "Une lettre pour toi",
+      hello: (n) => (n ? `Bonjour ${n},` : "Bonjour,"),
+      lead: "Je te laisse une lettre. Ouvre-la ici :",
+      brand: "Envoyée avec Magic Envelope",
+      chat: (n) => (n ? `Bonjour ${n}, je te laisse une lettre :` : "Je te laisse une lettre :"),
+    },
   },
   tpl: {
     birthday: { h: "C'est mon anniversaire !", t: "Viens fêter ça avec moi. Gâteau, musique et magie.", sign: "Bises" },
@@ -98,8 +132,16 @@ const pt: Dict = {
     calendar: "Adicionar à agenda", map: "Como chegar", attending: "Estarei lá", notAttending: "Não poderei", maybe: "Talvez",
     deadline: "Responda até", days: "dias", hours: "horas", minutes: "min", seconds: "seg", scan: "Escaneie",
     makeYourOwn: "Crie seu envelope mágico", today: "É hoje!",
+    rate: "O que achou?", rated: "Obrigado.", stars: (n) => `${n} de 5`,
     friend: "Querido Convidado", rsvpFlat: "Confirme presença",
     reply: { thanks: (h?: string) => (h ? `Obrigado pelo convite, ${h}!` : "Obrigado pelo convite!"), yes: "Estarei lá.", maybe: "Talvez eu vá — te confirmo em breve.", no: "Infelizmente, não vou poder ir." },
+    mail: {
+      forYou: "Uma carta para você",
+      hello: (n) => (n ? `Olá ${n},` : "Olá,"),
+      lead: "Deixo uma carta para você. Abra neste link:",
+      brand: "Enviada com Magic Envelope",
+      chat: (n) => (n ? `Olá ${n}, deixo uma carta para você:` : "Deixo uma carta para você:"),
+    },
   },
   tpl: {
     birthday: { h: "É meu aniversário!", t: "Vem comemorar comigo. Bolo, música e magia.", sign: "Com carinho" },
@@ -121,8 +163,16 @@ const it: Dict = {
     calendar: "Aggiungi al calendario", map: "Indicazioni", attending: "Ci sarò", notAttending: "Non potrò", maybe: "Forse",
     deadline: "Rispondi entro il", days: "giorni", hours: "ore", minutes: "min", seconds: "sec", scan: "Scansionami",
     makeYourOwn: "Crea la tua busta magica", today: "È oggi!",
+    rate: "Che te n'è parso?", rated: "Grazie.", stars: (n) => `${n} su 5`,
     friend: "Caro Ospite", rsvpFlat: "Conferma la tua presenza",
     reply: { thanks: (h?: string) => (h ? `Grazie per l’invito, ${h}!` : "Grazie per l’invito!"), yes: "Ci sarò.", maybe: "Forse riesco a venire, ti confermo presto.", no: "Purtroppo non riesco a esserci." },
+    mail: {
+      forYou: "Una lettera per te",
+      hello: (n) => (n ? `Ciao ${n},` : "Ciao,"),
+      lead: "Ti lascio una lettera. Aprila qui:",
+      brand: "Inviata con Magic Envelope",
+      chat: (n) => (n ? `Ciao ${n}, ti lascio una lettera:` : "Ti lascio una lettera:"),
+    },
   },
   tpl: {
     birthday: { h: "È il mio compleanno!", t: "Vieni a festeggiare con me. Torta, musica e magia.", sign: "Con affetto" },
@@ -144,8 +194,16 @@ const de: Dict = {
     calendar: "Zum Kalender", map: "Route", attending: "Ich komme", notAttending: "Ich kann nicht", maybe: "Vielleicht",
     deadline: "Bitte antworte bis", days: "Tage", hours: "Std", minutes: "Min", seconds: "Sek", scan: "Scan mich",
     makeYourOwn: "Erstelle deinen magischen Umschlag", today: "Heute ist es so weit!",
+    rate: "Wie fandest du es?", rated: "Danke.", stars: (n) => `${n} von 5`,
     friend: "Lieber Gast", rsvpFlat: "Bitte gib Bescheid",
     reply: { thanks: (h?: string) => (h ? `Danke für die Einladung, ${h}!` : "Danke für die Einladung!"), yes: "Ich bin dabei.", maybe: "Vielleicht schaffe ich es – ich sage dir bald Bescheid.", no: "Leider kann ich nicht kommen." },
+    mail: {
+      forYou: "Ein Brief für dich",
+      hello: (n) => (n ? `Hallo ${n},` : "Hallo,"),
+      lead: "Ich lege dir einen Brief hin. Öffne ihn hier:",
+      brand: "Gesendet mit Magic Envelope",
+      chat: (n) => (n ? `Hallo ${n}, ich lege dir einen Brief hin:` : "Ich lege dir einen Brief hin:"),
+    },
   },
   tpl: {
     birthday: { h: "Ich habe Geburtstag!", t: "Feier mit mir. Es gibt Kuchen, Musik und Magie.", sign: "Alles Liebe" },

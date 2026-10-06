@@ -12,7 +12,7 @@ export default async function Page() {
   return (
     <LangProvider lang="en">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd("en", rating)) }} />
-      <Home />
+      <Home rating={rating} />
     </LangProvider>
   );
 }

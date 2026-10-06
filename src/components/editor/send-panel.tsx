@@ -7,12 +7,12 @@ import {
 import QRCode from "qrcode";
 import { useEffect, useState, type ReactNode } from "react";
 import { composeLinks } from "@/lib/actions";
-import { cardTitle, fileSlug, listTitle } from "@/lib/blocks";
+import { fileSlug, letterNote, listTitle } from "@/lib/blocks";
 import { cardStyle } from "@/lib/envelope";
 import { val } from "@/lib/fields";
 import { useFlash, useOnline } from "@/lib/hooks";
 import { useUI } from "@/lib/locale";
-import type { Draft, Guest, RsvpAnswer } from "@/lib/model";
+import type { Card, Draft, Guest, RsvpAnswer } from "@/lib/model";
 import { copy, haptic, openOutbound, saveFile, share } from "@/lib/native";
 import { Seal } from "../craft";
 import { SketchButton, SketchLink } from "../sketch";
@@ -56,16 +56,18 @@ const csvCell = (s: string) => `"${s.replaceAll('"', '""')}"`;
 
 /**
  * How a guest's letter is delivered: WhatsApp, email, or the share sheet.
- * The message is copied first. On a desktop the compose page opens in the browser
- * (Gmail or WhatsApp Web). A phone uses the app. Resolves true when it was copied.
+ * Email gets a short letter (subject, greeting, the link on its own line, a signature).
+ * Chat gets one line plus the link. The message is copied first. On a desktop the compose
+ * page opens in the browser. A phone uses the app. Resolves true when it was copied.
  */
-async function deliver(guest: Guest, title: string, link: string) {
-  const text = `${title}\n${link}`;
+async function deliver(guest: Guest, card: Card, link: string) {
+  const note = letterNote(card, guest.name, link);
   const phone = val("phone", guest.phone);
   const email = val("email", guest.email);
-  if (!phone && !email) return (await share({ title, text: title, url: link })) === "copied";
+  if (!phone && !email) return (await share({ title: note.subject, text: note.chat, url: link })) === "copied";
+  const text = email && !phone ? note.email : note.chat;
   const copied = copy(text); // inside the click, before anything takes focus
-  const links = composeLinks(phone ? "whatsapp" : "email", phone || email || "", text, title);
+  const links = composeLinks(phone ? "whatsapp" : "email", phone || email || "", text, note.subject);
   openOutbound(links.web, links.app);
   return copied;
 }
@@ -139,7 +141,7 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
   const [copied, flash] = useFlash();
   const [keyCopied, flashKey] = useFlash();
   const [qr, setQr] = useState("");
-  const title = cardTitle(draft.card);
+  const note = letterNote(draft.card, undefined, url);
   useEffect(() => {
     let live = true;
     QRCode.toDataURL(url, { margin: 1, width: 512 }).then((s) => live && setQr(s));
@@ -161,8 +163,8 @@ function SingleLink({ draft, url }: { draft: Draft; url: string }) {
           {copied ? <Check size={16} className="ml-auto shrink-0 text-violet" /> : <Copy size={16} className="ml-auto shrink-0" />}
         </button>
         <div className="flex flex-wrap gap-2">
-          <SketchButton data-delivers tone="wax" onClick={() => share({ title, text: title, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {ui.share}</SketchButton>
-          <SketchLink data-delivers external href={composeLinks("whatsapp", "", `${title}\n${url}`).web} onClick={(e) => { e.preventDefault(); const links = composeLinks("whatsapp", "", `${title}\n${url}`); openOutbound(links.web, links.app); }}><MessageCircle size={18} /> WhatsApp</SketchLink>
+          <SketchButton data-delivers tone="wax" onClick={() => share({ title: note.subject, text: note.chat, url }).then((r) => r === "copied" && flash())}><Share2 size={18} /> {ui.share}</SketchButton>
+          <SketchLink data-delivers external href={composeLinks("whatsapp", "", note.chat).web} onClick={(e) => { e.preventDefault(); const links = composeLinks("whatsapp", "", note.chat); openOutbound(links.web, links.app); }}><MessageCircle size={18} /> WhatsApp</SketchLink>
           <SketchLink data-delivers file href={`/api/v1/letters/${draft.publishedId}/image?download=1`} aria-label={ui.out.download} title={ui.out.download}><Download size={18} /> {ui.out.download}</SketchLink>
         </div>
         {draft.editKey && (
@@ -218,7 +220,7 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
         {guests.some((g) => !sent[g.id]) && (
           <SketchButton data-delivers size="sm" tone="wax" onClick={() => {
             const g = guests.find((x) => !sent[x.id])!;
-            deliver(g, cardTitle(draft.card, g.name), linkFor(g)).then((copied) => copied && flashGuest(g.id));
+            deliver(g, draft.card, linkFor(g)).then((copied) => copied && flashGuest(g.id));
             markSent(g.id);
           }}><Send size={15} /> {ui.out.sendNext}</SketchButton>
         )}
@@ -229,7 +231,6 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
       </div>
       <ul className="divide-y divide-ink/10">
         {guests.map((g) => {
-          const title = cardTitle(draft.card, g.name);
           const channel = val("phone", g.phone) ? <MessageCircle size={16} /> : val("email", g.email) ? <Mail size={16} /> : <Share2 size={16} />;
           return (
             <li key={g.id} className="flex items-center gap-1.5 py-1.5">
@@ -241,7 +242,7 @@ function GuestLinks({ draft, guests, sent, linkFor, markSent }: {
                 className="grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-ink/5 hover:text-ink">
                 {copiedId === g.id ? <Check size={16} /> : <Copy size={16} />}
               </button>
-              <SketchButton data-delivers size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, title, linkFor(g)).then((copied) => copied && flashGuest(g.id)); markSent(g.id); }}>
+              <SketchButton data-delivers size="sm" tone={sent[g.id] ? "plain" : "wax"} onClick={() => { deliver(g, draft.card, linkFor(g)).then((copied) => copied && flashGuest(g.id)); markSent(g.id); }}>
                 {channel} {ui.out.sendTo}
               </SketchButton>
             </li>

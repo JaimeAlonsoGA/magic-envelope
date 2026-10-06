@@ -45,7 +45,7 @@ export function EnvelopeCanvas({ card, guestName, selected, onSelect }: {
   const [side, setSide] = useState<"front" | "back">("front");
   const env = envelopeOf(card, guestName);
   return (
-    <div className="mx-auto w-full max-w-xl space-y-4">
+    <div className="mx-auto w-full max-w-[48rem] space-y-4">
       <EnvelopeFlip
         env={env}
         side={side}

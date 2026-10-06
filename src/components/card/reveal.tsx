@@ -1,12 +1,13 @@
 "use client";
 
-import { Check, Download, PenLine, Share2, Sparkles } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Check, Download, PenLine, Share2, Sparkles, Star } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cardTitle } from "@/lib/blocks";
 import { cardStyle, envelopeOf } from "@/lib/envelope";
 import { useFlash } from "@/lib/hooks";
 import { t } from "@/lib/i18n";
 import { useUI } from "@/lib/locale";
+import { homePath } from "@/lib/seo";
 import type { Card } from "@/lib/model";
 import { hasFront } from "@/lib/mail";
 import { share } from "@/lib/native";
@@ -117,11 +118,49 @@ function playOpening(envelope: HTMLElement, sheet: HTMLElement): Animation[] {
 
 /** Guest experience: sealed envelope → opens → the letter comes out of it into its place, with live actions. */
 /** `bare`: no footer (the preview page brings its own controls). */
-/**
- * The growth loop: a guest who liked this letter starts their own from it — same occasion, same
- * style, same language — one tap from the wizard's presets. `ref` tells where creators come from.
- */
-const makeYourOwn = (card: Card) => `/new?kind=${card.kind}&style=${card.style}&lang=${card.lang}&ref=letter`;
+/** A guest who liked this letter starts at the home page, in the letter's language. */
+const makeYourOwn = (card: Card) => homePath(card.lang);
+
+const GUEST_RATE = "me:guest-rate";
+
+/** A star already left on this device, as a guest or as a host. 0 if none yet. */
+function starsLeft(): number {
+  try {
+    const guest = JSON.parse(localStorage.getItem(GUEST_RATE) ?? "{}") as { rated?: number };
+    const host = JSON.parse(localStorage.getItem("me:thanks") ?? "{}") as { rated?: number };
+    return guest.rated || host.rated || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** One row of stars after the letter is open. A guest's rating counts with the host's, on the home page. */
+function GuestRate({ g }: { g: ReturnType<typeof t>["guest"] }) {
+  const known = useSyncExternalStore(() => () => {}, starsLeft, () => 0);
+  const [picked, setPicked] = useState(0);
+  const [hover, setHover] = useState(0);
+  if (known > 0 && !picked) return null;
+  if (picked > 0) return <p className="w-full text-center font-hand text-lg">{g.rated}</p>;
+  const rate = (n: number) => {
+    setPicked(n);
+    try { localStorage.setItem(GUEST_RATE, JSON.stringify({ rated: n })); } catch { /* private mode */ }
+    void fetch("/api/rate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stars: n }) }).catch(() => {});
+  };
+  return (
+    <div className="flex w-full flex-wrap items-center justify-center gap-x-2 gap-y-1">
+      <span className="font-hand text-lg">{g.rate}</span>
+      <div className="flex" role="radiogroup" aria-label={g.rate} onMouseLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" role="radio" aria-checked={false} aria-label={g.stars(n)} title={g.stars(n)}
+            onMouseEnter={() => setHover(n)} onFocus={() => setHover(n)} onClick={() => rate(n)}
+            className="grid h-9 w-9 place-items-center rounded-md text-[#d29a12] hover:bg-black/5">
+            <Star size={20} fill={n <= hover ? "currentColor" : "none"} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, bare = false, rsvpKey }: { card: Card; guestName?: string; shareUrl: string; print?: boolean; ownerHref?: string; bare?: boolean; rsvpKey?: { id: string; g?: string } }) {
   // sealed: letter hidden · ready: the letter waits in the pocket, behind the closed flap · opening · open
@@ -194,8 +233,9 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
         <div ref={letterRef} className="relative" style={{ zIndex: LAYER.letter }}>
           <CardView card={card} shareUrl={shareUrl} style={s} guestName={guestName} flat={print} rsvpKey={rsvpKey} />
         </div>
-        {!bare && <footer className={`no-print mx-auto mt-10 flex max-w-[36rem] flex-wrap items-center justify-center gap-2 transition-opacity duration-300 ${phase === "open" ? "" : "opacity-0"}`}
+        {!bare && <footer inert={phase !== "open"} className={`no-print mx-auto mt-10 flex max-w-[36rem] flex-wrap items-center justify-center gap-2 transition-opacity duration-300 ${phase === "open" ? "" : "opacity-0"}`}
           style={s.page && s.dark ? ({ color: "#f4f1ea", "--ink": "#f4f1ea" } as React.CSSProperties) : undefined}>
+          {!ownerHref && <GuestRate g={g} />}
           <SketchButton size="icon" onClick={onShare} aria-label={g.share}>{copied ? <Check size={18} /> : <Share2 size={18} />}</SketchButton>
           {rsvpKey && <SketchLink file href={`/api/v1/letters/${rsvpKey.id}/image?download=1${rsvpKey.g ? `&g=${rsvpKey.g}` : ""}`} size="icon" aria-label={g.print}><Download size={18} /></SketchLink>}
           {ownerHref

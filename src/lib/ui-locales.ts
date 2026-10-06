@@ -174,6 +174,7 @@ export const es: UIText = {
   },
   site: {
     tagline: "Invitaciones gratis que llegan en un sobre lacrado",
+    ratings: (n) => `${n} valoraciones`,
     makeInvitation: "Crea una invitación",
     forAgents: "Para agentes",
     apiDocs: "Docs de API y MCP",
@@ -356,6 +357,7 @@ export const fr: UIText = {
   },
   site: {
     tagline: "Des invitations gratuites qui arrivent dans une enveloppe scellée",
+    ratings: (n) => `${n} avis`,
     makeInvitation: "Créer une invitation",
     forAgents: "Pour les agents",
     apiDocs: "Docs API et MCP",
@@ -538,6 +540,7 @@ export const pt: UIText = {
   },
   site: {
     tagline: "Convites grátis que chegam num envelope lacrado",
+    ratings: (n) => `${n} avaliações`,
     makeInvitation: "Crie um convite",
     forAgents: "Para agentes",
     apiDocs: "Docs de API e MCP",
@@ -720,6 +723,7 @@ export const it: UIText = {
   },
   site: {
     tagline: "Inviti gratuiti che arrivano in una busta sigillata",
+    ratings: (n) => `${n} valutazioni`,
     makeInvitation: "Crea un invito",
     forAgents: "Per gli agenti",
     apiDocs: "Documentazione API e MCP",
@@ -902,6 +906,7 @@ export const de: UIText = {
   },
   site: {
     tagline: "Kostenlose Einladungen, die im versiegelten Umschlag ankommen",
+    ratings: (n) => `${n} Bewertungen`,
     makeInvitation: "Einladung erstellen",
     forAgents: "Für Agenten",
     apiDocs: "API- & MCP-Doku",
