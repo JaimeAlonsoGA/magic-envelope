@@ -4,8 +4,9 @@ import { limited } from "@/lib/ratelimit.server";
 import { renderLetters, type ImageFormat } from "@/lib/render.server";
 import { loadCardForEdit, loadGuests } from "@/lib/store.server";
 
-// Not the project default of 300. Routes that share a timeout are one function, and this one carries Chromium.
-export const maxDuration = 800;
+// Hobby allows at most 300, and routes that share a timeout are one function.
+// 240 keeps Chromium off the shared 300s routes and off the image route (90).
+export const maxDuration = 240;
 const MAX = 150;
 
 /**
