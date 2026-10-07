@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "android/**",
     "ios/**",
   ]),
+  // CommonJS build scripts (loaded by next.config through require) are allowed to require.
+  { files: ["**/*.cjs"], rules: { "@typescript-eslint/no-require-imports": "off" } },
 ]);
 
 export default eslintConfig;

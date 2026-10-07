@@ -1,7 +1,8 @@
 import "server-only";
 import { createHash } from "crypto";
-import { lookup } from "dns/promises";
-import { isIP } from "net";
+import { lookup } from "dns";
+import { isIP, type LookupFunction } from "net";
+import { Agent, fetch } from "undici";
 import { hostOf, safeUrl } from "./actions";
 import { directImageUrl, isOwnImage } from "./media";
 import type { Block, Card } from "./model";
@@ -55,6 +56,36 @@ function sniff(buf: Uint8Array): string | null {
   return null;
 }
 
+/**
+ * Every connection resolves through here, so the address checked is the address connected to: a
+ * name that answers public for a pre-check and private for the fetch (DNS rebinding) gets nowhere.
+ */
+const publicOnly: LookupFunction = (hostname, options, callback) =>
+  lookup(hostname, { ...options, all: true }, (err, addresses) => {
+    if (err) return callback(err, "", 4);
+    const list = addresses as unknown as { address: string; family: number }[];
+    if (!list.length || list.some((a) => isPrivate(a.address))) return callback(new Error("blocked address"), "", 4);
+    if (options.all) (callback as unknown as (e: null, a: typeof list) => void)(null, list);
+    else callback(null, list[0].address, list[0].family);
+  });
+const publicAgent = new Agent({ connect: { lookup: publicOnly } });
+
+/** The body, stopping as soon as it passes `max` (a declared or an endless size never reaches memory). */
+async function readCapped(res: Awaited<ReturnType<typeof fetch>>, max: number) {
+  if (Number(res.headers.get("content-length") ?? 0) > max) throw new Error("too big");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of res.body ?? []) {
+    size += chunk.byteLength;
+    if (size > max) throw new Error("too big");
+    chunks.push(chunk);
+  }
+  const buf = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) { buf.set(c, at); at += c.byteLength; }
+  return buf;
+}
+
 /** Fetch one public image. Refuses private hosts, odd ports and anything that isn't a picture. */
 async function fetchPublicImage(raw: string, hops = 0): Promise<{ buf: Uint8Array; type: string }> {
   const u = new URL(raw);
@@ -62,15 +93,11 @@ async function fetchPublicImage(raw: string, hops = 0): Promise<{ buf: Uint8Arra
   if (u.port && u.port !== "80" && u.port !== "443") throw new Error("bad port");
   if (blockedHost(u.hostname)) throw new Error("blocked host");
   if (isIP(u.hostname) && isPrivate(u.hostname)) throw new Error("blocked address");
-  if (!isIP(u.hostname)) {
-    const ips = await lookup(u.hostname, { all: true }).catch(() => []);
-    if (!ips.length || ips.some((i) => isPrivate(i.address))) throw new Error("blocked address");
-  }
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 12_000);
   try {
     const res = await fetch(u, {
-      redirect: "manual", signal: ac.signal,
+      dispatcher: publicAgent, redirect: "manual", signal: ac.signal,
       headers: {
         accept: "image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8",
         // A product-only token is refused by several image hosts. This still names us.
@@ -83,8 +110,7 @@ async function fetchPublicImage(raw: string, hops = 0): Promise<{ buf: Uint8Arra
       return fetchPublicImage(new URL(loc, u).href, hops + 1);
     }
     if (!res.ok) throw new Error(String(res.status));
-    const buf = new Uint8Array(await res.arrayBuffer());
-    if (buf.byteLength > MAX_BYTES) throw new Error("too big");
+    const buf = await readCapped(res, MAX_BYTES);
     const type = sniff(buf);
     if (!type || !EXT[type]) throw new Error("not an image");
     return { buf, type };

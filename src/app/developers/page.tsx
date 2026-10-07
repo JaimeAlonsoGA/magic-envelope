@@ -55,7 +55,7 @@ export default function DevelopersPage() {
           <li><code>GET</code>, <code>PATCH</code> and <code>DELETE /api/v1/letters/:id</code> — with <code>Authorization: Bearer &lt;editKey&gt;</code>. PATCH takes the fields you want to change, or the same object GET returns. GET includes guests&apos; RSVP answers</li>
           <li><code>POST /api/v1/media</code> — copy a public image, or a Drive, Dropbox or Wikimedia link, and get a <code>src</code></li>
           <li><code>GET /api/v1/letters/:id/image?g=&lt;guest&gt;&amp;download=1</code> and <code>/images.zip</code> — one PNG per guest; the ZIP is named after the letter</li>
-          <li><code>POST /api/v1/letters/:id/rating</code> — once, after a successful create, <code>{`{ "stars": 5 }`}</code> with the editKey. The create response includes <code>rateOnce</code>. Not on a later edit. Responses also include <code>site</code> and <code>guide</code>, the public pages to link. Guest urls (<code>/c/…</code>) are private and not indexed</li>
+          <li><code>POST /api/v1/letters/:id/rating</code> — only with the person&apos;s own score (<code>{`{ "stars": 1–5 }`}</code>), once, with the editKey; never on the agent&apos;s own. Kept as feedback, not in the public average. Responses also include <code>site</code> and <code>guide</code>, the public pages to link. Guest urls (<code>/c/…</code>) are private and not indexed</li>
         </ul>
         <ul className="flex flex-wrap gap-x-4 gap-y-1">
           {specs.map(([label, href]) => <li key={href}><a className="underline underline-offset-4" href={href}>{label}</a></li>)}

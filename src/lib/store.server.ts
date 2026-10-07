@@ -217,7 +217,10 @@ export async function readImage(name: string): Promise<Uint8Array | null> {
  * One file per rating. The number before "~" is the stars, so the summary is a single listing.
  * Someone in the app: ratings/<stars>~<random>.
  * The owner of a letter, through the API: ratings/<stars>~L<id>. One per letter; rating again
- * replaces it. Both are real scores of the app and back the home page average.
+ * replaces it.
+ * Only people's ratings back the public average (the home's aggregateRating, shown by search
+ * engines). API ratings are kept apart: letters are free and keyless to create, so anyone could
+ * mint letters and score them, and review data that isn't from real users risks a search penalty.
  */
 const letterRatingName = /^ratings\/([1-5])~L([\w-]{6,32})$/;
 const isLetterRating = (pathname: string, id: string) => letterRatingName.exec(pathname)?.[2] === id;
@@ -246,7 +249,9 @@ export async function saveLetterRating(id: string, stars: number) {
   }
 }
 
-export async function ratingSummary(): Promise<{ count: number; average: number }> {
-  const stars = (await listPaths("ratings/")).map((p) => Number(p.pathname.slice("ratings/".length).split("~")[0])).filter((n) => n >= 1 && n <= 5);
+export async function ratingSummary({ includeApi = false } = {}): Promise<{ count: number; average: number }> {
+  const stars = (await listPaths("ratings/"))
+    .filter((p) => includeApi || !letterRatingName.test(p.pathname))
+    .map((p) => Number(p.pathname.slice("ratings/".length).split("~")[0])).filter((n) => n >= 1 && n <= 5);
   return { count: stars.length, average: stars.length ? stars.reduce((a, b) => a + b, 0) / stars.length : 0 };
 }
