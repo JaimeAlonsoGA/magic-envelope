@@ -1,13 +1,14 @@
 "use client";
 
 import { Check, Download, PenLine, Share2, Sparkles, Star } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cardTitle } from "@/lib/blocks";
 import { cardStyle, envelopeOf } from "@/lib/envelope";
 import { useFlash } from "@/lib/hooks";
 import { t } from "@/lib/i18n";
 import { useUI } from "@/lib/locale";
-import { homePath } from "@/lib/seo";
+import { homePath, occasionCopy, occasionPath } from "@/lib/seo";
 import type { Card } from "@/lib/model";
 import { hasFront } from "@/lib/mail";
 import { share } from "@/lib/native";
@@ -241,6 +242,11 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
           {ownerHref
             ? <SketchLink href={ownerHref} tone="primary"><PenLine size={18} /> {ui.edit}</SketchLink>
             : <SketchLink href={makeYourOwn(card)} tone="primary"><Sparkles size={18} /> {g.makeYourOwn}</SketchLink>}
+          {!ownerHref && (
+            <Link href={occasionPath(card.lang, card.kind)} className="basis-full pt-2 text-center font-hand text-lg opacity-70 underline-offset-4 hover:underline hover:opacity-100">
+              {occasionCopy(card.lang, card.kind).h1}
+            </Link>
+          )}
         </footer>}
       </div>
     </div>

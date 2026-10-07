@@ -16,6 +16,7 @@ const en: FaqPage = {
     { q: "How do I send invitations to a lot of people?", a: "For links: copy every link at once, or download a CSV and use it in your mail. For pictures: one ZIP holds every guest's image, named after the letter. Send next walks the list one person at a time when you want WhatsApp or email." },
     { q: "Can I download the invitation instead of printing it?", a: "Yes. Download is the main way out: one PNG per guest, or a ZIP of all of them. A guest can download their own letter after they open the envelope." },
     { q: "Can an AI agent create the invitation for me?", a: "Yes. The REST API and the MCP server create, update and export letters without opening the website. Docs and copy-ready examples are at /developers, and llms.txt describes the whole thing." },
+    { q: "Can I make an invitation for a house party tonight?", a: "Yes. A house party, a get-together or a hangout is a party invitation: the place, the music and a reply. A film club, a workshop or an activity is an event invitation, with an agenda and a QR code. The date can be today. It is free, there is no account, and an agent can create it through the API." },
   ],
 };
 
@@ -28,6 +29,7 @@ const es: FaqPage = {
     { q: "¿Cómo envío invitaciones a mucha gente?", a: "Enlaces: cópialos todos de una vez, o descarga un CSV para tu correo. Imágenes: un ZIP con la de cada invitado, con el nombre de la carta. «Enviar el siguiente» recorre la lista de uno en uno si quieres WhatsApp o email." },
     { q: "¿Puedo descargar la invitación en vez de imprimirla?", a: "Sí. Descargar es la salida principal: un PNG por invitado, o un ZIP con todos. Quien abre el sobre también puede descargar su carta." },
     { q: "¿Puede un agente de IA crear la invitación?", a: "Sí. La API REST y el servidor MCP crean, actualizan y exportan cartas sin abrir la web. La documentación y los ejemplos están en /developers, y llms.txt lo resume." },
+    { q: "¿Puedo hacer una invitación para una fiesta en casa esta noche?", a: "Sí. Una house party, una fiesta en casa o una quedada es una invitación de fiesta: el sitio, la música y la confirmación. Un cinefórum, un taller o una actividad es una invitación de evento, con agenda y un código QR. La fecha puede ser hoy. Es gratis, sin registro, y un agente puede crearla con la API." },
   ],
 };
 
@@ -40,6 +42,7 @@ const fr: FaqPage = {
     { q: "Comment envoyer beaucoup d'invitations ?", a: "Liens : copiez-les tous, ou téléchargez un CSV pour votre messagerie. Images : un ZIP avec celle de chaque invité, au nom de la lettre. « Envoyer le suivant » parcourt la liste un par un pour WhatsApp ou l'e-mail." },
     { q: "Puis-je télécharger l'invitation au lieu de l'imprimer ?", a: "Oui. Le téléchargement est la sortie principale : un PNG par invité, ou un ZIP. L'invité peut aussi télécharger sa lettre après avoir ouvert l'enveloppe." },
     { q: "Un agent IA peut-il créer l'invitation ?", a: "Oui. L'API REST et le serveur MCP créent, modifient et exportent les lettres sans ouvrir le site. La documentation est sur /developers, et llms.txt résume le tout." },
+    { q: "Puis-je faire une invitation pour une fête à la maison, ce soir ?", a: "Oui. Une fête à la maison ou une soirée entre amis est une invitation de fête : le lieu, la musique et une réponse. Un ciné-club, un atelier ou une activité est une invitation d’événement, avec un programme et un code QR. La date peut être aujourd’hui. C’est gratuit, sans compte, et un agent peut la créer via l’API." },
   ],
 };
 
@@ -52,6 +55,7 @@ const pt: FaqPage = {
     { q: "Como envio convites para muita gente?", a: "Links: copie todos de uma vez, ou baixe um CSV para o seu e-mail. Imagens: um ZIP com a de cada convidado, com o nome da carta. «Enviar o próximo» percorre a lista um a um no WhatsApp ou e-mail." },
     { q: "Posso baixar o convite em vez de imprimir?", a: "Sim. Baixar é o caminho principal: um PNG por convidado, ou um ZIP com todos. Quem abre o envelope também pode baixar a própria carta." },
     { q: "Um agente de IA pode criar o convite?", a: "Sim. A API REST e o servidor MCP criam, atualizam e exportam cartas sem abrir o site. A documentação está em /developers, e o llms.txt resume tudo." },
+    { q: "Posso fazer um convite para uma festa em casa hoje à noite?", a: "Sim. Uma festa em casa ou um encontro é um convite de festa: o local, a música e a confirmação. Um cineclube, uma oficina ou uma atividade é um convite de evento, com agenda e um código QR. A data pode ser hoje. É grátis, sem cadastro, e um agente pode criar pela API." },
   ],
 };
 
@@ -64,6 +68,7 @@ const it: FaqPage = {
     { q: "Come invio tanti inviti?", a: "Link: copiali tutti insieme, oppure scarica un CSV per la posta. Immagini: uno ZIP con quella di ogni ospite, col nome della lettera. «Invia il prossimo» scorre la lista uno per uno su WhatsApp o email." },
     { q: "Posso scaricare l'invito invece di stamparlo?", a: "Sì. Scaricare è la via principale: un PNG per ospite, o uno ZIP. Chi apre la busta può anche scaricare la propria lettera." },
     { q: "Un agente IA può creare l'invito?", a: "Sì. L'API REST e il server MCP creano, aggiornano ed esportano le lettere senza aprire il sito. La documentazione è su /developers, e llms.txt riassume tutto." },
+    { q: "Posso fare un invito per una festa a casa, stasera?", a: "Sì. Una festa a casa o una serata tra amici è un invito per una festa: il luogo, la musica e la conferma. Un cineforum, un laboratorio o un’attività è un invito per un evento, con agenda e codice QR. La data può essere oggi. È gratis, senza account, e un agente può crearlo con l’API." },
   ],
 };
 
@@ -76,6 +81,7 @@ const de: FaqPage = {
     { q: "Wie verschicke ich viele Einladungen?", a: "Links: alle auf einmal kopieren, oder eine CSV für deine Mail herunterladen. Bilder: ein ZIP mit dem Bild jedes Gastes, benannt nach dem Brief. «Nächsten senden» geht die Liste einzeln durch, für WhatsApp oder E-Mail." },
     { q: "Kann ich die Einladung herunterladen statt drucken?", a: "Ja. Herunterladen ist der Hauptweg: ein PNG pro Gast, oder ein ZIP mit allen. Wer den Umschlag öffnet, kann den eigenen Brief auch herunterladen." },
     { q: "Kann ein KI-Agent die Einladung erstellen?", a: "Ja. Die REST-API und der MCP-Server erstellen, ändern und exportieren Briefe, ohne die Website zu öffnen. Die Doku steht unter /developers, und llms.txt fasst alles zusammen." },
+    { q: "Kann ich eine Einladung für eine Houseparty heute Abend machen?", a: "Ja. Eine Houseparty oder ein Treffen ist eine Partyeinladung: Ort, Musik und eine Antwort. Ein Filmclub, ein Workshop oder eine Aktivität ist eine Event-Einladung, mit Agenda und QR-Code. Das Datum kann heute sein. Kostenlos, ohne Konto, und ein Agent kann sie über die API erstellen." },
   ],
 };
 

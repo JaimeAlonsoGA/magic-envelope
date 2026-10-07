@@ -3,7 +3,8 @@ import { limited } from "@/lib/ratelimit.server";
 import { renderLetters, type ImageFormat } from "@/lib/render.server";
 import { letterVersion, loadPublished } from "@/lib/store.server";
 
-export const maxDuration = 60;
+// Not 60: the assistant uses 60, and Vercel packs routes that share a timeout into one function.
+export const maxDuration = 90;
 
 /**
  * One letter as an image: GET /api/v1/letters/:id/image?g=<guestId>&format=png|jpeg

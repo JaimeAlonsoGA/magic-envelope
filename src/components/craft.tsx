@@ -36,14 +36,13 @@ function Mark({ mark, color, dx = 0 }: { mark: SealMark; color: string; dx?: num
   }
 }
 
-export function Seal({ value, shape = "scallop", color, size = 72, className = "", style }: {
-  value: string; shape?: SealShape; color: string; size?: number; className?: string; style?: CSSProperties;
-}) {
+/** Wax disc on a 100×100 grid. The shade is more wax, not a filter: a filter is its own layer and slips off the flap. */
+function SealGraphic({ value, shape, color, shadow = false }: { value: string; shape: SealShape; color: string; shadow?: boolean }) {
   const gid = `seal${useId().replace(/\W/g, "")}`;
   const p = sealPalette(color);
   const mark = parseSeal(value);
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} className={className} style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / .22))", ...style }} aria-hidden>
+    <>
       <defs>
         <radialGradient id={gid} cx="38%" cy="32%" r="72%">
           <stop offset="0" stopColor={p.light} />
@@ -51,6 +50,9 @@ export function Seal({ value, shape = "scallop", color, size = 72, className = "
           <stop offset="1" stopColor={p.dark} />
         </radialGradient>
       </defs>
+      {shadow && [1.5, 0.9, 0.4].map((dy, i) => (
+        <path key={dy} d={sealOutline(50, 50 + dy, 46, shape)} fill={`rgb(0 0 0 / ${0.05 + i * 0.04})`} />
+      ))}
       <path d={sealOutline(50, 50, 46, shape)} fill={`url(#${gid})`} />
       {/* pressed face: lit lower-right lip + shadowed upper-left lip read as an impression */}
       <circle cx="50.8" cy="50.8" r="31" fill="none" stroke={p.rimLight} strokeWidth="1.6" />
@@ -58,6 +60,16 @@ export function Seal({ value, shape = "scallop", color, size = 72, className = "
       <Mark mark={mark} color={p.markShadow} dx={-0.7} />
       <Mark mark={mark} color={p.markEdge} dx={1} />
       <Mark mark={mark} color={p.mark} />
+    </>
+  );
+}
+
+export function Seal({ value, shape = "scallop", color, size = 72, className = "", style }: {
+  value: string; shape?: SealShape; color: string; size?: number; className?: string; style?: CSSProperties;
+}) {
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} className={className} style={{ filter: "drop-shadow(0 2px 2px rgb(0 0 0 / .22))", ...style }} aria-hidden>
+      <SealGraphic value={value} shape={shape} color={color} />
     </svg>
   );
 }
@@ -218,6 +230,8 @@ export const POCKET = { x: 0.06, y: 0.05, w: 0.88, hidden: 0.9 } as const; // be
 
 /** Rounded like the SVG's rx (6 of 300×200), as a CSS radius on a box of the same proportions. */
 const ENV_RADIUS = `${(ENV.radius / ENV.w) * 100}% / ${(ENV.radius / ENV.h) * 100}%`;
+/** Seal diameter as a fraction of the envelope width, drawn in the flap's own coordinates. */
+const SEAL_SCALE = (ENV.w * 0.26) / 100;
 
 export function EnvelopeBack({ env, opener = false, ref, className = "" }: {
   env: EnvModel;
@@ -261,16 +275,21 @@ export function EnvelopeBack({ env, opener = false, ref, className = "" }: {
       </div>
 
       {/* top flap, hinged on the top edge: outer face (with the seal pressed on it) + the inside on its back */}
-      <div data-env-piece data-env-flap className={piece} style={{ zIndex: LAYER.flapClosed, perspective: 1400 }}>
-        <div data-env-hinge className="absolute inset-0 origin-top [transform-style:preserve-3d]">
+      <div data-env-piece data-env-flap className={piece} style={{ zIndex: LAYER.flapClosed, perspective: opener ? 1400 : undefined }}>
+        {/* preserve-3d only while this back can open. During a turn-over the inside face's rotateX
+            would be its own plane and the wax would settle a frame late. */}
+        <div data-env-hinge className={`absolute inset-0 origin-top ${opener ? "[transform-style:preserve-3d]" : ""}`}>
           <div className="absolute inset-0 [backface-visibility:hidden]">
+            {/* The seal is paths in this same SVG. Its own element, translate, or filter would be
+                composited apart from the paper and slide for a frame at the end of the turn. */}
             <svg viewBox="0 0 300 200" className="absolute inset-0 h-full w-full" aria-hidden>
               <path d={ENV.flap} fill={c.flap} {...edge} />
+              {env.seal && (
+                <g data-seal transform={`translate(${ENV.seal.x} ${ENV.seal.y}) scale(${SEAL_SCALE}) translate(-50 -50)`}>
+                  <SealGraphic value={env.seal} shape={env.sealShape} color={env.wax} shadow />
+                </g>
+              )}
             </svg>
-            {env.seal && (
-              <Seal value={env.seal} shape={env.sealShape} color={env.wax} className="absolute w-[26%] -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${(ENV.seal.x / ENV.w) * 100}%`, top: `${(ENV.seal.y / ENV.h) * 100}%`, height: "auto" }} />
-            )}
           </div>
           {/* The back face is turned around its own centre, so its flap is drawn pre-mirrored
               (y → h − y); both flips then compose into a flap hinged on the top edge. */}

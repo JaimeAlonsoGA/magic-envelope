@@ -4,7 +4,8 @@ import { limited } from "@/lib/ratelimit.server";
 import { renderLetters, type ImageFormat } from "@/lib/render.server";
 import { loadCardForEdit, loadGuests } from "@/lib/store.server";
 
-export const maxDuration = 300;
+// Not the project default of 300. Routes that share a timeout are one function, and this one carries Chromium.
+export const maxDuration = 800;
 const MAX = 150;
 
 /**

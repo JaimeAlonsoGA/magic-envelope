@@ -19,7 +19,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...everyLang(faqPath, 0.8),
     ...KINDS.flatMap((k) => everyLang((l) => occasionPath(l, k), 0.9)),
     { url: `${SITE_URL}/new`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${SITE_URL}/developers`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${SITE_URL}/llms.txt`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE_URL}/developers`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/llms.txt`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
+    { url: `${SITE_URL}/api/v1/openapi.json`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
   ];
 }

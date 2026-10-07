@@ -193,6 +193,7 @@ const en = {
     makeInvitation: "Make an invitation",
     forAgents: "For agents",
     apiDocs: "API & MCP docs",
+    agentCan: "An agent can create this invitation with the free API. No account, no key.",
     freeForever: "Free, forever",
     noAds: "No account, no ads. If it made someone smile:",
     coffee: "Buy me a coffee",

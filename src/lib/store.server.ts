@@ -112,7 +112,8 @@ export async function deleteCard(id: string, editKey: string): Promise<boolean> 
   const raw = await owned(id, editKey);
   if (!raw) return false;
   const answers = (await listPaths(`rsvp/${id}/`)).map((a) => a.pathname);
-  await removePaths([...answers, ...imagesOf(raw.card).map((n) => `img/${n}`), `cards/${id}.json`]);
+  const rating = (await listPaths("ratings/")).filter((p) => isLetterRating(p.pathname, id)).map((p) => p.pathname);
+  await removePaths([...answers, ...rating, ...imagesOf(raw.card).map((n) => `img/${n}`), `cards/${id}.json`]);
   return true;
 }
 
@@ -213,13 +214,32 @@ export async function readImage(name: string): Promise<Uint8Array | null> {
 }
 
 /* ───────────── App ratings ─────────────
- * One file per rating (ratings/<stars>~<random>); the summary is a single listing. Real ratings
- * from people who just finished a letter: they back the aggregateRating in the home's structured data.
+ * One file per rating. The number before "~" is the stars, so the summary is a single listing.
+ * Someone in the app: ratings/<stars>~<random>.
+ * The owner of a letter, through the API: ratings/<stars>~L<id>. One per letter; rating again
+ * replaces it. Both are real scores of the app and back the home page average.
  */
+const letterRatingName = /^ratings\/([1-5])~L([\w-]{6,32})$/;
+const isLetterRating = (pathname: string, id: string) => letterRatingName.exec(pathname)?.[2] === id;
+
 export async function saveRating(stars: number) {
   const pathname = `ratings/${stars}~${randomBytes(6).toString("hex")}`;
   const at = new Date().toISOString();
   if (useBlob) await put(pathname, at, { access: "private", contentType: "text/plain", addRandomSuffix: false });
+  else {
+    await mkdir(path.join(LOCAL, "ratings"), { recursive: true });
+    await writeFile(path.join(LOCAL, pathname), at);
+  }
+}
+
+/** The letter owner's rating. Replaces any earlier one for this letter, so it counts once. */
+export async function saveLetterRating(id: string, stars: number) {
+  if (!/^[\w-]{6,32}$/.test(id) || stars < 1 || stars > 5 || stars % 1 !== 0) return;
+  const old = (await listPaths("ratings/")).filter((p) => isLetterRating(p.pathname, id)).map((p) => p.pathname);
+  await removePaths(old);
+  const pathname = `ratings/${stars}~L${id}`;
+  const at = new Date().toISOString();
+  if (useBlob) await put(pathname, at, { access: "private", contentType: "text/plain", addRandomSuffix: false, allowOverwrite: true });
   else {
     await mkdir(path.join(LOCAL, "ratings"), { recursive: true });
     await writeFile(path.join(LOCAL, pathname), at);

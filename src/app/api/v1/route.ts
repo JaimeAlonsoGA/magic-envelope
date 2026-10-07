@@ -16,6 +16,7 @@ export function GET() {
       create: "POST /api/v1/letters",
       read: "GET /api/v1/letters/{id} (Authorization: Bearer <editKey>)",
       update: "PATCH /api/v1/letters/{id} (Authorization: Bearer <editKey>)",
+      rate: "POST /api/v1/letters/{id}/rating { stars } (Authorization: Bearer <editKey>)",
     },
   }, { headers: { "access-control-allow-origin": "*" } });
 }

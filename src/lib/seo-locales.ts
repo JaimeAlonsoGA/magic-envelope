@@ -32,7 +32,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       party: {
         title: "Invitaciones de fiesta gratis online", h1: "Invitaciones de fiesta con estilo",
-        intro: "De una cena con amigos a una noche de fiesta: elige un estilo, añade el sitio, la música y el dress code, y envía a cada uno su propia invitación.",
+        intro: "Una fiesta en casa, una quedada o una noche de fiesta: elige un estilo, añade el sitio, la música y el dress code, y envía a cada uno su propia invitación. Puede ser esta noche.",
         styles: ["groovy", "launch", "midnight"],
         points: ["Playlist y dress code", "Mapa y cómo llegar", "Confirmación con un toque", "Como enlace o como imagen"],
       },
@@ -56,7 +56,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Invitaciones para eventos gratis online", h1: "Invitaciones para eventos",
-        intro: "Lanzamientos, quedadas, charlas: una invitación limpia con la agenda, el lugar, enlaces y un código QR para el acceso.",
+        intro: "Un cinefórum, una actividad, una charla o un lanzamiento: una invitación limpia con la agenda, el lugar, enlaces y un código QR para el acceso.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda y enlaces", "Código QR", "Una invitación para cada asistente", "API para agentes y automatizaciones"],
       },
@@ -92,7 +92,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       party: {
         title: "Invitation de fête gratuite en ligne", h1: "Des invitations de fête qui ont du style",
-        intro: "D’un dîner entre amis à une soirée : choisissez un style, ajoutez le lieu, la musique et le dress code, et envoyez à chacun sa propre invitation.",
+        intro: "Une fête à la maison ou une soirée entre amis : choisissez un style, ajoutez le lieu, la musique et le dress code, et envoyez à chacun sa propre invitation. Ce soir, c’est possible.",
         styles: ["groovy", "launch", "midnight"],
         points: ["Playlist et dress code", "Carte et itinéraire", "Réponse en un geste", "En lien ou en image"],
       },
@@ -116,7 +116,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Invitation d’événement gratuite en ligne", h1: "Invitations d’événement",
-        intro: "Lancements, meetups, conférences : une invitation nette avec le programme, le lieu, des liens et un code QR pour l’accueil.",
+        intro: "Un ciné-club, un atelier, un meetup ou un lancement : une invitation nette avec le programme, le lieu, des liens et un code QR pour l’accueil.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Programme et liens", "Code QR", "Une invitation par participant", "API pour agents et automatisations"],
       },
@@ -152,7 +152,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       party: {
         title: "Convites de festa grátis online", h1: "Convites de festa com estilo",
-        intro: "De um jantar com amigos a uma noitada: escolha um estilo, adicione o local, a música e o traje, e envie a cada um seu próprio convite.",
+        intro: "Uma festa em casa, um encontro ou uma noitada: escolha um estilo, adicione o local, a música e o traje, e envie a cada um seu próprio convite. Pode ser hoje à noite.",
         styles: ["groovy", "launch", "midnight"],
         points: ["Playlist e traje", "Mapa e rotas", "Confirmação com um toque", "Como link ou imagem"],
       },
@@ -176,7 +176,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Convites para eventos grátis online", h1: "Convites para eventos",
-        intro: "Lançamentos, encontros, palestras: um convite limpo com a agenda, o local, links e um código QR para o credenciamento.",
+        intro: "Um cineclube, uma atividade, um encontro ou um lançamento: um convite limpo com a agenda, o local, links e um código QR para o credenciamento.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda e links", "Código QR", "Um convite para cada participante", "API para agentes e automações"],
       },
@@ -212,7 +212,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       party: {
         title: "Inviti per feste gratis online", h1: "Inviti per feste con stile",
-        intro: "Da una cena tra amici a una serata: scegli uno stile, aggiungi il luogo, la musica e il dress code, e invia a ognuno il suo invito.",
+        intro: "Una festa a casa o una serata tra amici: scegli uno stile, aggiungi il luogo, la musica e il dress code, e invia a ognuno il suo invito. Può essere stasera.",
         styles: ["groovy", "launch", "midnight"],
         points: ["Playlist e dress code", "Mappa e indicazioni", "Conferma con un tocco", "Come link o immagine"],
       },
@@ -236,7 +236,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Inviti per eventi gratis online", h1: "Inviti per eventi",
-        intro: "Lanci, meetup, talk: un invito pulito con l’agenda, il luogo, i link e un codice QR per l’accoglienza.",
+        intro: "Un cineforum, un laboratorio, un meetup o un lancio: un invito pulito con l’agenda, il luogo, i link e un codice QR per l’accoglienza.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda e link", "Codice QR", "Un invito per ogni partecipante", "API per agenti e automazioni"],
       },
@@ -272,7 +272,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       party: {
         title: "Kostenlose Partyeinladungen online", h1: "Partyeinladungen mit Stil",
-        intro: "Vom Essen mit Freunden bis zur langen Nacht: Wähle einen Stil, füge Ort, Musik und Dresscode hinzu und schick allen ihre eigene Einladung.",
+        intro: "Eine Houseparty, ein Treffen oder eine lange Nacht: Wähle einen Stil, füge Ort, Musik und Dresscode hinzu und schick allen ihre eigene Einladung. Auch für heute Abend.",
         styles: ["groovy", "launch", "midnight"],
         points: ["Playlist und Dresscode", "Karte und Route", "Zusage mit einem Tipp", "Als Link oder als Bild"],
       },
@@ -296,7 +296,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Kostenlose Event-Einladungen online", h1: "Einladungen für Events",
-        intro: "Launches, Meetups, Vorträge: eine klare Einladung mit Agenda, Ort, Links und QR-Code für den Einlass.",
+        intro: "Ein Filmclub, ein Workshop, ein Meetup oder ein Launch: eine klare Einladung mit Agenda, Ort, Links und QR-Code für den Einlass.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda und Links", "QR-Code", "Eine Einladung pro Gast", "API für Agenten und Automationen"],
       },

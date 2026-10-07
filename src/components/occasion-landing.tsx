@@ -42,6 +42,7 @@ export function OccasionLanding({ kind, lang }: { kind: Kind; lang: Lang }) {
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-wax px-6 py-3 font-hand text-xl text-on-wax shadow-sm transition-transform hover:-translate-y-0.5">
             <Plus size={20} /> {ui.site.createFree}
           </Link>
+          <p className="mt-4"><Link href="/developers" className="text-sm text-muted underline decoration-dotted underline-offset-4 hover:text-ink">{ui.site.agentCan}</Link></p>
         </header>
 
         {/* live previews: the real letters in this language, each a deep link into the wizard with that style */}

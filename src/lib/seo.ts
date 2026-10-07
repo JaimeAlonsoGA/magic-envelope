@@ -8,6 +8,18 @@ import { SITE_URL } from "./site";
 import type { StyleId } from "./styles";
 
 export type Occasion = { title: string; h1: string; intro: string; styles: StyleId[]; points: string[] };
+
+/** The words a person actually says. An agent matches the request to this list, then uses that preset. */
+export const PRESET_FOR: Record<Kind, readonly string[]> = {
+  wedding: ["wedding", "boda", "mariage", "casamento", "matrimonio", "Hochzeit"],
+  birthday: ["birthday", "cumpleaños", "aniversário", "anniversaire", "compleanno", "Geburtstag"],
+  party: ["party", "house party", "fiesta", "fiesta en casa", "quedada", "hangout", "get-together", "fête", "festa", "Houseparty"],
+  baby: ["baby shower", "chá de bebê", "babyshower"],
+  dinner: ["dinner", "cena", "dîner", "jantar", "Abendessen"],
+  graduation: ["graduation", "graduación", "formatura", "remise de diplôme", "laurea", "Abschluss"],
+  event: ["event", "evento", "meetup", "cineforum", "cinefórum", "film club", "actividad", "taller", "workshop", "activité"],
+  letter: ["letter", "carta", "lettre", "Brief"],
+};
 export type SiteCopy = { title: string; description: string };
 
 export const SITE_NAME = "Magic Envelope";
@@ -33,7 +45,7 @@ export const OCCASIONS: Record<Kind, Occasion> = {
   party: {
     title: "Free party invitations online",
     h1: "Party invitations with style",
-    intro: "From a dinner with friends to a night out: pick a look, add the place, the music and a dress code, and send everyone their own invitation.",
+    intro: "A house party, a get-together or a night out: pick a look, add the place, the music and a dress code, and send everyone their own invitation. It can be tonight.",
     styles: ["groovy", "launch", "midnight"],
     points: ["Playlist and dress code", "Map and directions", "One-tap RSVP", "Share as a link or an image"],
   },
@@ -61,7 +73,7 @@ export const OCCASIONS: Record<Kind, Occasion> = {
   event: {
     title: "Free event invitations online",
     h1: "Event invitations",
-    intro: "Launches, meetups, talks: a clean invitation with the agenda, the place, links and a QR code to check in.",
+    intro: "A film club, a workshop, a meetup or a launch: a clean invitation with the agenda, the place, links and a QR code to check in.",
     styles: ["launch", "minimal", "brutal"],
     points: ["Agenda and links", "QR code", "Personal invitation per attendee", "API for agents and automations"],
   },
