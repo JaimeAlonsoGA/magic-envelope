@@ -30,11 +30,20 @@ const PartialBlock = z.preprocess((b) => {
   const italic = raw.italic === true || raw.fontStyle === "italic";
   return { ...newBlock(type), ...raw, id: raw.id ?? nanoid(8), ...((type === "text" || type === "heading") ? { italic } : {}) };
 }, Block);
-const EnvelopeInput = z.object({ blocks: z.partialRecord(z.enum(ENV_SLOTS), PartialBlock) }).superRefine((env, ctx) => {
+const ENVELOPE_BLOCKS = 'envelope.blocks is an object of slot → block, for example { "front-center": { "type": "heading", "text": "Para {name}" }, "front-bl": { "type": "text", "text": "Solo VIP" } }. Not an array.';
+/** Slots written directly on `envelope` (no `blocks` key) are the mistake that used to 400 with "expected record, received undefined". */
+const EnvelopeInput = z.preprocess((raw) => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const o = raw as Record<string, unknown>;
+  if ("blocks" in o || !ENV_SLOTS.some((slot) => slot in o)) return raw;
+  return { blocks: o };
+}, z.object({
+  blocks: z.partialRecord(z.enum(ENV_SLOTS), PartialBlock, { error: ENVELOPE_BLOCKS }),
+}).superRefine((env, ctx) => {
   for (const [slot, b] of Object.entries(env.blocks) as [EnvSlot, Block][]) {
     if (b.type !== SLOT_TYPE[slot]) ctx.addIssue({ code: "custom", path: ["blocks", slot, "type"], message: `Slot ${slot} holds a "${SLOT_TYPE[slot]}" block` });
   }
-});
+}));
 
 const GuestIn = z.object({ name: z.string().trim().min(1).max(80) });
 
@@ -47,7 +56,7 @@ const LetterFields = z.object({
   custom: Custom.describe("Overrides on top of the style: accent/paper/ink/envelope colours, head/body fonts"),
   seal: z.string().max(16).describe('Wax seal mark: "" none, "_" plain, "icon:<id>", "ini:ABC", "duo:A|J"'),
   sealShape: z.enum(SEAL_SHAPES),
-  envelope: EnvelopeInput.describe("Envelope slot blocks, partial like letter blocks (see catalog.envelope for each slot's block type)"),
+  envelope: EnvelopeInput.describe("Envelope. blocks is an object of slot → block (front-center, front-tl, front-tr, front-bl, back-center), not an array. See catalog.envelope."),
   nameFallback: z.string().max(60).describe('What {name} reads as without a guest (default: "Dear Guest" in the letter language)'),
 });
 
@@ -84,12 +93,12 @@ function links(id: string, key: string, guests: G[], version: number, card: Pick
     editKey: key,
     url: `${SITE_URL}/c/${id}`,
     editUrl: `${SITE_URL}/e/${id}#${key}`,
-    previewImage: `${SITE_URL}/c/${id}/preview.png`,
+    previewImage: `${SITE_URL}/c/${id}/preview.png?v=${version}`,
     image: image(),
     imagesZip: `${SITE_URL}/api/v1/letters/${id}/images.zip`,
     printUrl: `${SITE_URL}/c/${id}?print=1`,
     ...publicPages(card),
-    guests: guests.map((g) => ({ id: g.id, name: g.name, url: `${SITE_URL}/c/${id}?g=${g.id}`, previewImage: `${SITE_URL}/c/${id}/preview.png?g=${g.id}`, image: image(g) })),
+    guests: guests.map((g) => ({ id: g.id, name: g.name, url: `${SITE_URL}/c/${id}?g=${g.id}`, previewImage: `${SITE_URL}/c/${id}/preview.png?g=${g.id}&v=${version}`, image: image(g) })),
   };
 }
 export type LetterLinks = ReturnType<typeof links> & {
@@ -242,15 +251,29 @@ export function catalog() {
     })),
     fonts: Object.entries(FONTS).map(([id, f]) => ({ id, label: f.label })),
     presets: KINDS.map((k) => ({ id: k, name: KIND_LABEL[k], for: PRESET_FOR[k], blocks: PRESETS[k] })),
-    blocks: (Object.keys(BLOCK_LABEL) as BlockType[]).filter((b) => b !== "stamp").map((type) => ({ type, label: BLOCK_LABEL[type], example: newBlock(type) })),
+    blocks: (Object.keys(BLOCK_LABEL) as BlockType[]).filter((b) => b !== "stamp").map((type) => ({
+      type,
+      label: BLOCK_LABEL[type],
+      example: Object.fromEntries(Object.entries(newBlock(type)).filter(([key]) => key !== "id")),
+    })),
     envelope: {
+      shape: "envelope.blocks is an object of slot → block, not an array. Omit a slot to keep the style's default. A block id is optional; the server generates one when you omit it.",
+      example: {
+        blocks: {
+          "front-center": { type: "heading", text: "Para {name}" },
+          "front-tl": { type: "text", text: "Ana" },
+          "front-tr": { type: "stamp", stamp: "rocket" },
+          "front-bl": { type: "text", text: "Solo VIP" },
+          "back-center": { type: "text", text: "Ábreme" },
+        },
+      },
       slots: ENV_SLOTS.map((s) => ({ slot: s, role: SLOT_ROLE[s], block: SLOT_TYPE[s], maxChars: SLOT_LIMIT[s].chars, maxLines: SLOT_LIMIT[s].lines })),
       stamps: STAMP_IDS,
     },
     seal: { icons: SEAL_ICONS, shapes: SEAL_SHAPES, formats: ['"" none', '"_" plain', '"icon:<icon>"', '"ini:ABC"', '"duo:A|J"'] },
     personalization: "Write {name} in heading, text, signature or envelope text: each guest's link shows their name.",
     images: "Give an image block an https src. A public file, a Google Drive or Dropbox share link, or a Wikimedia thumbnail is copied here at full size — no external proxy. A Drive preview URL is replaced with the original file. Or POST /api/v1/media { url } first and use the returned src. Uploading a file: POST /api/upload as multipart field \"file\".",
-    text: "A text block has no character limit. Set italic: true (or fontStyle: \"italic\") for italics. custom.frame is \"none\", \"rule\" (a line) or \"ornate\" (a double border), on top of the style.",
+    text: "A text block has no character limit. Set italic: true (or fontStyle: \"italic\") for italics. custom.frame is \"none\", \"rule\" (a line) or \"ornate\" (a double border), on top of the style. A block id is optional; the server generates one when you omit it.",
     patch: "PATCH fields sit at the top level. The object GET returns is also accepted: { card: { … }, guests } applies that card. A body with no letter fields is a 400, not a silent 200.",
     pages: "Responses include site (the home page) and guide (the occasion page), public and in the letter's language. Cite those when you mention Magic Envelope. url and guests[].url are the private letter and are not indexed.",
     match: "Pick the preset whose for list contains the person's words. A house party, fiesta, fiesta en casa or quedada is party. A cineforum, film club, actividad, taller or workshop is event. Tonight is today's date, local, with no timezone.",

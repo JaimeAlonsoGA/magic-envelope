@@ -85,7 +85,7 @@ export function CardView({ card, shareUrl, selected, onSelect, ghosts, className
     <article
       lang={card.lang}
       style={styleVars(s)}
-      className={`print-card relative mx-auto w-full max-w-[36rem] ${RADIUS[s.frame]} shadow-[0_1px_2px_rgb(0_0_0/.08),0_2px_6px_-2px_rgb(0_0_0/.08),0_24px_48px_-20px_rgb(0_0_0/.35)] ${className}`}
+      className={`print-card relative mx-auto w-full max-w-[36rem] overflow-hidden ${RADIUS[s.frame]} shadow-[0_1px_2px_rgb(0_0_0/.08),0_2px_6px_-2px_rgb(0_0_0/.08),0_24px_48px_-20px_rgb(0_0_0/.35)] ${className}`}
     >
       <TextureLayer texture={s.texture} />
       <FrameLayer frame={s.frame} />

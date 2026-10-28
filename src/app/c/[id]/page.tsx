@@ -21,13 +21,17 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/c/[
   const title = cardTitle(card, guestName);
   const description = `✉ ${to ? `${to} · ` : ""}${t(card.lang).guest.tapToOpen}`;
   // the link's own preview: this guest's envelope, not the site's
-  const q = guestName && g ? `?g=${g}` : "";
-  const image = { url: `${SITE_URL}/c/${id}/preview.png${q}`, width: 1200, height: 630, alt: to || title };
+  // `v` is the letter's revision, so a chat that cached a failed or stale preview fetches this one.
+  const q = new URLSearchParams();
+  if (guestName && g) q.set("g", g);
+  if (data.updatedAt) q.set("v", String(data.updatedAt));
+  const qs = q.toString();
+  const image = { url: `${SITE_URL}/c/${id}/preview.png${qs ? `?${qs}` : ""}`, type: "image/png", width: 1200, height: 630, alt: to || title };
   return {
     title,
     description,
     robots: { index: false, follow: false }, // invitations are private-by-link
-    openGraph: { type: "website", title, description, url: `${SITE_URL}/c/${id}${q}`, siteName: "Magic Envelope", locale: card.lang, images: [image] },
+    openGraph: { type: "website", title, description, url: `${SITE_URL}/c/${id}${guestName && g ? `?g=${g}` : ""}`, siteName: "Magic Envelope", locale: card.lang, images: [image] },
     twitter: { card: "summary_large_image", title, description, images: [image.url] },
   };
 }

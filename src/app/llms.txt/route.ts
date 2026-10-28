@@ -40,6 +40,22 @@ POST ${SITE_URL}/api/v1/letters
 
 The response has \`url\`, one \`guests[].url\` per guest (send each guest their own), \`previewImage\`, a secret \`editKey\`, and \`site\` and \`guide\` (the public pages).
 
+Block \`id\` is optional. The examples leave it out; the server assigns one. Send an id only to keep that block's identity.
+
+An envelope is optional (the style ships a default). \`envelope.blocks\` is an object of slot → block, not an array. Omit a slot to keep that slot's default:
+
+\`\`\`json
+"envelope": {
+  "blocks": {
+    "front-center": { "type": "heading", "text": "Para {name}" },
+    "front-tl": { "type": "text", "text": "Ana García" },
+    "front-tr": { "type": "stamp", "stamp": "rocket" },
+    "front-bl": { "type": "text", "text": "Solo VIP" },
+    "back-center": { "type": "text", "text": "Ábreme" }
+  }
+}
+\`\`\`
+
 ## Styles
 
 ${c.styles.map((s) => `- ${s.id}: ${s.name} (${s.group})`).join("\n")}
@@ -53,7 +69,8 @@ A party tonight is preset \`party\` and today's date. A film club, cineforum or 
 ## Rules
 
 - ${c.personalization}
-- Blocks may be partial: missing fields take the editor's defaults.
+- Blocks may be partial: missing fields take the editor's defaults. \`id\` is one of those: omit it and the server generates one. Stored blocks always have an id, which is why a schema lists it; a request does not have to.
+- \`envelope.blocks\` is an object keyed by slot (\`front-center\` recipient, \`front-tl\` sender, \`front-tr\` stamp, \`front-bl\` note, \`back-center\` under the seal). Each value is a block object (\`{ "type", ... }\`), not an array of blocks.
 - Dates are the local time at the venue, without a timezone: "2026-11-14T18:00", or "2026-11-14" for a whole day. Anything else is a 400. Tonight is today's date in that same shape.
 - PATCH changes only the fields you send. You can also send the object GET returns (\`{ "card": { … }, "guests": […] }\`): that wrapper is applied. A body with no letter fields is a 400, not an empty 200. \`guests\` replaces the list but keeps every existing guest's id and link (matched by id, then name); \`addGuests\` appends.
 - Images: put an https URL on an image block. A public file, a Google Drive or Dropbox share link, or a Wikimedia thumbnail is copied here at full size (a Drive preview is replaced with the original file). Or POST /api/v1/media \`{ "url" }\` and use the returned \`src\`. File upload: POST /api/upload, multipart field \`file\`. Each letter and guest has an \`image\` URL (PNG, add \`&download=1\` to save it); \`imagesZip\` gives them all, named after the letter (editKey). \`previewImage\` is the link preview with the guest's envelope.

@@ -14,7 +14,8 @@ const EW = 840, EH = 560; // the app's 3:2 envelope, as large as the frame allow
  */
 export async function GET(req: Request, ctx: RouteContext<"/c/[id]/preview.png">) {
   const { id } = await ctx.params;
-  const g = new URL(req.url).searchParams.get("g") ?? undefined;
+  const q = new URL(req.url).searchParams;
+  const g = q.get("g") ?? undefined;
   const data = await loadPublished(id, g);
   if (!data) return new Response("Not found", { status: 404 });
   const env = envelopeOf(data.card, data.guestName);
@@ -27,7 +28,9 @@ export async function GET(req: Request, ctx: RouteContext<"/c/[id]/preview.png">
   const font = await ogFont(hand, `${name}${sender}${note}${stamp?.value ?? ""}`);
   const size = Math.max(56, Math.min(120, Math.floor(1500 / Math.max(6, name.length + 2))));
 
-  return new ImageResponse(
+  // Buffer the PNG. A streamed body has no Content-Length, and a chat crawler that times out
+  // on the first (cold) draw keeps that failure. `v` matches the letter's revision.
+  const image = new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3eee3" }}>
         <div style={{
@@ -60,7 +63,26 @@ export async function GET(req: Request, ctx: RouteContext<"/c/[id]/preview.png">
     {
       width: W, height: H, emoji: "twemoji",
       fonts: font ? [font] : undefined,
-      headers: { "cache-control": "public, max-age=3600, s-maxage=86400" },
     },
   );
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await image.arrayBuffer();
+  } catch (e) {
+    console.error(e);
+    return new Response("Failed to generate the image", { status: 500 });
+  }
+  if (!bytes.byteLength) return new Response("Failed to generate the image", { status: 500 });
+  const fresh = data.updatedAt != null && q.get("v") === String(data.updatedAt);
+  const cache = fresh ? "public, max-age=31536000, immutable" : "public, max-age=86400";
+  const cdn = fresh ? "public, max-age=31536000, immutable" : "public, s-maxage=604800, stale-while-revalidate=86400";
+  return new Response(new Uint8Array(bytes), {
+    headers: {
+      "content-type": "image/png",
+      "content-length": String(bytes.byteLength),
+      "cache-control": cache,
+      "cdn-cache-control": cdn,
+      "x-content-type-options": "nosniff",
+    },
+  });
 }

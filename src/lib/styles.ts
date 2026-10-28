@@ -205,3 +205,10 @@ export const SHAPE: Record<Shape, { action: string; box: string }> = {
 export const RADIUS: Record<Frame, string> = {
   ornate: "rounded-[3px]", rule: "rounded-[3px]", none: "rounded-[3px]", glow: "rounded-[28px]", pixel: "rounded-[5px]", groovy: "rounded-[40px]", soft: "rounded-[28px]",
 };
+
+/**
+ * What fills the corners outside a letter's radius in an export. A transparent corner composites
+ * to white in a chat or a photo app, which tears a dark rounded card. This is the page the guest
+ * already sees behind the letter (`#fbf8f1` when the style has no page of its own).
+ */
+export const exportMat = (s: Resolved) => s.page ?? "#fbf8f1";

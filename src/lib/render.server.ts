@@ -37,9 +37,8 @@ export async function renderLetters(id: string, guests: (string | null)[], forma
       await page.evaluate(() => document.fonts.ready);
       const el = await page.$("#letter");
       if (!el) throw new Error("letter not found");
-      // PNG keeps the corners outside the letter's radius transparent; JPEG has no alpha, so they take the page colour
-      if (format === "jpeg") await page.evaluate(() => { document.documentElement.style.background = document.body.style.background = "#fbf8f1"; });
-      const img = await el.screenshot(format === "jpeg" ? { type: "jpeg", quality: 88 } : { type: "png", omitBackground: true });
+      // #letter paints the style's page colour into the rounded corners, so PNG and JPEG are both a finished rectangle.
+      const img = await el.screenshot(format === "jpeg" ? { type: "jpeg", quality: 88 } : { type: "png" });
       out.push(img);
       onEach?.(i, img);
     }

@@ -35,20 +35,50 @@ export type Ctx = {
 /** Should this block show its digital actions here? Off in images/print, or when the block opts out. */
 const live = (ctx: Ctx, b: { interactive?: boolean }) => !ctx.flat && b.interactive !== false;
 
+/**
+ * Emoji sequences, including a variation selector (❤️ is ❤ + FE0F) and ZWJ runs.
+ * The export browser has no color-emoji font, so these become images there.
+ */
+const EMOJI = /\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*/gu;
+
+function twemojiSrc(grapheme: string) {
+  const cps = [...grapheme].map((c) => c.codePointAt(0)!.toString(16)).filter((cp) => cp !== "fe0f" && cp !== "fe0e");
+  return `https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/${cps.join("-")}.svg`;
+}
+
+/** User text. Flat exports swap emoji for images; a missing glyph would otherwise vanish from the PNG. */
+function Glyphs({ text, flat }: { text: string; flat: boolean }) {
+  if (!flat) return <>{text}</>;
+  const out: ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(EMOJI)) {
+    const i = m.index;
+    if (i > last) out.push(text.slice(last, i));
+    out.push(
+      // eslint-disable-next-line @next/next/no-img-element
+      <img key={i} alt={m[0]} src={twemojiSrc(m[0])} crossOrigin="anonymous" loading="eager" draggable={false} className="inline-block h-[1em] w-[1em] align-[-0.15em]" />,
+    );
+    last = i + m[0].length;
+  }
+  if (!out.length) return <>{text}</>;
+  if (last < text.length) out.push(text.slice(last));
+  return <>{out}</>;
+}
+
 /** Text with the guest's name injected. In the editor the name is marked as a field. */
 function Named({ text, ctx }: { text: string; ctx: Ctx }) {
   const ui = useUI();
   const parts = splitName(text);
-  if (parts.length === 1) return <>{text}</>;
+  if (parts.length === 1) return <Glyphs text={text} flat={ctx.flat} />;
   const name = ctx.guestName?.trim() || fallbackName(ctx.card);
   return (
     <>
       {parts.map((p, i) => (
         <Fragment key={i}>
-          {p}
+          <Glyphs text={p} flat={ctx.flat} />
           {i < parts.length - 1 && (ctx.editing
             ? <span className="rounded-sm underline decoration-dotted decoration-2 underline-offset-4" title={ui.guests.insertName}>{name}</span>
-            : name)}
+            : <Glyphs text={name} flat={ctx.flat} />)}
         </Fragment>
       ))}
     </>
@@ -113,21 +143,21 @@ export function RenderBlock({ b, ctx, ghost }: { b: Block; ctx: Ctx; ghost?: boo
         return (
           <p className="flex items-center justify-center gap-2 text-center" style={{ fontFamily: "var(--c-body)" }}>
             <LIcon size={16} style={{ color: "var(--c-accent)" }} />
-            {b.label.trim() && <span>{b.label.trim()} ·</span>}<span className="opacity-80">{hostOf(href)}{new URL(href).pathname.replace(/\/$/, "")}</span>
+            {b.label.trim() && <span><Glyphs text={b.label.trim()} flat={ctx.flat} /> ·</span>}<span className="opacity-80">{hostOf(href)}{new URL(href).pathname.replace(/\/$/, "")}</span>
           </p>
         );
-      return <div className="text-center"><Action ctx={ctx} href={href}><LIcon size={17} />{b.label.trim() || hostOf(href)}</Action></div>;
+      return <div className="text-center"><Action ctx={ctx} href={href}><LIcon size={17} />{b.label.trim() ? <Glyphs text={b.label.trim()} flat={ctx.flat} /> : hostOf(href)}</Action></div>;
     }
     case "qr": return <Qr b={b} ctx={ctx} />;
     case "rsvp": return <Rsvp b={b} ctx={ctx} />;
-    case "agenda": return <Agenda b={b} />;
-    case "dress": return <Dress b={b} />;
+    case "agenda": return <Agenda b={b} flat={ctx.flat} />;
+    case "dress": return <Dress b={b} flat={ctx.flat} />;
     case "gift": {
       const href = val("url", b.href);
       return (
         <div className="space-y-3 text-center">
           <Icon as={Gift} />
-          {b.text && <Body>{b.text}</Body>}
+          {b.text && <Body><Glyphs text={b.text} flat={ctx.flat} /></Body>}
           {b.iban?.trim() && (live(ctx, b)
             ? <CopyLine value={b.iban.trim()} label={t(ctx.card.lang).guest.copied} />
             : <p className="break-all font-mono text-sm">{b.iban.trim()}</p>)}
@@ -185,8 +215,8 @@ function Place({ b, ctx }: { b: BlockOf<"place">; ctx: Ctx }) {
   return (
     <div className="space-y-2 text-center">
       <Icon as={MapPin} />
-      {b.name.trim() && <div style={{ ...subFont, fontSize: "calc(1.5rem * var(--c-sub-scale))" }}>{b.name}</div>}
-      {showAddress && <div className="opacity-80" style={{ fontFamily: "var(--c-body)", fontSize: "calc(1rem * var(--c-body-scale))" }}>{address}</div>}
+      {b.name.trim() && <div style={{ ...subFont, fontSize: "calc(1.5rem * var(--c-sub-scale))" }}><Glyphs text={b.name} flat={ctx.flat} /></div>}
+      {showAddress && <div className="opacity-80" style={{ fontFamily: "var(--c-body)", fontSize: "calc(1rem * var(--c-body-scale))" }}><Glyphs text={address} flat={ctx.flat} /></div>}
       {address && live(ctx, b) && (
         <>
           <iframe title="map" src={mapsEmbed(address)} loading="lazy" className="no-print mt-3 h-44 w-full rounded-sm border-0" />
@@ -290,7 +320,7 @@ function Rsvp({ b, ctx }: { b: BlockOf<"rsvp">; ctx: Ctx }) {
 }
 
 /** Schedule as a vertical timeline: time on the left, a dot on the line, what happens on the right. */
-function Agenda({ b }: { b: BlockOf<"agenda"> }) {
+function Agenda({ b, flat }: { b: BlockOf<"agenda">; flat: boolean }) {
   const items = b.items.filter((i) => i.what.trim());
   return (
     <ol className="mx-auto w-fit max-w-full">
@@ -301,7 +331,7 @@ function Agenda({ b }: { b: BlockOf<"agenda"> }) {
             {n < items.length - 1 && <span className="absolute bottom-0 top-3 w-px bg-[var(--c-accent)] opacity-40" />}
             <span className="relative mt-2 h-2 w-2 rounded-full bg-[var(--c-accent)]" />
           </span>
-          <span className="pb-4 leading-snug" style={{ fontFamily: "var(--c-body)", fontSize: "calc(1.125rem * var(--c-body-scale))" }}>{i.what}</span>
+          <span className="pb-4 leading-snug" style={{ fontFamily: "var(--c-body)", fontSize: "calc(1.125rem * var(--c-body-scale))" }}><Glyphs text={i.what} flat={flat} /></span>
         </li>
       ))}
     </ol>
@@ -309,17 +339,17 @@ function Agenda({ b }: { b: BlockOf<"agenda"> }) {
 }
 
 /** Dress code as a moodboard of references. */
-function Dress({ b }: { b: BlockOf<"dress"> }) {
+function Dress({ b, flat }: { b: BlockOf<"dress">; flat: boolean }) {
   return (
     <div className="space-y-4 text-center">
       <Icon as={Shirt} />
-      {b.text && <Body>{b.text}</Body>}
+      {b.text && <Body><Glyphs text={b.text} flat={flat} /></Body>}
       {b.board.length > 0 && (
         <ul className="mx-auto grid max-w-sm grid-cols-3 gap-2">
           {b.board.map((it, i) => (
             <li key={i} className="grid aspect-square place-items-center overflow-hidden rounded-sm ring-1 ring-[color-mix(in_srgb,var(--c-ink)_12%,transparent)]"
               style={it.kind === "color" ? { background: it.value } : { background: "color-mix(in srgb, var(--c-ink) 4%, transparent)" }}>
-              {it.kind === "emoji" && <span className="text-4xl">{it.value}</span>}
+              {it.kind === "emoji" && <span className="text-4xl"><Glyphs text={it.value} flat={flat} /></span>}
               {it.kind === "text" && <span className="px-2 text-sm leading-tight" style={{ fontFamily: "var(--c-body)" }}>{it.value}</span>}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {it.kind === "image" && val("url", it.value) && <img src={displayImageSrc(val("url", it.value)!)} alt="" className="h-full w-full object-cover" />}
@@ -347,7 +377,11 @@ export function Divider({ style }: { style: BlockOf<"divider">["style"] }) {
   if (style === "stars")
     return (
       <div className="flex items-center justify-center gap-3" style={{ color: "var(--c-accent)" }} aria-hidden>
-        <span className="h-px w-14 bg-current opacity-50" /><span className="text-sm">✦</span><span className="h-px w-14 bg-current opacity-50" />
+        <span className="h-px w-14 bg-current opacity-50" />
+        <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" aria-hidden>
+          <path fill="currentColor" d="M8 .8 9.35 6.65 15.2 8 9.35 9.35 8 15.2 6.65 9.35.8 8 6.65 6.65Z" />
+        </svg>
+        <span className="h-px w-14 bg-current opacity-50" />
       </div>
     );
   return (

@@ -57,13 +57,13 @@ export async function loadCard(id: string): Promise<Card | null> {
  * A published letter as one guest sees it: the card plus *only* that guest's name.
  * The guest list itself never leaves the server.
  */
-export async function loadPublished(id: string, guestId?: string): Promise<{ card: Card; guestName?: string } | null> {
+export async function loadPublished(id: string, guestId?: string): Promise<{ card: Card; guestName?: string; updatedAt?: number } | null> {
   if (!/^[\w-]{6,32}$/.test(id)) return null;
   const raw = (await readJson(`cards/${id}.json`)) as Stored | null;
   const parsed = Card.safeParse(raw?.card);
-  if (!parsed.success) return null;
-  const guest = guestId ? raw?.guests?.find((g) => g.id === guestId) : undefined;
-  return { card: parsed.data, guestName: guest?.name };
+  if (!raw || !parsed.success) return null;
+  const guest = guestId ? raw.guests?.find((g) => g.id === guestId) : undefined;
+  return { card: parsed.data, guestName: guest?.name, updatedAt: raw.updatedAt };
 }
 
 const keyMatches = (raw: Stored, editKey: string) => !!editKey && timingSafeEqual(Buffer.from(raw.key), Buffer.from(hashKey(editKey)));

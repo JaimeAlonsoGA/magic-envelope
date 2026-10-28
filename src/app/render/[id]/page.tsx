@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CardView } from "@/components/card/card-view";
+import { cardStyle } from "@/lib/envelope";
+import { exportMat } from "@/lib/styles";
 import { SITE_URL } from "@/lib/site";
 import { loadPublished } from "@/lib/store.server";
 
@@ -20,7 +22,10 @@ export default async function RenderPage({ params, searchParams }: PageProps<"/r
   return (
     <div className="w-[36rem]">
       <style>{"html,body{background:transparent!important}"}</style>
-      <div id="letter"><CardView card={data.card} shareUrl={shareUrl} guestName={data.guestName} flat className="!shadow-none" /></div>
+      {/* The mat shows through the letter's radius, so an export is a finished rectangle rather than a sticker with white corners. */}
+      <div id="letter" style={{ background: exportMat(cardStyle(data.card)) }}>
+        <CardView card={data.card} shareUrl={shareUrl} guestName={data.guestName} flat className="!shadow-none" />
+      </div>
     </div>
   );
 }

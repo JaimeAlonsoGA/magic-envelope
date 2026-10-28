@@ -5,7 +5,7 @@ import JSZip from "jszip";
 import { useEffect, useRef, useState } from "react";
 import { cardStyle } from "@/lib/envelope";
 import type { Card } from "@/lib/model";
-import { FONTS, type FontId } from "@/lib/styles";
+import { exportMat, FONTS, type FontId } from "@/lib/styles";
 import { CardView } from "./card/card-view";
 
 /** JPG: light, for phones and chats (textured paper makes PNGs heavy). PNG: lossless, for print. */
@@ -58,13 +58,13 @@ export function useLetterImages() {
       try {
         await document.fonts.ready;
         await frame(); await frame();
-        const el = stage.current!.querySelector("article")!;
+        const el = stage.current!.querySelector("[data-export]")! as HTMLElement;
         await Promise.all([...el.querySelectorAll("img")].map((i) => i.decode().catch(() => {})));
         await new Promise((r) => setTimeout(r, 120)); // QR codes render asynchronously
         const fontEmbedCSS = await fontsFor(job.card);
-        // the letter is centred with auto margins on screen; the capture must start at its own edge
-        // JPG has no transparency: the corners outside the letter's radius take the app's page colour
-        const canvas = await toCanvas(el, { pixelRatio: 2, fontEmbedCSS, cacheBust: true, style: { margin: "0" }, ...(job.format === "jpeg" ? { backgroundColor: "#fbf8f1" } : {}) });
+        // Capture the mat, not the article: backgroundColor on the article would replace its own paper.
+        // The mat is the page colour showing through the letter's radius.
+        const canvas = await toCanvas(el, { pixelRatio: 2, fontEmbedCSS, cacheBust: true, style: { margin: "0" } });
         const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, `image/${job.format}`, 0.9));
         if (!blob) throw new Error("render");
         job.resolve(blob);
@@ -97,7 +97,9 @@ export function useLetterImages() {
 
   const stageEl = job && (
     <div aria-hidden className="pointer-events-none fixed left-[-12000px] top-0 w-[600px]" ref={stage}>
-      <CardView card={job.card} shareUrl={job.shareUrl} guestName={job.guestName} flat className="!shadow-none" />
+      <div data-export className="w-[36rem]" style={{ background: exportMat(cardStyle(job.card)) }}>
+        <CardView card={job.card} shareUrl={job.shareUrl} guestName={job.guestName} flat className="!shadow-none" />
+      </div>
     </div>
   );
 
