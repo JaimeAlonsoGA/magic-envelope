@@ -27,7 +27,8 @@ Agents can do everything through the API, without a browser.
 Minimal request:
 
 \`\`\`json
-POST ${SITE_URL}/api/v1/letters
+ME=${SITE_URL}
+POST $ME/api/v1/letters
 { "lang": "es", "style": "romance", "preset": "wedding",
   "blocks": [
     { "type": "heading", "text": "{name}, ¡nos casamos!" },
