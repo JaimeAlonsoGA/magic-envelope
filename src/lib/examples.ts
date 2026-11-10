@@ -72,19 +72,20 @@ Playful style. Give me one link for each guest: Lucía, Tom, Marco.` }],
     title: "curl",
     intro: "Create and publish a letter. The response has the letter's link, one link and one image per guest, and the editKey (keep it to make changes or delete it).",
     snippets: [
-      { label: "Create", code: `curl -X POST ${SITE_URL}/api/v1/letters \\\n  -H "content-type: application/json" \\\n  -d '${LETTER}'` },
-      { label: "Change it later (only what you send changes; same links)", code: `curl -X PATCH ${SITE_URL}/api/v1/letters/LETTER_ID \\\n  -H "authorization: Bearer EDIT_KEY" \\\n  -H "content-type: application/json" \\\n  -d '{ "style": "midnight", "addGuests": [{ "name": "Olivia" }] }'` },
-      { label: "Who's coming", code: `curl ${SITE_URL}/api/v1/letters/LETTER_ID -H "authorization: Bearer EDIT_KEY" | jq .rsvps` },
-      { label: "Every guest's letter as an image (ZIP named after the letter)", code: `curl -L -O -J "${SITE_URL}/api/v1/letters/LETTER_ID/images.zip" \\\n  -H "authorization: Bearer EDIT_KEY"` },
-      { label: "Copy a photo (Drive, Dropbox or any public image) and use it on the letter", code: `curl -X POST ${SITE_URL}/api/v1/media \\\n  -H "content-type: application/json" \\\n  -d '{ "url": "https://drive.google.com/file/d/FILE_ID/view" }'` },
-      { label: "Delete it", code: `curl -X DELETE ${SITE_URL}/api/v1/letters/LETTER_ID -H "authorization: Bearer EDIT_KEY"` },
+      { label: "Create", code: `ME=${SITE_URL}\ncurl -X POST "$ME/api/v1/letters" \\\n  -H "content-type: application/json" \\\n  -d '${LETTER}'` },
+      { label: "Change it later (only what you send changes; same links)", code: `ME=${SITE_URL}\ncurl -X PATCH "$ME/api/v1/letters/$LETTER_ID" \\\n  -H "authorization: Bearer $EDIT_KEY" \\\n  -H "content-type: application/json" \\\n  -d '{ "style": "midnight", "addGuests": [{ "name": "Olivia" }] }'` },
+      { label: "Who's coming", code: `ME=${SITE_URL}\ncurl "$ME/api/v1/letters/$LETTER_ID" -H "authorization: Bearer $EDIT_KEY" | jq .rsvps` },
+      { label: "Every guest's letter as an image (ZIP named after the letter)", code: `ME=${SITE_URL}\ncurl -L -O -J "$ME/api/v1/letters/$LETTER_ID/images.zip" \\\n  -H "authorization: Bearer $EDIT_KEY"` },
+      { label: "Copy a photo (Drive, Dropbox or any public image) and use it on the letter", code: `ME=${SITE_URL}\ncurl -X POST "$ME/api/v1/media" \\\n  -H "content-type: application/json" \\\n  -d '{ "url": "https://drive.google.com/file/d/FILE_ID/view" }'` },
+      { label: "Delete it", code: `ME=${SITE_URL}\ncurl -X DELETE "$ME/api/v1/letters/$LETTER_ID" -H "authorization: Bearer $EDIT_KEY"` },
     ],
   },
   {
     id: "javascript",
     title: "JavaScript / TypeScript",
     intro: "Works in Node 18+, Deno, Bun, browsers and edge functions (CORS is open).",
-    snippets: [{ code: `const res = await fetch("${SITE_URL}/api/v1/letters", {
+    snippets: [{ code: `const ME = "${SITE_URL}";
+const res = await fetch(ME + "/api/v1/letters", {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify(${LETTER.replaceAll("\n", "\n  ")}),
@@ -99,8 +100,9 @@ for (const guest of letter.guests) console.log(guest.name, guest.url);` }],
     intro: "With requests.",
     snippets: [{ code: `import requests
 
+ME = "${SITE_URL}"
 letter = requests.post(
-    "${SITE_URL}/api/v1/letters",
+    ME + "/api/v1/letters",
     json={
         "lang": "en", "style": "parchment", "preset": "birthday",
         "blocks": [
@@ -125,7 +127,8 @@ for guest in letter["guests"]:
   const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
   const guests = rows.map(([name]) => ({ name: String(name).trim() })).filter((g) => g.name);
 
-  const res = UrlFetchApp.fetch("${SITE_URL}/api/v1/letters", {
+  const ME = "${SITE_URL}";
+  const res = UrlFetchApp.fetch(ME + "/api/v1/letters", {
     method: "post",
     contentType: "application/json",
     payload: JSON.stringify({
