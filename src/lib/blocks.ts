@@ -24,7 +24,7 @@ export const PALETTE: BlockType[] = [
 ];
 
 export const KIND_EMOJI: Record<Kind, string> = {
-  birthday: "🎂", wedding: "💍", party: "🎉", baby: "🍼", dinner: "🍷", graduation: "🎓", event: "📣", letter: "✉️",
+  birthday: "🎂", wedding: "💍", party: "🎉", baby: "🍼", dinner: "🍷", graduation: "🎓", event: "📣", letter: "✉️", launch: "🚀",
 };
 
 const uid = () => nanoid(8);
@@ -67,7 +67,7 @@ export function newBlock(type: BlockType): Block {
 /** Seal glyph that suits each occasion. */
 const SEAL: Record<Kind, string> = {
   birthday: "icon:cake", wedding: "icon:ring", party: "icon:cheers", baby: "icon:moon", dinner: "icon:flower",
-  graduation: "icon:cap", event: "icon:star", letter: "icon:heart",
+  graduation: "icon:cap", event: "icon:star", letter: "icon:heart", launch: "icon:crown",
 };
 
 /** Default start: a blank letter (title + text placeholders). */
@@ -85,6 +85,8 @@ export const PRESETS: Record<Kind, BlockType[]> = {
   graduation: ["heading", "image", "text", "countdown", "date", "place", "rsvp"],
   event: ["heading", "text", "date", "place", "agenda", "link", "qr", "rsvp"],
   letter: ["heading", "text", "divider", "signature"],
+  // what people send for a launch: a few words, the date it drops, and the link (no venue: most are online)
+  launch: ["image", "heading", "text", "countdown", "link", "signature"],
 };
 
 export function fromPreset(kind: Kind, style: StyleId, lang: Lang): Card {

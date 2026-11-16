@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, CopyPlus, Eye, Home, Mail, Palette, Plus, Send, Trash2, Users } from "lucide-react";
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
-import { BLOCK_ICON, PALETTE, newBlock } from "@/lib/blocks";
+import { BLOCK_ICON, PALETTE, listTitle, newBlock } from "@/lib/blocks";
 import { exampleGuest, useDraft } from "@/lib/drafts";
 import { useOrigin } from "@/lib/hooks";
 import { useUI } from "@/lib/locale";
@@ -136,6 +136,8 @@ export function Editor({ id }: { id: string }) {
     <div className="flex min-h-dvh flex-col">
       <header className="no-print sticky top-0 z-20 flex items-center gap-2 bg-bg/85 px-3 pb-2 pt-[max(.5rem,env(safe-area-inset-top))] backdrop-blur">
         <SketchLink href="/" size="icon" aria-label={ui.home}><Home size={20} /></SketchLink>
+        {/* the page's name for a screen reader: the letter being edited */}
+        <h1 className="sr-only">{listTitle(card) || ui.create}</h1>
         <div className="flex-1" />
         <SketchButton aria-label={ui.guests.title} title={ui.guests.title} active={shown === "guests"} onClick={() => openPanel("guests")} className="!px-3">
           <Users size={19} />{guests.length > 0 && <span className="text-base tabular-nums">{guests.length}</span>}
@@ -202,7 +204,7 @@ export function Editor({ id }: { id: string }) {
           )}
           {shown === "theme" && <StylePanel card={card} setCard={setCard} link={view === "link"} />}
           {shown === "guests" && <GuestsPanel draft={draft} setGuests={setGuests} setCard={setCard} previewId={previewId} setPreviewId={setPreviewId} />}
-          {shown === "share" && <SendPanel draft={draft} pub={pub} origin={origin} save={save} />}
+          {shown === "share" && <SendPanel draft={draft} pub={pub} origin={origin} save={save} onAddGuests={() => openPanel("guests")} />}
         </Sheet>
       )}
     </div>

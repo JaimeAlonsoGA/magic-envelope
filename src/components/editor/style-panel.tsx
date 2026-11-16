@@ -3,10 +3,10 @@
 import { Check, RotateCcw } from "lucide-react";
 import { cardStyle } from "@/lib/envelope";
 import { FLAGS } from "@/lib/i18n";
-import { useUI } from "@/lib/locale";
+import { useLang, useUI } from "@/lib/locale";
 import { ENVELOPE_PAPERS } from "@/lib/mail";
 import { LANGS, type Card } from "@/lib/model";
-import { FONTS, FONT_IDS, STYLES, STYLE_IDS, resolveStyle, type Custom, type FontId } from "@/lib/styles";
+import { FONTS, FONT_IDS, STYLES, STYLE_IDS, resolveStyle, styleName, type Custom, type FontId } from "@/lib/styles";
 import { SketchButton } from "../sketch";
 import { StyleSwatch } from "../style-swatch";
 import { Choice } from "./field";
@@ -49,6 +49,7 @@ function FontPicker({ label, value, onChange }: { label: string; value: FontId; 
 /** How a letter looks: its style, colors, fonts and language. (The envelope is edited on its own canvas.) */
 export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: Partial<Card>) => void; link: boolean }) {
   const ui = useUI();
+  const appLang = useLang();
   const s = cardStyle(card);
   const custom = card.custom ?? {};
   const setCustom = (patch: Custom) => {
@@ -68,7 +69,7 @@ export function StylePanel({ card, setCard, link }: { card: Card; setCard: (p: P
                 <span className={`block rounded-[6px] outline-2 outline-offset-2 transition ${on ? "outline outline-violet" : "outline-transparent group-hover:outline-ink/20 group-hover:outline"}`}>
                   <StyleSwatch s={resolveStyle(id)} className="aspect-[4/3] text-base" />
                 </span>
-                <span className="mt-1 flex items-center gap-1 text-sm">{on && <Check size={13} className="text-violet" />}{STYLES[id].name}</span>
+                <span className="mt-1 flex items-center gap-1 text-sm">{on && <Check size={13} className="text-violet" />}{styleName(id, appLang)}</span>
               </button>
             );
           })}

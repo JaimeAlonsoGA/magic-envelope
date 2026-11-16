@@ -65,7 +65,7 @@ ${c.styles.map((s) => `- ${s.id}: ${s.name} (${s.group})`).join("\n")}
 
 ${KINDS.map((k) => `- ${k}: ${KIND_LABEL[k]} — people say: ${PRESET_FOR[k].join(", ")} — ${LANGS.map((l) => `[${l}](${SITE_URL}${occasionPath(l, k)})`).join(" · ")}`).join("\n")}
 
-A party tonight is preset \`party\` and today's date. A film club, cineforum or activity is preset \`event\`.
+A party tonight is preset \`party\` and today's date. A film club, cineforum or activity is preset \`event\`. A product launch, a beta invite, a new single or an exhibition opening is preset \`launch\`.
 
 ## Rules
 

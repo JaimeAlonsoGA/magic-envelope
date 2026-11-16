@@ -4,13 +4,14 @@ import { CalendarDays, CopyPlus, Eye, Link2, Plus, Star, Trash2, Users } from "l
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { eventDate, listTitle } from "@/lib/blocks";
+import { KIND_EMOJI, eventDate, listTitle } from "@/lib/blocks";
 import { deleteDraft, duplicateDraft, useDrafts } from "@/lib/drafts";
 import { envelopeOf } from "@/lib/envelope";
 import { useFlash } from "@/lib/hooks";
 import { useLang, useUI } from "@/lib/locale";
-import type { Draft } from "@/lib/model";
+import { KINDS, type Draft } from "@/lib/model";
 import { haptic } from "@/lib/native";
+import { occasionPath } from "@/lib/seo";
 import { Assistant } from "./assistant";
 import { EnvelopeBack, envelopeLift, envelopeStill, type EnvModel } from "./craft";
 import { SiteFooter } from "./site-footer";
@@ -92,7 +93,7 @@ export function Home({ rating }: { rating?: { count: number; average: number } }
   const drafts = useDrafts();
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-4xl flex-col items-center px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(.75rem,env(safe-area-inset-top))]">
+    <main className="mx-auto flex min-h-dvh max-w-4xl flex-col items-center px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(.75rem,env(safe-area-inset-top))]">
       {/* browsers offer "Install" themselves; the top stays clear */}
       <div className="h-11" />
 
@@ -113,7 +114,8 @@ export function Home({ rating }: { rating?: { count: number; average: number } }
       {process.env.NEXT_PUBLIC_ASSISTANT === "on" && <div className="mt-10 flex w-full justify-center"><Assistant /></div>}
 
       {/* the CTA is the envelope itself: still, solid, and it answers the pointer */}
-      <Link href="/new" className={`group mt-14 block w-60 sm:w-80 ${focusRing}`}>
+      {/* in the page's language: the wizard skips that step (Back still reaches it) */}
+      <Link href={`/new?lang=${lang}`} className={`group mt-14 block w-60 sm:w-80 ${focusRing}`}>
         <div className={envelopeStill}>
           <EnvelopeBack env={CTA_ENVELOPE} />
         </div>
@@ -131,7 +133,22 @@ export function Home({ rating }: { rating?: { count: number; average: number } }
         </section>
       )}
 
-      <div className="mt-auto w-full"><SiteFooter lang={lang} /></div>
-    </div>
+      {/* by occasion: each opens its page (three live letters in fitting styles) and from there the wizard */}
+      <nav aria-label={ui.site.makeInvitation} className="mt-20 w-full">
+        <h2 className="mb-5 font-hand text-xl text-muted">{ui.site.makeInvitation}</h2>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {KINDS.map((k) => (
+            <li key={k} className={KINDS.length % 2 ? "last:col-span-2 sm:last:col-span-1" : undefined}>
+              <Link href={occasionPath(lang, k)}
+                className="flex items-center gap-2.5 rounded-xl border border-dashed border-ink/15 px-4 py-3 font-hand text-lg transition-colors hover:border-ink/40 hover:text-wax focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-violet">
+                <span aria-hidden className="text-xl">{KIND_EMOJI[k]}</span> {ui.kinds[k]}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="mt-auto w-full"><SiteFooter lang={lang} occasions={false} /></div>
+    </main>
   );
 }

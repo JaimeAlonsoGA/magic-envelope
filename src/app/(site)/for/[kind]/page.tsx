@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OccasionLanding } from "@/components/occasion-landing";
 import { KINDS, type Kind } from "@/lib/model";
-import { OCCASIONS, SITE_NAME, languageAlternates, occasionPath } from "@/lib/seo";
+import { OG_IMAGE, OCCASIONS, SITE_NAME, languageAlternates, occasionPath } from "@/lib/seo";
 
 export const dynamicParams = false;
 export const generateStaticParams = () => KINDS.map((kind) => ({ kind }));
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps<"/for/[kind]">): Pr
     title: o.title,
     description: o.intro,
     alternates: languageAlternates((l) => occasionPath(l, k), "en"),
-    openGraph: { title: `${o.title} · ${SITE_NAME}`, description: o.intro, url: occasionPath("en", k), locale: "en" },
+    openGraph: { type: "website", siteName: "Magic Envelope", title: `${o.title} · ${SITE_NAME}`, description: o.intro, url: occasionPath("en", k), locale: "en", images: [OG_IMAGE] },
   };
 }
 

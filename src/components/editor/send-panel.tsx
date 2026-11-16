@@ -2,7 +2,7 @@
 
 import {
   Check, Copy, Download, FileSpreadsheet, ImageIcon, KeyRound, Link2, Loader2, Mail, MessageCircle,
-  HelpCircle, RefreshCw, Send, Share2, WifiOff, X,
+  HelpCircle, RefreshCw, Send, Share2, Users, WifiOff, X,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState, type ReactNode } from "react";
@@ -72,7 +72,8 @@ async function deliver(guest: Guest, card: Card, link: string) {
   return copied;
 }
 
-export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Draft; pub: Publisher; origin: string; save: (p: Partial<Draft>, touch?: boolean) => void; initialTab?: "link" | "image" }) {
+/** `onAddGuests`: opens the guests panel, offered when one generic link is all there is. */
+export function SendPanel({ draft, pub, origin, save, initialTab, onAddGuests }: { draft: Draft; pub: Publisher; origin: string; save: (p: Partial<Draft>, touch?: boolean) => void; initialTab?: "link" | "image"; onAddGuests?: () => void }) {
   const ui = useUI();
   // opens on the output being previewed
   const [tab, setTab] = useState<"link" | "image">(initialTab ?? draft.view ?? "link");
@@ -126,7 +127,20 @@ export function SendPanel({ draft, pub, origin, save, initialTab }: { draft: Dra
       {/* any way of sending it (data-delivers) completes the story: then say thanks */}
       <div className="space-y-5" onClickCapture={(e) => (e.target as HTMLElement).closest("[data-delivers]") && setDelivered(true)}>
         {tab === "link" ? (
-          guests.length ? <GuestLinks draft={draft} guests={guests} sent={sent} linkFor={linkFor} markSent={markSent} /> : <SingleLink draft={draft} url={base} />
+          guests.length ? <GuestLinks draft={draft} guests={guests} sent={sent} linkFor={linkFor} markSent={markSent} /> : (
+            <>
+              <SingleLink draft={draft} url={base} />
+              {/* the letter works for everyone, but the name on the envelope is the point: say it once, quietly */}
+              {onAddGuests && (
+                <p className="flex flex-wrap items-center gap-x-2 border-t border-dashed border-ink/10 pt-4 text-sm text-muted">
+                  {ui.out.nameEach}
+                  <button type="button" onClick={onAddGuests} className="inline-flex min-h-10 items-center gap-1 text-violet underline-offset-4 hover:underline">
+                    <Users size={15} /> {ui.out.addGuests}
+                  </button>
+                </p>
+              )}
+            </>
+          )
         ) : (
           <Images draft={draft} guests={guests} markSent={markSent} />
         )}

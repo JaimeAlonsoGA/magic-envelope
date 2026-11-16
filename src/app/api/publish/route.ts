@@ -24,11 +24,11 @@ export async function POST(req: Request) {
   }
   const { card: stored } = await copyCardImages(parsed.data.card);
   const { guests } = parsed.data;
-  if (!(await saveCard(id, stored, key, guests))) {
+  if (!(await saveCard(id, stored, key, guests, "app"))) {
     // Edit key doesn't match: publish as a brand-new card instead.
     id = nanoid(10);
     key = nanoid(32);
-    await saveCard(id, stored, key, guests);
+    await saveCard(id, stored, key, guests, "app");
   }
   return Response.json({ id, key, card: stored });
 }

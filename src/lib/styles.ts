@@ -5,6 +5,7 @@
  */
 import type { CSSProperties } from "react";
 import { luminance } from "./color";
+import type { Lang } from "./model";
 
 /* ───────────── Fonts ───────────── */
 
@@ -82,7 +83,7 @@ export const STYLES = {
     texture: "none", frame: "none", shape: "solid", headWeight: 600, headTracking: "-0.02em",
   },
   launch: {
-    name: "Launch", group: "Modern", head: "inter", body: "inter", sign: "inter",
+    name: "Neon", group: "Modern", head: "inter", body: "inter", sign: "inter",
     paper: "#0d0d14",
     bg: "radial-gradient(90% 55% at 0% 0%, #3a1f7a 0%, transparent 60%), radial-gradient(80% 50% at 100% 100%, #0b4a6e 0%, transparent 60%), #0d0d14",
     ink: "#ececf3", accent: "#c4b5fd", onAccent: "#0d0d14", wax: "#7c3aed", envelope: "#1d1d29",
@@ -134,7 +135,7 @@ export const STYLES = {
   },
   pocket: {
     name: "Pocket 8-bit", group: "Retro", head: "pixel", body: "vt323", sign: "vt323",
-    paper: "#9bbc0f", ink: "#0f380f", accent: "#306230", onAccent: "#9bbc0f", wax: "#306230", envelope: "#8bac0f",
+    paper: "#9bbc0f", ink: "#0f380f", accent: "#234a23", onAccent: "#9bbc0f", wax: "#306230", envelope: "#8bac0f",
     texture: "scanlines", frame: "pixel", shape: "pixel", headCase: "upper", page: "#c9c9c3",
   },
 } satisfies Record<string, Style>;
@@ -212,3 +213,17 @@ export const RADIUS: Record<Frame, string> = {
  * already sees behind the letter (`#fbf8f1` when the style has no page of its own).
  */
 export const exportMat = (s: Resolved) => s.page ?? "#fbf8f1";
+
+/**
+ * Style names as people read them. `STYLES[id].name` stays the English one (the API, llms.txt);
+ * pages and the editor show this. Names that read the same everywhere (Gatsby, Groovy 80s) aren't listed.
+ */
+const STYLE_NAMES: Partial<Record<Lang, Partial<Record<StyleId, string>>>> = {
+  es: { parchment: "Pergamino", midnight: "Medianoche", botanical: "Botánico", notebook: "Cuaderno", launch: "Neón", ivory: "Marfil", bubblegum: "Chicle", confetti: "Confeti", typewriter: "Máquina de escribir" },
+  fr: { parchment: "Parchemin", midnight: "Minuit", botanical: "Botanique", notebook: "Cahier", minimal: "Minimaliste", launch: "Néon", ivory: "Ivoire", brutal: "Brutaliste", bubblegum: "Chewing-gum", confetti: "Confettis", typewriter: "Machine à écrire" },
+  pt: { parchment: "Pergaminho", midnight: "Meia-noite", botanical: "Botânico", notebook: "Caderno", minimal: "Minimalista", ivory: "Marfim", bubblegum: "Chiclete", confetti: "Confete", typewriter: "Máquina de escrever" },
+  it: { parchment: "Pergamena", midnight: "Mezzanotte", romance: "Romantico", botanical: "Botanico", notebook: "Quaderno", minimal: "Minimalista", ivory: "Avorio", brutal: "Brutalista", bubblegum: "Gomma da masticare", confetti: "Coriandoli", typewriter: "Macchina da scrivere" },
+  de: { parchment: "Pergament", midnight: "Mitternacht", romance: "Romantik", botanical: "Botanisch", notebook: "Notizbuch", ivory: "Elfenbein", bubblegum: "Kaugummi", typewriter: "Schreibmaschine" },
+};
+
+export const styleName = (id: StyleId, lang: Lang) => STYLE_NAMES[lang]?.[id] ?? STYLES[id].name;

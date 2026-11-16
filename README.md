@@ -14,6 +14,9 @@ pnpm dev          # http://localhost:3000
 
 Locally, without any keys, published cards and uploaded images are saved under `.data/`. Only AI images need a key.
 
+After a deploy that changes public pages, `node scripts/indexnow.mjs` tells Bing and the other IndexNow engines.
+What people do (letters from the app vs. agents, guest names, RSVPs, ratings per week) comes from the store, not from analytics: `node --env-file=.env.production.local scripts/funnel.mjs` (pull the file with `vercel env pull .env.production.local --environment=production`).
+
 
 ## For agents
 

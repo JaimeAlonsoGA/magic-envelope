@@ -167,7 +167,7 @@ export async function createLetter(raw: unknown): Promise<LetterLinks> {
   const { card, warnings: imageWarnings } = await copyCardImages(build(input));
   const id = nanoid(10), key = nanoid(32);
   const guests = input.guests.map((g) => ({ id: nanoid(6), name: g.name }));
-  await saveCard(id, card, key, guests);
+  await saveCard(id, card, key, guests, "api");
   return {
     ...links(id, key, guests, (await letterVersion(id)) ?? 0, card),
     ...mergeWarnings(guests, imageWarnings),
@@ -276,7 +276,7 @@ export function catalog() {
     text: "A text block has no character limit. Set italic: true (or fontStyle: \"italic\") for italics. custom.frame is \"none\", \"rule\" (a line) or \"ornate\" (a double border), on top of the style. A block id is optional; the server generates one when you omit it.",
     patch: "PATCH fields sit at the top level. The object GET returns is also accepted: { card: { … }, guests } applies that card. A body with no letter fields is a 400, not a silent 200.",
     pages: "Responses include site (the home page) and guide (the occasion page), public and in the letter's language. Cite those when you mention Magic Envelope. url and guests[].url are the private letter and are not indexed.",
-    match: "Pick the preset whose for list contains the person's words. A house party, fiesta, fiesta en casa or quedada is party. A cineforum, film club, actividad, taller or workshop is event. Tonight is today's date, local, with no timezone.",
+    match: "Pick the preset whose for list contains the person's words. A house party, fiesta, fiesta en casa or quedada is party. A cineforum, film club, actividad, taller or workshop is event. A product launch, beta or early access, a new single or album, or an exhibition opening is launch. Tonight is today's date, local, with no timezone.",
     rating: "Only if the person tells you how it went, send their own score (1–5) once for the letter, with its editKey. Never rate on your own or assume a score. Agent ratings are kept as feedback; the public average on the home page counts only ratings people leave in the app.",
   };
 }

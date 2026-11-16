@@ -1,10 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import { Bebas_Neue, Cinzel, Courier_Prime, Fredoka, IM_Fell_English, Inter, Kalam, MedievalSharp, Monoton, Playfair_Display, Press_Start_2P, Righteous, Space_Grotesk, VT323 } from "next/font/google";
 import { NativeShell } from "@/components/native-shell";
 import { Telemetry } from "@/components/telemetry";
-import { DESCRIPTION, SITE_NAME, TAGLINE } from "@/lib/seo";
+import { DESCRIPTION, OG_IMAGE, SITE_NAME, TAGLINE } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
+import type { Lang } from "@/lib/model";
 import "./globals.css";
+
+/*
+ * The document shell shared by the two root layouts: (site) for English and the app itself, [lang] for
+ * the localized pages. Two roots so <html lang> is right in the HTML a crawler or screen reader gets,
+ * without reading headers (which would make every page dynamic).
+ */
 
 // The app's own hand is the only preloaded face; it draws every page's headline.
 const kalam = Kalam({ variable: "--font-kalam", weight: ["400", "700"], subsets: ["latin"] });
@@ -34,8 +42,8 @@ export const metadata: Metadata = {
   authors: [{ name: "Jaime Alonso", url: "https://jaimealonso.dev" }],
   creator: "Jaime Alonso",
   alternates: { canonical: "/" },
-  openGraph: { type: "website", siteName: SITE_NAME, title: `${SITE_NAME} — ${TAGLINE}`, description: DESCRIPTION, url: "/" },
-  twitter: { card: "summary_large_image", title: `${SITE_NAME} — ${TAGLINE}`, description: DESCRIPTION },
+  openGraph: { type: "website", siteName: SITE_NAME, title: `${SITE_NAME} — ${TAGLINE}`, description: DESCRIPTION, url: "/", images: [OG_IMAGE] },
+  twitter: { card: "summary_large_image", title: `${SITE_NAME} — ${TAGLINE}`, description: DESCRIPTION, images: [OG_IMAGE.url] },
   appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
   formatDetection: { telephone: false },
   verification: { google: "0Ry0LUlnmH6gsbo3HStK0rYVFb7n7faZntGZ7T4C53w" },
@@ -51,9 +59,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export function Document({ lang, children }: { lang: Lang; children: ReactNode }) {
   return (
-    <html lang="en" className={`${fontVars} h-full antialiased`}>
+    <html lang={lang} className={`${fontVars} h-full antialiased`}>
       <body className="min-h-full">
         <NativeShell />
         {children}

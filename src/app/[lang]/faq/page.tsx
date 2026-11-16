@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { FaqPage } from "@/components/faq-page";
 import { FAQ } from "@/lib/faq";
 import { LANGS, type Lang } from "@/lib/model";
-import { faqPath, languageAlternates } from "@/lib/seo";
+import { OG_IMAGE, faqPath, languageAlternates } from "@/lib/seo";
 
 type Local = Exclude<Lang, "en">;
 const LOCAL = LANGS.filter((l): l is Local => l !== "en");
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
     title: page.title,
     description: page.intro,
     alternates: languageAlternates(faqPath, lang as Local),
-    openGraph: { title: page.title, description: page.intro, url: faqPath(lang as Local), locale: lang },
+    openGraph: { type: "website", siteName: "Magic Envelope", title: page.title, description: page.intro, url: faqPath(lang as Local), locale: lang, images: [OG_IMAGE] },
   };
 }
 

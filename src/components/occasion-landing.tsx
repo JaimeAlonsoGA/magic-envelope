@@ -7,7 +7,7 @@ import { LangProvider } from "@/lib/locale";
 import type { Kind, Lang } from "@/lib/model";
 import { SITE_NAME, homePath, occasionCopy, occasionPath } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
-import { STYLES } from "@/lib/styles";
+import { styleName } from "@/lib/styles";
 import { UI_TEXT } from "@/lib/ui";
 
 /** Landing page per occasion and language: what you get, three live letters in fitting styles, deep links into the wizard. */
@@ -54,7 +54,7 @@ export function OccasionLanding({ kind, lang }: { kind: Kind; lang: Lang }) {
                   <CardView card={fromPreset(kind, style, lang)} shareUrl={SITE_URL} />
                 </div>
               </div>
-              <p className="mt-2 px-3 font-hand text-lg">{STYLES[style].name}</p>
+              <p className="mt-2 px-3 font-hand text-lg">{styleName(style, lang)}</p>
             </Link>
           ))}
         </section>

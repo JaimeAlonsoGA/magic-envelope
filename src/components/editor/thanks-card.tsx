@@ -58,10 +58,10 @@ export function ThanksCard() {
       {!mem.rated ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-lg">{t.howWasIt}</span>
-          <div className="flex" role="radiogroup" aria-label={t.howWasIt} onMouseLeave={() => setHover(0)}>
+          <div className="flex" role="group" aria-label={t.howWasIt} onMouseLeave={() => setHover(0)}>
             {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} type="button" role="radio" aria-checked={false} aria-label={t.stars(n)} title={t.stars(n)}
-                onMouseEnter={() => setHover(n)} onFocus={() => setHover(n)} onClick={() => rate(n)}
+              <button key={n} type="button" aria-label={t.stars(n)} title={t.stars(n)}
+                onMouseEnter={() => setHover(n)} onFocus={() => setHover(n)} onBlur={() => setHover(0)} onClick={() => rate(n)}
                 className="grid h-9 w-9 place-items-center rounded-md text-[#d29a12] hover:bg-ink/5">
                 <Star size={22} fill={n <= hover ? "currentColor" : "none"} />
               </button>

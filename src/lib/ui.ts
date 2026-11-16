@@ -10,7 +10,7 @@ import { de, es, fr, it, pt } from "./ui-locales";
 /** English names, also used by the API and agent docs (stable, not translated). */
 export const KIND_LABEL: Record<Kind, string> = {
   birthday: "Birthday", wedding: "Wedding", party: "Party", baby: "Baby shower",
-  dinner: "Dinner", graduation: "Graduation", event: "Event", letter: "Letter",
+  dinner: "Dinner", graduation: "Graduation", event: "Event", letter: "Letter", launch: "Launch",
 };
 
 export const BLOCK_LABEL: Record<BlockType, string> = {
@@ -165,6 +165,8 @@ const en = {
     rendering: (d: number, n: number) => `Drawing ${d}/${n}…`,
     imageNote: "One image per guest, in a ZIP when there are many. PNG, ready to send.",
     progress: (s: number, n: number) => `${s} of ${n} sent`,
+    nameEach: "One link for everyone. Want each guest's name on their envelope?",
+    addGuests: "Add guests",
   },
   view: { link: "Link", image: "Image" },
   interactive: "Show buttons in the link",

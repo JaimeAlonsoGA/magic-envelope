@@ -7,18 +7,33 @@ import { KIND_EMOJI, blankCard, fromPreset } from "@/lib/blocks";
 import { createDraft, getLastLang, setLastLang } from "@/lib/drafts";
 import { useHydrated } from "@/lib/hooks";
 import { FLAGS, t } from "@/lib/i18n";
-import { useUI } from "@/lib/locale";
+import { useLang, useUI } from "@/lib/locale";
 import { KINDS, LANGS, type Card, type Kind, type Lang } from "@/lib/model";
 import { onBack } from "@/lib/native";
-import { RADIUS, STYLES, STYLE_GROUPS, STYLE_IDS, resolveStyle, styleVars, type StyleId } from "@/lib/styles";
+import { RADIUS, STYLES, STYLE_GROUPS, STYLE_IDS, resolveStyle, styleName, styleVars, type StyleId } from "@/lib/styles";
 import { CardView } from "./card/card-view";
 import { SketchButton, SketchLink } from "./sketch";
 import { StyleSwatch } from "./style-swatch";
 
 /** Deep links (/new?lang=…&style=…&kind=…) skip the steps they already decide. */
 export function Wizard({ initialStyle, initialKind, initialLang }: { initialStyle?: StyleId; initialKind?: Kind; initialLang?: Lang }) {
-  // The default language comes from localStorage, so render only on the client.
-  return useHydrated() ? <Steps initialStyle={initialStyle} initialKind={initialKind} initialLang={initialLang} /> : null;
+  // The default language comes from localStorage, so the steps render on the client; until then, their outline.
+  return useHydrated() ? <Steps initialStyle={initialStyle} initialKind={initialKind} initialLang={initialLang} /> : <Outline />;
+}
+
+/** The page's shape before hydration: no blank flash, no layout jump. */
+function Outline() {
+  return (
+    <main aria-busy className="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 pb-10 pt-[max(.75rem,env(safe-area-inset-top))]">
+      <div className="h-14" />
+      <div className="flex flex-1 flex-col justify-center py-6">
+        <div className="mx-auto mb-8 h-7 w-32 rounded-full bg-ink/5" />
+        <div className="mx-auto grid w-full max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 6 }, (_, i) => <div key={i} className="h-[4.25rem] rounded-xl bg-ink/5" />)}
+        </div>
+      </div>
+    </main>
+  );
 }
 
 const tile = "cursor-pointer rounded-md transition-transform duration-200 ease-out hover:-translate-y-1 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-4 focus-visible:outline-violet";
@@ -37,6 +52,7 @@ function Preview({ card }: { card: Card }) {
 /** Create a letter: language → style (how it looks) → blank or a preset (what's in it). */
 function Steps({ initialStyle, initialKind, initialLang }: { initialStyle?: StyleId; initialKind?: Kind; initialLang?: Lang }) {
   const ui = useUI();
+  const appLang = useLang();
   const router = useRouter();
   // a link that already decides the language (and style) starts past those steps
   const [step, setStep] = useState(initialLang ? (initialStyle ? 2 : 1) : 0);
@@ -56,7 +72,7 @@ function Steps({ initialStyle, initialKind, initialLang }: { initialStyle?: Styl
   const s = resolveStyle(style);
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 pb-10 pt-[max(.75rem,env(safe-area-inset-top))]">
+    <main className="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 pb-10 pt-[max(.75rem,env(safe-area-inset-top))]">
       <header className="grid h-14 grid-cols-[2.75rem_1fr_2.75rem] items-center">
         {step > 0
           ? <SketchButton size="icon" aria-label={ui.back} onClick={() => setStep(step - 1)}><ArrowLeft size={20} /></SketchButton>
@@ -90,7 +106,7 @@ function Steps({ initialStyle, initialKind, initialLang }: { initialStyle?: Styl
                   {STYLE_IDS.filter((id) => STYLES[id].group === g).map((id) => (
                     <button key={id} type="button" onClick={() => { setStyle(id); setStep(2); }} className={`${tile} text-left`}>
                       <StyleSwatch s={resolveStyle(id)} line="Magic Envelope" className="aspect-[4/3] text-lg" />
-                      <span className="mt-2 block text-base">{STYLES[id].name}</span>
+                      <span className="mt-2 block text-base">{styleName(id, appLang)}</span>
                     </button>
                   ))}
                 </div>
@@ -114,7 +130,7 @@ function Steps({ initialStyle, initialKind, initialLang }: { initialStyle?: Styl
             </button>
             {/* optional presets (not <button>: the inert preview contains buttons, and buttons can't nest) */}
             {presets.map((card) => (
-              <div key={card.kind} role="button" tabIndex={0} aria-label={`${ui.kinds[card.kind]} preset`} className={tile}
+              <div key={card.kind} role="button" tabIndex={0} aria-label={ui.kinds[card.kind]} className={tile}
                 onClick={() => start(card)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), start(card))}>
                 <Preview card={card} />
                 <span className="mt-1 block truncate px-3 text-base sm:text-lg">{KIND_EMOJI[card.kind]} {ui.kinds[card.kind]}</span>
@@ -123,6 +139,6 @@ function Steps({ initialStyle, initialKind, initialLang }: { initialStyle?: Styl
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }

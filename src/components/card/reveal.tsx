@@ -150,10 +150,11 @@ function GuestRate({ g }: { g: ReturnType<typeof t>["guest"] }) {
   return (
     <div className="flex w-full flex-wrap items-center justify-center gap-x-2 gap-y-1">
       <span className="font-hand text-lg">{g.rate}</span>
-      <div className="flex" role="radiogroup" aria-label={g.rate} onMouseLeave={() => setHover(0)}>
+      {/* five plain buttons, not a radiogroup: one press sends the score (a radio would wait for arrows and a submit) */}
+      <div className="flex" role="group" aria-label={g.rate} onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <button key={n} type="button" role="radio" aria-checked={false} aria-label={g.stars(n)} title={g.stars(n)}
-            onMouseEnter={() => setHover(n)} onFocus={() => setHover(n)} onClick={() => rate(n)}
+          <button key={n} type="button" aria-label={g.stars(n)} title={g.stars(n)}
+            onMouseEnter={() => setHover(n)} onFocus={() => setHover(n)} onBlur={() => setHover(0)} onClick={() => rate(n)}
             className="grid h-9 w-9 place-items-center rounded-md text-[#d29a12] hover:bg-black/5">
             <Star size={20} fill={n <= hover ? "currentColor" : "none"} />
           </button>
@@ -218,12 +219,12 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
   };
 
   return (
-    <div className="reveal relative min-h-dvh" style={s.page && !bare ? { background: s.page } : undefined}>
+    <main className="reveal relative min-h-dvh" style={s.page && !bare ? { background: s.page } : undefined}>
       {/* The envelope sits over the page, its layers interleaved with the letter's (no stacking context
           on the way: absolute, not fixed — the page can't scroll until the letter is out). */}
       {phase !== "open" && (
         <div className="absolute inset-x-0 top-0 h-dvh overflow-hidden">
-          <EnvelopeOpener env={envelopeOf(card, guestName)} startFront={hasFront(card)} label={g.open}
+          <EnvelopeOpener env={envelopeOf(card, guestName)} startFront={hasFront(card)} words={g}
             onReady={setEnvelope} onOpen={open} />
         </div>
       )}
@@ -232,7 +233,7 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
       <div aria-hidden={phase !== "open" || undefined} inert={phase !== "open"}
         className={`flex flex-col [justify-content:safe_center] px-3 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-16 ${phase === "open" ? "min-h-dvh" : "h-dvh overflow-hidden"} ${phase === "sealed" ? "invisible" : ""}`}>
         <div ref={letterRef} className="relative" style={{ zIndex: LAYER.letter }}>
-          <CardView card={card} shareUrl={shareUrl} style={s} guestName={guestName} flat={print} rsvpKey={rsvpKey} />
+          <CardView card={card} shareUrl={shareUrl} style={s} guestName={guestName} flat={print} rsvpKey={rsvpKey} isPage={!bare} />
         </div>
         {!bare && <footer inert={phase !== "open"} className={`no-print mx-auto mt-10 flex max-w-[36rem] flex-wrap items-center justify-center gap-2 transition-opacity duration-300 ${phase === "open" ? "" : "opacity-0"}`}
           style={s.page && s.dark ? ({ color: "#f4f1ea", "--ink": "#f4f1ea" } as React.CSSProperties) : undefined}>
@@ -249,6 +250,6 @@ export function Reveal({ card, guestName, shareUrl, print = false, ownerHref, ba
           )}
         </footer>}
       </div>
-    </div>
+    </main>
   );
 }

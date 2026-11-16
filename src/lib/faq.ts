@@ -17,12 +17,13 @@ const en: FaqPage = {
     { q: "Can I download the invitation instead of printing it?", a: "Yes. Download is the main way out: one PNG per guest, or a ZIP of all of them. A guest can download their own letter after they open the envelope." },
     { q: "Can an AI agent create the invitation for me?", a: "Yes. The REST API and the MCP server create, update and export letters without opening the website. Docs and copy-ready examples are at /developers, and llms.txt describes the whole thing." },
     { q: "Can I make an invitation for a house party tonight?", a: "Yes. A house party, a get-together or a hangout is a party invitation: the place, the music and a reply. A film club, a workshop or an activity is an event invitation, with an agenda and a QR code. The date can be today. It is free, there is no account, and an agent can create it through the API." },
+    { q: "Can I invite people to a launch, a release or an opening?", a: "Yes. A product launch, a beta or early access, a new single or an exhibition opening is a launch invitation: a countdown to the day, the link and a cover image, with each person's name on their envelope. It reads like being on the list, not like a newsletter." },
   ],
 };
 
 const es: FaqPage = {
   title: "Preguntas sobre invitaciones online gratis",
-  intro: "Magic Envelope es una invitación gratis que se lacrá y se envía. Sin cuenta y sin anuncios. Cada invitado recibe su propia carta.",
+  intro: "Magic Envelope es una invitación gratis que se lacra y se envía. Sin cuenta y sin anuncios. Cada invitado recibe su propia carta.",
   items: [
     { q: "¿Puedo hacer una invitación gratis online sin registrarme?", a: "Sí. Abre Magic Envelope, describe la ocasión o empieza por una carta en blanco, y publícala. No hay registro ni marca de agua." },
     { q: "¿Cada invitado ve su propio nombre?", a: "Sí. Añade a tus invitados y escribe {name} en el título o en el texto. Cada persona recibe un enlace y una imagen con su nombre, y su confirmación vuelve a ti." },
@@ -30,6 +31,7 @@ const es: FaqPage = {
     { q: "¿Puedo descargar la invitación en vez de imprimirla?", a: "Sí. Descargar es la salida principal: un PNG por invitado, o un ZIP con todos. Quien abre el sobre también puede descargar su carta." },
     { q: "¿Puede un agente de IA crear la invitación?", a: "Sí. La API REST y el servidor MCP crean, actualizan y exportan cartas sin abrir la web. La documentación y los ejemplos están en /developers, y llms.txt lo resume." },
     { q: "¿Puedo hacer una invitación para una fiesta en casa esta noche?", a: "Sí. Una house party, una fiesta en casa o una quedada es una invitación de fiesta: el sitio, la música y la confirmación. Un cinefórum, un taller o una actividad es una invitación de evento, con agenda y un código QR. La fecha puede ser hoy. Es gratis, sin registro, y un agente puede crearla con la API." },
+    { q: "¿Puedo invitar a un lanzamiento, un estreno o una inauguración?", a: "Sí. El lanzamiento de un producto, una beta o acceso anticipado, un single nuevo o la inauguración de una exposición es una invitación de lanzamiento: cuenta atrás hasta el día, el enlace y una portada, con el nombre de cada persona en su sobre. Se siente como estar en la lista, no como una newsletter." },
   ],
 };
 
@@ -43,6 +45,7 @@ const fr: FaqPage = {
     { q: "Puis-je télécharger l'invitation au lieu de l'imprimer ?", a: "Oui. Le téléchargement est la sortie principale : un PNG par invité, ou un ZIP. L'invité peut aussi télécharger sa lettre après avoir ouvert l'enveloppe." },
     { q: "Un agent IA peut-il créer l'invitation ?", a: "Oui. L'API REST et le serveur MCP créent, modifient et exportent les lettres sans ouvrir le site. La documentation est sur /developers, et llms.txt résume le tout." },
     { q: "Puis-je faire une invitation pour une fête à la maison, ce soir ?", a: "Oui. Une fête à la maison ou une soirée entre amis est une invitation de fête : le lieu, la musique et une réponse. Un ciné-club, un atelier ou une activité est une invitation d’événement, avec un programme et un code QR. La date peut être aujourd’hui. C’est gratuit, sans compte, et un agent peut la créer via l’API." },
+    { q: "Puis-je inviter à un lancement, une sortie ou un vernissage ?", a: "Oui. Le lancement d’un produit, une bêta ou un accès anticipé, un nouveau single ou un vernissage, c’est une invitation de lancement : un compte à rebours, le lien et un visuel, avec le nom de chacun sur son enveloppe. On se sent sur la liste, pas dans une newsletter." },
   ],
 };
 
@@ -56,6 +59,7 @@ const pt: FaqPage = {
     { q: "Posso baixar o convite em vez de imprimir?", a: "Sim. Baixar é o caminho principal: um PNG por convidado, ou um ZIP com todos. Quem abre o envelope também pode baixar a própria carta." },
     { q: "Um agente de IA pode criar o convite?", a: "Sim. A API REST e o servidor MCP criam, atualizam e exportam cartas sem abrir o site. A documentação está em /developers, e o llms.txt resume tudo." },
     { q: "Posso fazer um convite para uma festa em casa hoje à noite?", a: "Sim. Uma festa em casa ou um encontro é um convite de festa: o local, a música e a confirmação. Um cineclube, uma oficina ou uma atividade é um convite de evento, com agenda e um código QR. A data pode ser hoje. É grátis, sem cadastro, e um agente pode criar pela API." },
+    { q: "Posso convidar para um lançamento, uma estreia ou uma vernissage?", a: "Sim. O lançamento de um produto, uma beta ou acesso antecipado, um single novo ou a abertura de uma exposição é um convite de lançamento: contagem regressiva, o link e uma capa, com o nome de cada pessoa no envelope. Parece estar na lista, não numa newsletter." },
   ],
 };
 
@@ -69,6 +73,7 @@ const it: FaqPage = {
     { q: "Posso scaricare l'invito invece di stamparlo?", a: "Sì. Scaricare è la via principale: un PNG per ospite, o uno ZIP. Chi apre la busta può anche scaricare la propria lettera." },
     { q: "Un agente IA può creare l'invito?", a: "Sì. L'API REST e il server MCP creano, aggiornano ed esportano le lettere senza aprire il sito. La documentazione è su /developers, e llms.txt riassume tutto." },
     { q: "Posso fare un invito per una festa a casa, stasera?", a: "Sì. Una festa a casa o una serata tra amici è un invito per una festa: il luogo, la musica e la conferma. Un cineforum, un laboratorio o un’attività è un invito per un evento, con agenda e codice QR. La data può essere oggi. È gratis, senza account, e un agente può crearlo con l’API." },
+    { q: "Posso invitare a un lancio, un’uscita o un’inaugurazione?", a: "Sì. Il lancio di un prodotto, una beta o un accesso anticipato, un nuovo singolo o l’inaugurazione di una mostra è un invito di lancio: conto alla rovescia, il link e una copertina, con il nome di ognuno sulla sua busta. Sembra di essere in lista, non in una newsletter." },
   ],
 };
 
@@ -82,6 +87,7 @@ const de: FaqPage = {
     { q: "Kann ich die Einladung herunterladen statt drucken?", a: "Ja. Herunterladen ist der Hauptweg: ein PNG pro Gast, oder ein ZIP mit allen. Wer den Umschlag öffnet, kann den eigenen Brief auch herunterladen." },
     { q: "Kann ein KI-Agent die Einladung erstellen?", a: "Ja. Die REST-API und der MCP-Server erstellen, ändern und exportieren Briefe, ohne die Website zu öffnen. Die Doku steht unter /developers, und llms.txt fasst alles zusammen." },
     { q: "Kann ich eine Einladung für eine Houseparty heute Abend machen?", a: "Ja. Eine Houseparty oder ein Treffen ist eine Partyeinladung: Ort, Musik und eine Antwort. Ein Filmclub, ein Workshop oder eine Aktivität ist eine Event-Einladung, mit Agenda und QR-Code. Das Datum kann heute sein. Kostenlos, ohne Konto, und ein Agent kann sie über die API erstellen." },
+    { q: "Kann ich zu einem Launch, einem Release oder einer Vernissage einladen?", a: "Ja. Ein Produktlaunch, eine Beta oder ein Early Access, eine neue Single oder eine Vernissage ist eine Launch-Einladung: ein Countdown, der Link und ein Titelbild, mit dem Namen jeder Person auf ihrem Umschlag. Es fühlt sich an wie auf der Liste stehen, nicht wie ein Newsletter." },
   ],
 };
 

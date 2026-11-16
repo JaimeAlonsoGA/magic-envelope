@@ -28,6 +28,8 @@ export type Ctx = {
   flat: boolean;
   guestName?: string; // this letter's guest, if any
   editing?: boolean; // show the {name} token as a visible field
+  /** The block whose title is the page's own (h1): the first heading, when the letter is the page. */
+  pageTitle?: string;
   /** On a guest's page: where an RSVP answer is recorded for the host. */
   rsvpKey?: { id: string; g?: string };
 };
@@ -119,11 +121,12 @@ export function RenderBlock({ b, ctx, ghost }: { b: Block; ctx: Ctx; ghost?: boo
   switch (b.type) {
     case "heading": {
       const rem = { md: 1.5, lg: 2.1, xl: 2.8 }[b.size];
+      const H = ctx.pageTitle === b.id ? "h1" : "h2";
       return (
-        <h2 className="text-balance break-words text-center leading-[1.2]"
+        <H className="text-balance break-words text-center leading-[1.2]"
           style={{ ...headFont, fontStyle: b.italic ? "italic" : "normal", color: "var(--c-accent)", fontSize: `calc(clamp(${rem * 0.8}rem, ${rem * 3.4}vw, ${rem}rem) * var(--c-head-scale))` }}>
           <Named text={b.text} ctx={ctx} />
-        </h2>
+        </H>
       );
     }
     case "text":

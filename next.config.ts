@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // The dev badge sits over the bottom sheet's controls on phones; errors still show in the overlay.
   devIndicators: false,
+  // two root layouts ((site) in English, [lang] for the localized pages) share one 404 for unknown URLs
+  experimental: { globalNotFound: true },
   // Chromium stays out of the server bundle so the binary is traced as a file, and only into the
   // two routes that render a letter. A broader include put the ~70MB binary on the shared function
   // that also serves .well-known, the API, and the link preview (about 160MB, twice per deployment).
@@ -37,7 +39,11 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     // link previews moved to a route that can read the guest (?g=)
-    return [{ source: "/c/:id/opengraph-image", destination: "/c/:id/preview.png", permanent: true }];
+    return [
+      { source: "/c/:id/opengraph-image", destination: "/c/:id/preview.png", permanent: true },
+      // the site preview became a plain route every page names (app/og.png); chats cached the old URL
+      { source: "/opengraph-image", destination: "/og.png", permanent: true },
+    ];
   },
 };
 

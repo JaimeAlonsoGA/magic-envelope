@@ -16,7 +16,9 @@ export { RSVP_ANSWERS, type RsvpAnswer };
 const useBlob = !!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 const LOCAL = path.join(process.cwd(), ".data");
 
-type Stored = { card: Card; key: string; createdAt: number; updatedAt: number; guests?: PublicGuest[] };
+/** `via`: where the letter was made (the web app, or the API / MCP an agent uses). Read by scripts/funnel.mjs. */
+export type Via = "app" | "api";
+type Stored = { card: Card; key: string; createdAt: number; updatedAt: number; guests?: PublicGuest[]; via?: Via };
 
 export const hashKey = (k: string) => createHash("sha256").update(k).digest("hex");
 
@@ -169,12 +171,12 @@ export async function loadGuests(id: string): Promise<PublicGuest[] | null> {
 }
 
 /** Create (no existing) or overwrite (matching edit key) a published card. */
-export async function saveCard(id: string, card: Card, editKey: string, guests: PublicGuest[] = []) {
+export async function saveCard(id: string, card: Card, editKey: string, guests: PublicGuest[] = [], via?: Via) {
   const existing = (await readJson(`cards/${id}.json`)) as Stored | null;
   if (existing && !keyMatches(existing, editKey)) return false;
   const now = Date.now();
   await writeJson(`cards/${id}.json`, {
-    card, guests, key: hashKey(editKey), createdAt: existing?.createdAt ?? now, updatedAt: now,
+    card, guests, key: hashKey(editKey), createdAt: existing?.createdAt ?? now, updatedAt: now, via: existing?.via ?? via,
   } satisfies Stored);
   return true;
 }

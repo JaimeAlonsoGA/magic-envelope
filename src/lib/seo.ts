@@ -13,14 +13,18 @@ export type Occasion = { title: string; h1: string; intro: string; styles: Style
 export const PRESET_FOR: Record<Kind, readonly string[]> = {
   wedding: ["wedding", "boda", "mariage", "casamento", "matrimonio", "Hochzeit"],
   birthday: ["birthday", "cumpleaños", "aniversário", "anniversaire", "compleanno", "Geburtstag"],
-  party: ["party", "house party", "fiesta", "fiesta en casa", "quedada", "hangout", "get-together", "fête", "festa", "Houseparty"],
+  party: ["party", "house party", "fiesta", "fiesta en casa", "quedada", "hangout", "get-together", "movie night", "noche de pelis", "housewarming", "Christmas party", "fiesta de Navidad", "Nochevieja", "fête", "festa", "Houseparty"],
   baby: ["baby shower", "chá de bebê", "babyshower"],
-  dinner: ["dinner", "cena", "dîner", "jantar", "Abendessen"],
+  dinner: ["dinner", "cena", "Christmas dinner", "cena de Navidad", "Friendsgiving", "dîner", "jantar", "Abendessen"],
   graduation: ["graduation", "graduación", "formatura", "remise de diplôme", "laurea", "Abschluss"],
   event: ["event", "evento", "meetup", "cineforum", "cinefórum", "film club", "actividad", "taller", "workshop", "activité"],
   letter: ["letter", "carta", "lettre", "Brief"],
+  launch: ["launch", "product launch", "lanzamiento", "beta", "early access", "acceso anticipado", "waitlist", "lista de espera", "VIP", "release", "release party", "listening party", "new single", "nuevo single", "álbum", "album", "estreno", "exhibition", "exposición", "vernissage", "inauguración", "opening", "lancement", "lançamento", "lancio"],
 };
 export type SiteCopy = { title: string; description: string };
+
+/** Link preview for every public page (app/og.png). Pages that set openGraph must list it: Next replaces the whole object. */
+export const OG_IMAGE = { url: "/og.png", width: 1200, height: 630, type: "image/png", alt: "Magic Envelope" };
 
 export const SITE_NAME = "Magic Envelope";
 export const TAGLINE = "Free invitations that arrive in a sealed envelope";
@@ -73,9 +77,16 @@ export const OCCASIONS: Record<Kind, Occasion> = {
   event: {
     title: "Free event invitations online",
     h1: "Event invitations",
-    intro: "A film club, a workshop, a meetup or a launch: a clean invitation with the agenda, the place, links and a QR code to check in.",
+    intro: "A film club, a workshop, a talk or a meetup: a clean invitation with the agenda, the place, links and a QR code to check in.",
     styles: ["launch", "minimal", "brutal"],
     points: ["Agenda and links", "QR code", "Personal invitation per attendee", "API for agents and automations"],
+  },
+  launch: {
+    title: "Launch, release and opening invitations",
+    h1: "Let them see it first",
+    intro: "A product launch, a beta, a new single or an exhibition opening: each person gets their own envelope with their name on it, a countdown to the day and the link. It reads like being on the list, not on a mailing list.",
+    styles: ["launch", "midnight", "brutal"],
+    points: ["Countdown to the release", "Link, QR code and cover image", "Personal link for every guest", "An agent can send it through the API"],
   },
   letter: {
     title: "Write a letter online, sealed in an envelope",

@@ -2,12 +2,16 @@ import { ImageResponse } from "next/og";
 import { ENV, envelopePalette, sealOutline, sealPalette } from "@/lib/craft";
 import { SITE_NAME, TAGLINE } from "@/lib/seo";
 
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
-export const alt = `${SITE_NAME} — ${TAGLINE}`;
+const size = { width: 1200, height: 630 };
 
-/** Home link preview: the sealed envelope from the CTA, and the promise. */
-export default function Image() {
+export const dynamic = "force-static";
+
+/**
+ * The site's link preview: the sealed envelope from the CTA, and the promise. A plain route, named in
+ * every page's metadata (lib/seo.ts OG_IMAGE): an opengraph-image file only reached pages that didn't
+ * set their own openGraph, which is every localized one.
+ */
+export function GET() {
   const c = envelopePalette("#e9d6ad");
   const s = sealPalette("#a3172b");
   const edge = { stroke: c.edge, strokeWidth: 0.8 };

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { cardTitle } from "@/lib/blocks";
 import { cardStyle } from "@/lib/envelope";
+import { useUI } from "@/lib/locale";
 import type { Card } from "@/lib/model";
 import { RADIUS, styleVars, type Frame, type Resolved, type Texture } from "@/lib/styles";
 import { selectableClass, selectableStyle } from "../selectable";
@@ -64,17 +65,21 @@ type Props = {
   guestName?: string;
   /** On a guest's page: where RSVP answers are recorded for the host. */
   rsvpKey?: Ctx["rsvpKey"];
+  /** The letter is the page (a guest's): its first title is the page's h1. */
+  isPage?: boolean;
 };
 
 /** The letter: a sheet of paper in its style, stacking typed blocks. */
-export function CardView({ card, shareUrl, selected, onSelect, ghosts, className = "", style, flat = false, guestName, rsvpKey }: Props) {
+export function CardView({ card, shareUrl, selected, onSelect, ghosts, className = "", style, flat = false, guestName, rsvpKey, isPage = false }: Props) {
   const s = style ?? cardStyle(card);
   const place = card.blocks.find((b) => b.type === "place");
   const ctx: Ctx = {
     card, style: s, title: cardTitle(card, guestName), shareUrl, flat, guestName, rsvpKey, editing: !!onSelect,
+    pageTitle: isPage ? card.blocks.find((b) => b.type === "heading" && b.text.trim())?.id : undefined,
     where: place?.type === "place" ? place.address.trim() || undefined : undefined,
   };
   const selRef = useRef<HTMLDivElement>(null);
+  const ui = useUI();
 
   // Keep the block being edited visible above the bottom sheet.
   useEffect(() => {
@@ -98,12 +103,16 @@ export function CardView({ card, shareUrl, selected, onSelect, ghosts, className
               role="button"
               tabIndex={0}
               aria-pressed={selected === b.id}
+              // its name is its kind, then what it shows ("Date Saturday 17 October"): the content is inert,
+              // so it's read through aria-labelledby, which reaches it anyway
+              aria-labelledby={`${b.id}-kind ${b.id}-body`}
               onClick={() => onSelect(b.id)}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onSelect(b.id))}
               className={`-mx-3 px-3 py-2 ${selectableClass(selected === b.id)}`}
               style={selectableStyle(selected === b.id)}
             >
-              <div inert><RenderBlock b={b} ctx={ctx} ghost /></div>
+              <span id={`${b.id}-kind`} className="sr-only">{ui.blocks[b.type]}</span>
+              <div id={`${b.id}-body`} inert><RenderBlock b={b} ctx={ctx} ghost /></div>
             </div>
           ) : (
             <RenderBlock key={b.id} b={b} ctx={ctx} ghost={ghosts} />

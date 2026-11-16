@@ -2,7 +2,7 @@ import { Bot, Coffee } from "lucide-react";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
 import { KINDS, LANGS, type Lang } from "@/lib/model";
-import { faqPath, homePath, occasionPath } from "@/lib/seo";
+import { SITE_NAME, faqPath, homePath, occasionPath } from "@/lib/seo";
 import { UI_TEXT } from "@/lib/ui";
 import { LangLink } from "./lang-link";
 
@@ -12,17 +12,18 @@ export const COFFEE_URL = "https://buymeacoffee.com/jaimehuman";
  * Site footer, in the page's language: occasions (localized landing pages), agent access,
  * support, credit, and the same page in every other language.
  */
-export function SiteFooter({ lang = "en", paths = homePath }: { lang?: Lang; paths?: (l: Lang) => string }) {
+/** `occasions={false}` where the page already lists them (the home page). */
+export function SiteFooter({ lang = "en", paths = homePath, occasions = true }: { lang?: Lang; paths?: (l: Lang) => string; occasions?: boolean }) {
   const ui = UI_TEXT[lang];
   const link = "text-muted transition-colors hover:text-ink";
   return (
     <footer className="mt-24 w-full border-t border-dashed border-ink/15 pt-10 font-hand">
       <div className="grid gap-8 sm:grid-cols-3">
-        <nav aria-label={ui.site.makeInvitation}>
-          <h2 className="mb-2 text-lg">{ui.site.makeInvitation}</h2>
+        <nav aria-label={occasions ? ui.site.makeInvitation : ui.site.faq}>
+          <h2 className="mb-2 text-lg">{occasions ? ui.site.makeInvitation : SITE_NAME}</h2>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {KINDS.map((k) => <li key={k}><Link className={link} href={occasionPath(lang, k)}>{ui.kinds[k]}</Link></li>)}
-            <li className="col-span-2 mt-2"><Link className={link} href={faqPath(lang)}>{ui.site.faq}</Link></li>
+            {occasions && KINDS.map((k) => <li key={k}><Link className={link} href={occasionPath(lang, k)}>{ui.kinds[k]}</Link></li>)}
+            <li className={occasions ? "col-span-2 mt-2" : "col-span-2"}><Link className={link} href={faqPath(lang)}>{ui.site.faq}</Link></li>
           </ul>
         </nav>
         <nav aria-label={ui.site.forAgents}>

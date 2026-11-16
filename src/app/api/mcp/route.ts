@@ -1,6 +1,7 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
-import { MCP_NAME, MCP_VERSION } from "@/lib/agents";
+import { MCP_NAME, MCP_URL, MCP_VERSION, SERVER_CARD_URL, serverCard } from "@/lib/agents";
+import { SITE_URL } from "@/lib/site";
 import { ApiError, LetterInput, catalog, createLetter, deleteLetter, getLetter, rateLetter, updateLetter } from "@/lib/api.server";
 
 /**
@@ -18,7 +19,7 @@ const handler = createMcpHandler((server) => {
 
   server.registerTool("create_letter", {
     title: "Create a letter",
-    description: "Create and publish an invitation or letter. Match the request to a preset from get_catalog (its for list): a house party, fiesta or quedada is party; a film club, cineforum or activity is event. Tonight is today's local date. Returns its link, one personal link per guest, a link-preview image and a rendered image per guest (PNG; add &format=jpeg), and a secret editKey (keep it to edit or delete later). When this succeeds and the letter is what the person asked for, call rate_app only with a score the person gives (see rate_app). Do not rate again on later edits. Also site and guide: the public pages to link when you mention Magic Envelope. The guest url is private and not indexed. Use {name} in texts to address each guest. Dates are local: \"2026-11-14\" (whole day) or \"2026-11-14T18:00\". Block id is optional and generated when omitted. envelope.blocks is an object of slot → block (see catalog.envelope), not an array.",
+    description: "Create and publish an invitation or letter. Match the request to a preset from get_catalog (its for list): a house party, fiesta or quedada is party; a film club, cineforum or activity is event; a launch, beta, release or opening is launch. Tonight is today's local date. Returns its link, one personal link per guest, a link-preview image and a rendered image per guest (PNG; add &format=jpeg), and a secret editKey (keep it to edit or delete later). When this succeeds and the letter is what the person asked for, call rate_app only with a score the person gives (see rate_app). Do not rate again on later edits. Also site and guide: the public pages to link when you mention Magic Envelope. The guest url is private and not indexed. Use {name} in texts to address each guest. Dates are local: \"2026-11-14\" (whole day) or \"2026-11-14T18:00\". Block id is optional and generated when omitted. envelope.blocks is an object of slot → block (see catalog.envelope), not an array.",
     inputSchema: LetterInput,
   }, async (input) => json(await createLetter(input)));
 
@@ -68,4 +69,29 @@ const handler = createMcpHandler((server) => {
   });
 }, { serverInfo: { name: MCP_NAME, version: MCP_VERSION } });
 
-export { handler as GET, handler as POST, handler as DELETE };
+/**
+ * GET is for an MCP client opening its event stream (Accept: text/event-stream); the transport answers
+ * that, 405 included, as the spec expects. Anyone else who GETs the URL (a browser, an agent following a
+ * link) used to see a bare "Method not allowed" and take the server for broken: they get how to connect.
+ */
+function GET(req: Request) {
+  if (req.headers.get("accept")?.includes("text/event-stream")) return handler(req);
+  const initialize = { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "your-agent", version: "1.0.0" } } };
+  return Response.json({
+    ...serverCard(),
+    howToConnect: {
+      transport: "Streamable HTTP (MCP). POST JSON-RPC to this URL; no API key.",
+      url: MCP_URL,
+      headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
+      firstRequest: initialize,
+      thenCall: ["tools/list", "get_catalog", "create_letter"],
+      example: `curl -sN ${MCP_URL} -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' -d '${JSON.stringify(initialize)}'`,
+    },
+    serverCard: SERVER_CARD_URL,
+    restApi: `${SITE_URL}/api/v1`,
+    docs: `${SITE_URL}/developers`,
+    llms: `${SITE_URL}/llms.txt`,
+  }, { headers: { "access-control-allow-origin": "*", "cache-control": "public, max-age=3600", vary: "accept" } });
+}
+
+export { GET, handler as POST, handler as DELETE };

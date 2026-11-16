@@ -6,7 +6,9 @@ import { detectLang } from "./lang";
 import type { Kind, Lang } from "./model";
 
 type Guest = {
-  to: string; open: string; tapToOpen: string; share: string; copied: string; print: string;
+  to: string; open: string; tapToOpen: string;
+  /** The sealed envelope: its label on the front (one tap turns it over), and the hint under it on each side. */
+  turn: string; hintFront: string; hintBack: string; share: string; copied: string; print: string;
   calendar: string; map: string; attending: string; notAttending: string; maybe: string; deadline: string;
   days: string; hours: string; minutes: string; seconds: string; scan: string; makeYourOwn: string; today: string;
   /** One tap after the letter is open. Stars rate the app, not the host. */
@@ -33,9 +35,9 @@ type Dict = {
 
 const es: Dict = {
   langName: "Español",
-  kinds: { birthday: "Cumpleaños", wedding: "Boda", party: "Fiesta", baby: "Baby shower", dinner: "Cena", graduation: "Graduación", event: "Evento", letter: "Carta" },
+  kinds: { birthday: "Cumpleaños", wedding: "Boda", party: "Fiesta", baby: "Baby shower", dinner: "Cena", graduation: "Graduación", launch: "Lanzamiento", event: "Evento", letter: "Carta" },
   guest: {
-    to: "Para", open: "Abrir", tapToOpen: "Toca el sobre", share: "Compartir", copied: "¡Copiado!", print: "Descargar",
+    to: "Para", open: "Abrir", tapToOpen: "Toca el sobre", turn: "Dar la vuelta al sobre", hintFront: "Toca el sobre para darle la vuelta", hintBack: "Toca para abrirlo", share: "Compartir", copied: "¡Copiado!", print: "Descargar",
     calendar: "Añadir al calendario", map: "Cómo llegar", attending: "Allí estaré", notAttending: "No podré", maybe: "Quizás",
     deadline: "Responde antes del", days: "días", hours: "horas", minutes: "min", seconds: "seg", scan: "Escanéame",
     makeYourOwn: "Crea tu sobre mágico", today: "¡Es hoy!",
@@ -57,6 +59,7 @@ const es: Dict = {
     baby: { h: "Baby shower", t: "Un pequeño gran milagro está en camino.", sign: "Con ilusión" },
     dinner: { h: "Cena en casa", t: "Una mesa, buena comida y mejor compañía.", sign: "Hasta pronto" },
     graduation: { h: "¡Me gradúo!", t: "Lo logré. Celebrémoslo juntos.", sign: "Gracias por estar" },
+    launch: { h: "Estás en la lista", t: "Algo nuevo está a punto de salir y eres de las primeras personas en verlo.", sign: "Nos vemos dentro" },
     event: { h: "Estás invitado", t: "Nos encantaría contar contigo.", sign: "El equipo" },
     letter: { h: "Querida persona,", t: "Hay cosas que solo caben en una carta…", sign: "Siempre tuyo" },
   },
@@ -64,9 +67,9 @@ const es: Dict = {
 
 const en: Dict = {
   langName: "English",
-  kinds: { birthday: "Birthday", wedding: "Wedding", party: "Party", baby: "Baby shower", dinner: "Dinner", graduation: "Graduation", event: "Event", letter: "Letter" },
+  kinds: { birthday: "Birthday", wedding: "Wedding", party: "Party", baby: "Baby shower", dinner: "Dinner", graduation: "Graduation", launch: "Launch", event: "Event", letter: "Letter" },
   guest: {
-    to: "To", open: "Open", tapToOpen: "Tap the envelope", share: "Share", copied: "Copied!", print: "Download",
+    to: "To", open: "Open", tapToOpen: "Tap the envelope", turn: "Turn the envelope over", hintFront: "Tap the envelope to turn it over", hintBack: "Tap to open it", share: "Share", copied: "Copied!", print: "Download",
     calendar: "Add to calendar", map: "Directions", attending: "I'll be there", notAttending: "Can't make it", maybe: "Maybe",
     deadline: "Please reply by", days: "days", hours: "hours", minutes: "min", seconds: "sec", scan: "Scan me",
     makeYourOwn: "Make your own magic envelope", today: "It's today!",
@@ -88,6 +91,7 @@ const en: Dict = {
     baby: { h: "Baby shower", t: "A tiny miracle is on the way.", sign: "With joy" },
     dinner: { h: "Dinner at ours", t: "One table, good food, better company.", sign: "See you soon" },
     graduation: { h: "I graduated!", t: "I made it. Let's celebrate together.", sign: "Thanks for being there" },
+    launch: { h: "You're on the list", t: "Something new is about to come out, and you're one of the first to see it.", sign: "See you inside" },
     event: { h: "You're invited", t: "We'd love to have you with us.", sign: "The team" },
     letter: { h: "Dear you,", t: "Some things only fit in a letter…", sign: "Always yours" },
   },
@@ -95,9 +99,9 @@ const en: Dict = {
 
 const fr: Dict = {
   langName: "Français",
-  kinds: { birthday: "Anniversaire", wedding: "Mariage", party: "Fête", baby: "Baby shower", dinner: "Dîner", graduation: "Diplôme", event: "Événement", letter: "Lettre" },
+  kinds: { birthday: "Anniversaire", wedding: "Mariage", party: "Fête", baby: "Baby shower", dinner: "Dîner", graduation: "Diplôme", launch: "Lancement", event: "Événement", letter: "Lettre" },
   guest: {
-    to: "Pour", open: "Ouvrir", tapToOpen: "Touchez l'enveloppe", share: "Partager", copied: "Copié !", print: "Télécharger",
+    to: "Pour", open: "Ouvrir", tapToOpen: "Touchez l'enveloppe", turn: "Retourner l'enveloppe", hintFront: "Touchez l'enveloppe pour la retourner", hintBack: "Touchez pour l'ouvrir", share: "Partager", copied: "Copié !", print: "Télécharger",
     calendar: "Ajouter au calendrier", map: "Itinéraire", attending: "J'y serai", notAttending: "Je ne pourrai pas", maybe: "Peut-être",
     deadline: "Répondez avant le", days: "jours", hours: "heures", minutes: "min", seconds: "s", scan: "Scannez-moi",
     makeYourOwn: "Créez votre enveloppe magique", today: "C'est aujourd'hui !",
@@ -119,6 +123,7 @@ const fr: Dict = {
     baby: { h: "Baby shower", t: "Un petit miracle arrive.", sign: "Avec joie" },
     dinner: { h: "Dîner à la maison", t: "Une table, de bons plats, une belle compagnie.", sign: "À très vite" },
     graduation: { h: "Diplômé·e !", t: "J'ai réussi. Fêtons-le ensemble.", sign: "Merci d'être là" },
+    launch: { h: "Vous êtes sur la liste", t: "Quelque chose de nouveau arrive, et vous faites partie des premiers à le découvrir.", sign: "À très vite" },
     event: { h: "Vous êtes invité·e", t: "Nous serions ravis de vous compter parmi nous.", sign: "L'équipe" },
     letter: { h: "Cher toi,", t: "Certaines choses ne tiennent que dans une lettre…", sign: "Pour toujours" },
   },
@@ -126,9 +131,9 @@ const fr: Dict = {
 
 const pt: Dict = {
   langName: "Português",
-  kinds: { birthday: "Aniversário", wedding: "Casamento", party: "Festa", baby: "Chá de bebê", dinner: "Jantar", graduation: "Formatura", event: "Evento", letter: "Carta" },
+  kinds: { birthday: "Aniversário", wedding: "Casamento", party: "Festa", baby: "Chá de bebê", dinner: "Jantar", graduation: "Formatura", launch: "Lançamento", event: "Evento", letter: "Carta" },
   guest: {
-    to: "Para", open: "Abrir", tapToOpen: "Toque no envelope", share: "Compartilhar", copied: "Copiado!", print: "Baixar",
+    to: "Para", open: "Abrir", tapToOpen: "Toque no envelope", turn: "Virar o envelope", hintFront: "Toque no envelope para virá-lo", hintBack: "Toque para abrir", share: "Compartilhar", copied: "Copiado!", print: "Baixar",
     calendar: "Adicionar à agenda", map: "Como chegar", attending: "Estarei lá", notAttending: "Não poderei", maybe: "Talvez",
     deadline: "Responda até", days: "dias", hours: "horas", minutes: "min", seconds: "seg", scan: "Escaneie",
     makeYourOwn: "Crie seu envelope mágico", today: "É hoje!",
@@ -150,6 +155,7 @@ const pt: Dict = {
     baby: { h: "Chá de bebê", t: "Um pequeno milagre está a caminho.", sign: "Com alegria" },
     dinner: { h: "Jantar em casa", t: "Uma mesa, boa comida e ótima companhia.", sign: "Até breve" },
     graduation: { h: "Me formei!", t: "Consegui. Vamos comemorar juntos.", sign: "Obrigado por estar aqui" },
+    launch: { h: "Você está na lista", t: "Algo novo está para sair, e você está entre os primeiros a ver.", sign: "Até já" },
     event: { h: "Você está convidado", t: "Adoraríamos contar com você.", sign: "A equipe" },
     letter: { h: "Querida pessoa,", t: "Há coisas que só cabem numa carta…", sign: "Sempre seu" },
   },
@@ -157,9 +163,9 @@ const pt: Dict = {
 
 const it: Dict = {
   langName: "Italiano",
-  kinds: { birthday: "Compleanno", wedding: "Matrimonio", party: "Festa", baby: "Baby shower", dinner: "Cena", graduation: "Laurea", event: "Evento", letter: "Lettera" },
+  kinds: { birthday: "Compleanno", wedding: "Matrimonio", party: "Festa", baby: "Baby shower", dinner: "Cena", graduation: "Laurea", launch: "Lancio", event: "Evento", letter: "Lettera" },
   guest: {
-    to: "Per", open: "Apri", tapToOpen: "Tocca la busta", share: "Condividi", copied: "Copiato!", print: "Scarica",
+    to: "Per", open: "Apri", tapToOpen: "Tocca la busta", turn: "Gira la busta", hintFront: "Tocca la busta per girarla", hintBack: "Tocca per aprirla", share: "Condividi", copied: "Copiato!", print: "Scarica",
     calendar: "Aggiungi al calendario", map: "Indicazioni", attending: "Ci sarò", notAttending: "Non potrò", maybe: "Forse",
     deadline: "Rispondi entro il", days: "giorni", hours: "ore", minutes: "min", seconds: "sec", scan: "Scansionami",
     makeYourOwn: "Crea la tua busta magica", today: "È oggi!",
@@ -181,6 +187,7 @@ const it: Dict = {
     baby: { h: "Baby shower", t: "Un piccolo miracolo è in arrivo.", sign: "Con gioia" },
     dinner: { h: "Cena a casa", t: "Una tavola, buon cibo e ottima compagnia.", sign: "A presto" },
     graduation: { h: "Mi sono laureato/a!", t: "Ce l'ho fatta. Festeggiamo insieme.", sign: "Grazie di esserci" },
+    launch: { h: "Sei nella lista", t: "Sta per uscire qualcosa di nuovo, e sei tra i primi a vederlo.", sign: "A presto" },
     event: { h: "Sei invitato", t: "Ci farebbe piacere averti con noi.", sign: "Il team" },
     letter: { h: "Cara persona,", t: "Certe cose stanno solo in una lettera…", sign: "Per sempre tuo" },
   },
@@ -188,9 +195,9 @@ const it: Dict = {
 
 const de: Dict = {
   langName: "Deutsch",
-  kinds: { birthday: "Geburtstag", wedding: "Hochzeit", party: "Party", baby: "Babyparty", dinner: "Abendessen", graduation: "Abschluss", event: "Event", letter: "Brief" },
+  kinds: { birthday: "Geburtstag", wedding: "Hochzeit", party: "Party", baby: "Babyparty", dinner: "Abendessen", graduation: "Abschluss", launch: "Launch", event: "Event", letter: "Brief" },
   guest: {
-    to: "An", open: "Öffnen", tapToOpen: "Umschlag antippen", share: "Teilen", copied: "Kopiert!", print: "Herunterladen",
+    to: "An", open: "Öffnen", tapToOpen: "Umschlag antippen", turn: "Umschlag umdrehen", hintFront: "Umschlag antippen zum Umdrehen", hintBack: "Antippen zum Öffnen", share: "Teilen", copied: "Kopiert!", print: "Herunterladen",
     calendar: "Zum Kalender", map: "Route", attending: "Ich komme", notAttending: "Ich kann nicht", maybe: "Vielleicht",
     deadline: "Bitte antworte bis", days: "Tage", hours: "Std", minutes: "Min", seconds: "Sek", scan: "Scan mich",
     makeYourOwn: "Erstelle deinen magischen Umschlag", today: "Heute ist es so weit!",
@@ -212,6 +219,7 @@ const de: Dict = {
     baby: { h: "Babyparty", t: "Ein kleines Wunder ist unterwegs.", sign: "Voller Vorfreude" },
     dinner: { h: "Abendessen bei uns", t: "Ein Tisch, gutes Essen, noch bessere Gesellschaft.", sign: "Bis bald" },
     graduation: { h: "Geschafft!", t: "Ich habe meinen Abschluss. Lass uns feiern.", sign: "Danke, dass du da bist" },
+    launch: { h: "Du stehst auf der Liste", t: "Gleich erscheint etwas Neues, und du gehörst zu den Ersten, die es sehen.", sign: "Bis gleich" },
     event: { h: "Du bist eingeladen", t: "Wir würden uns freuen, dich dabei zu haben.", sign: "Das Team" },
     letter: { h: "Liebe Person,", t: "Manche Dinge passen nur in einen Brief…", sign: "Für immer deins" },
   },

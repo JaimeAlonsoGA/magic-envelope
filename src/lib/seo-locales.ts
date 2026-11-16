@@ -15,7 +15,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
     },
     slugs: {
       wedding: "invitaciones-de-boda", birthday: "invitaciones-de-cumpleanos", party: "invitaciones-de-fiesta", baby: "invitaciones-baby-shower",
-      dinner: "invitaciones-para-cena", graduation: "invitaciones-de-graduacion", event: "invitaciones-para-eventos", letter: "carta-online",
+      dinner: "invitaciones-para-cena", graduation: "invitaciones-de-graduacion", event: "invitaciones-para-eventos", letter: "carta-online", launch: "invitaciones-lanzamiento",
     },
     occasions: {
       wedding: {
@@ -56,9 +56,15 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Invitaciones para eventos gratis online", h1: "Invitaciones para eventos",
-        intro: "Un cinefórum, una actividad, una charla o un lanzamiento: una invitación limpia con la agenda, el lugar, enlaces y un código QR para el acceso.",
+        intro: "Un cinefórum, una actividad, una charla o un encuentro: una invitación limpia con la agenda, el lugar, enlaces y un código QR para el acceso.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda y enlaces", "Código QR", "Una invitación para cada asistente", "API para agentes y automatizaciones"],
+      },
+      launch: {
+        title: "Invitaciones para lanzamientos, estrenos e inauguraciones", h1: "Que lo vean antes que nadie",
+        intro: "Un lanzamiento, una beta, un single nuevo o la inauguración de una exposición: cada persona recibe su sobre con su nombre, una cuenta atrás hasta el día y el enlace. Se siente como estar en la lista, no en una lista de correo.",
+        styles: ["launch", "midnight", "brutal"],
+        points: ["Cuenta atrás hasta el estreno", "Enlace, código QR y portada", "Un enlace para cada invitado", "Un agente puede enviarlo por la API"],
       },
       letter: {
         title: "Escribe una carta online, en un sobre lacrado", h1: "Una carta, sellada en un sobre",
@@ -75,7 +81,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
     },
     slugs: {
       wedding: "faire-part-mariage", birthday: "invitation-anniversaire", party: "invitation-fete", baby: "invitation-baby-shower",
-      dinner: "invitation-diner", graduation: "invitation-remise-diplome", event: "invitation-evenement", letter: "lettre-en-ligne",
+      dinner: "invitation-diner", graduation: "invitation-remise-diplome", event: "invitation-evenement", letter: "lettre-en-ligne", launch: "invitation-lancement",
     },
     occasions: {
       wedding: {
@@ -116,9 +122,15 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Invitation d’événement gratuite en ligne", h1: "Invitations d’événement",
-        intro: "Un ciné-club, un atelier, un meetup ou un lancement : une invitation nette avec le programme, le lieu, des liens et un code QR pour l’accueil.",
+        intro: "Un ciné-club, un atelier, une conférence ou un meetup : une invitation nette avec le programme, le lieu, des liens et un code QR pour l’accueil.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Programme et liens", "Code QR", "Une invitation par participant", "API pour agents et automatisations"],
+      },
+      launch: {
+        title: "Invitations de lancement, de sortie et de vernissage", h1: "Qu’ils le voient en premier",
+        intro: "Un lancement, une bêta, un nouveau single ou un vernissage : chaque personne reçoit son enveloppe à son nom, un compte à rebours jusqu’au jour J et le lien. On se sent sur la liste, pas dans une newsletter.",
+        styles: ["launch", "midnight", "brutal"],
+        points: ["Compte à rebours jusqu’à la sortie", "Lien, code QR et visuel", "Un lien pour chaque invité", "Un agent peut l’envoyer par l’API"],
       },
       letter: {
         title: "Écrire une lettre en ligne, scellée à la cire", h1: "Une lettre, scellée dans une enveloppe",
@@ -135,7 +147,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
     },
     slugs: {
       wedding: "convites-de-casamento", birthday: "convites-de-aniversario", party: "convites-de-festa", baby: "convites-cha-de-bebe",
-      dinner: "convites-para-jantar", graduation: "convites-de-formatura", event: "convites-para-eventos", letter: "carta-online",
+      dinner: "convites-para-jantar", graduation: "convites-de-formatura", event: "convites-para-eventos", letter: "carta-online", launch: "convites-lancamento",
     },
     occasions: {
       wedding: {
@@ -176,9 +188,15 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Convites para eventos grátis online", h1: "Convites para eventos",
-        intro: "Um cineclube, uma atividade, um encontro ou um lançamento: um convite limpo com a agenda, o local, links e um código QR para o credenciamento.",
+        intro: "Um cineclube, uma atividade, uma palestra ou um encontro: um convite limpo com a agenda, o local, links e um código QR para o credenciamento.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda e links", "Código QR", "Um convite para cada participante", "API para agentes e automações"],
+      },
+      launch: {
+        title: "Convites para lançamentos, estreias e vernissages", h1: "Que vejam antes de todo mundo",
+        intro: "Um lançamento, uma beta, um single novo ou a abertura de uma exposição: cada pessoa recebe o seu envelope com o nome dela, uma contagem regressiva até o dia e o link. Parece estar na lista, não numa lista de e-mails.",
+        styles: ["launch", "midnight", "brutal"],
+        points: ["Contagem regressiva até a estreia", "Link, código QR e capa", "Um link para cada convidado", "Um agente pode enviar pela API"],
       },
       letter: {
         title: "Escreva uma carta online, lacrada num envelope", h1: "Uma carta, lacrada num envelope",
@@ -195,7 +213,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
     },
     slugs: {
       wedding: "partecipazioni-matrimonio", birthday: "inviti-compleanno", party: "inviti-festa", baby: "inviti-baby-shower",
-      dinner: "inviti-cena", graduation: "inviti-laurea", event: "inviti-eventi", letter: "lettera-online",
+      dinner: "inviti-cena", graduation: "inviti-laurea", event: "inviti-eventi", letter: "lettera-online", launch: "inviti-lancio",
     },
     occasions: {
       wedding: {
@@ -236,9 +254,15 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Inviti per eventi gratis online", h1: "Inviti per eventi",
-        intro: "Un cineforum, un laboratorio, un meetup o un lancio: un invito pulito con l’agenda, il luogo, i link e un codice QR per l’accoglienza.",
+        intro: "Un cineforum, un laboratorio, un incontro o un meetup: un invito pulito con l’agenda, il luogo, i link e un codice QR per l’accoglienza.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda e link", "Codice QR", "Un invito per ogni partecipante", "API per agenti e automazioni"],
+      },
+      launch: {
+        title: "Inviti per lanci, uscite e inaugurazioni", h1: "Fallo vedere prima a loro",
+        intro: "Un lancio, una beta, un nuovo singolo o l’inaugurazione di una mostra: ognuno riceve la sua busta con il suo nome, il conto alla rovescia e il link. Sembra di essere in lista, non in una mailing list.",
+        styles: ["launch", "midnight", "brutal"],
+        points: ["Conto alla rovescia all’uscita", "Link, codice QR e copertina", "Un link per ogni invitato", "Un agente può inviarlo tramite API"],
       },
       letter: {
         title: "Scrivi una lettera online, sigillata con ceralacca", h1: "Una lettera, sigillata in una busta",
@@ -255,7 +279,7 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
     },
     slugs: {
       wedding: "hochzeitseinladungen", birthday: "geburtstagseinladungen", party: "partyeinladungen", baby: "babyparty-einladungen",
-      dinner: "einladung-zum-essen", graduation: "einladung-abschlussfeier", event: "event-einladungen", letter: "brief-online",
+      dinner: "einladung-zum-essen", graduation: "einladung-abschlussfeier", event: "event-einladungen", letter: "brief-online", launch: "einladung-launch",
     },
     occasions: {
       wedding: {
@@ -296,9 +320,15 @@ export const LOCALIZED: Record<Exclude<Lang, "en">, Localized> = {
       },
       event: {
         title: "Kostenlose Event-Einladungen online", h1: "Einladungen für Events",
-        intro: "Ein Filmclub, ein Workshop, ein Meetup oder ein Launch: eine klare Einladung mit Agenda, Ort, Links und QR-Code für den Einlass.",
+        intro: "Ein Filmclub, ein Workshop, ein Vortrag oder ein Meetup: eine klare Einladung mit Agenda, Ort, Links und QR-Code für den Einlass.",
         styles: ["launch", "minimal", "brutal"],
         points: ["Agenda und Links", "QR-Code", "Eine Einladung pro Gast", "API für Agenten und Automationen"],
+      },
+      launch: {
+        title: "Einladungen zu Launch, Release und Vernissage", h1: "Sie sehen es zuerst",
+        intro: "Ein Produktlaunch, eine Beta, eine neue Single oder eine Vernissage: Jede Person bekommt ihren eigenen Umschlag mit ihrem Namen, einen Countdown bis zum Tag und den Link. Das fühlt sich an wie auf der Liste stehen, nicht wie ein Newsletter.",
+        styles: ["launch", "midnight", "brutal"],
+        points: ["Countdown bis zum Release", "Link, QR-Code und Titelbild", "Ein Link für jeden Gast", "Ein Agent kann sie über die API senden"],
       },
       letter: {
         title: "Einen Brief online schreiben, mit Wachs versiegelt", h1: "Ein Brief, versiegelt im Umschlag",

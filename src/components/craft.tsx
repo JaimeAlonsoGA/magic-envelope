@@ -345,11 +345,15 @@ const ENV_SHADOW = "[filter:drop-shadow(0_6px_10px_rgb(0_0_0/.14))]";
  * `onReady` hands it the layered back as soon as it shows (so the letter can be slipped into the pocket
  * ahead of time), `onOpen` says go. Nothing moves until tapped.
  */
-export function EnvelopeOpener({ env, startFront, label, onReady, onOpen }: {
-  env: EnvModel; startFront: boolean; label: string; onReady: (envelope: HTMLDivElement) => void; onOpen: () => void;
+/** What the sealed envelope says: its name on each side (as a button) and the hint under it. */
+export type OpenerWords = { turn: string; open: string; hintFront: string; hintBack: string };
+
+export function EnvelopeOpener({ env, startFront, words, onReady, onOpen }: {
+  env: EnvModel; startFront: boolean; words: OpenerWords; onReady: (envelope: HTMLDivElement) => void; onOpen: () => void;
 }) {
   const [phase, setPhase] = useState<"front" | "flipping" | "back" | "open">(startFront ? "front" : "back");
   const backRef = useRef<HTMLDivElement>(null);
+  const uid = useId();
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const back = phase === "back" || phase === "open";
@@ -372,13 +376,26 @@ export function EnvelopeOpener({ env, startFront, label, onReady, onOpen }: {
   return (
     // no transform / opacity / filter around this box: any of those would trap the flap's layers,
     // and the letter (a higher layer on the page) would paint on top of the sealed envelope.
-    <div className="flex h-full items-center justify-center px-6">
+    <div className="flex h-full flex-col items-center justify-center gap-5 px-6">
       <div role="button" tabIndex={0} onClick={go} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), go())}
-        aria-label={label} aria-disabled={phase === "flipping" || phase === "open"}
+        // named by what to do, then what it says (the guest's name on it), so the name matches what's seen
+        aria-labelledby={`${uid}-do ${uid}-env`} aria-disabled={phase === "flipping" || phase === "open"}
         className={`w-[min(100%,32rem,56dvh)] rounded-md focus-visible:outline-2 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-violet ${phase === "open" ? "" : "cursor-pointer"}`}>
-        {back
-          ? <EnvelopeBack ref={backRef} env={env} opener />
-          : <div className={ENV_SHADOW}><EnvelopeFlip env={env} side={phase === "flipping" ? "back" : "front"} /></div>}
+        <span id={`${uid}-do`} className="sr-only">{phase === "front" || phase === "flipping" ? words.turn : words.open}</span>
+        <div id={`${uid}-env`}>
+          {back
+            ? <EnvelopeBack ref={backRef} env={env} opener />
+            : <div className={ENV_SHADOW}><EnvelopeFlip env={env} side={phase === "flipping" ? "back" : "front"} /></div>}
+        </div>
+      </div>
+      {/* Two taps (turn it over, then open it) and nothing on the paper says so: the hint does. It keeps its
+          space when it fades, because the opening was measured with it there. Polite: a screen reader hears
+          the second step after the first. */}
+      <div className="pop [animation-delay:.6s]">
+        <p aria-live="polite" onClick={go}
+          className={`cursor-pointer select-none rounded-full bg-bg/85 px-4 py-1.5 font-hand text-lg text-ink shadow-sm backdrop-blur transition-opacity duration-300 ${phase === "front" || phase === "back" ? "" : "opacity-0"}`}>
+          {phase === "front" || phase === "flipping" ? words.hintFront : words.hintBack}
+        </p>
       </div>
     </div>
   );

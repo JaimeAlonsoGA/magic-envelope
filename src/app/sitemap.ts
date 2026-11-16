@@ -3,7 +3,10 @@ import { KINDS, LANGS, type Lang } from "@/lib/model";
 import { faqPath, homePath, occasionPath } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 
-/** Every public page in every language, each listing its translations (hreflang). */
+/**
+ * Every public page in every language, each listing its translations (hreflang). Not /new: the wizard
+ * renders on the client, so a crawler sees an empty page; the occasion pages are the way in.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const everyLang = (path: (l: Lang) => string, priority: number): MetadataRoute.Sitemap =>
@@ -18,7 +21,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...everyLang(homePath, 1),
     ...everyLang(faqPath, 0.8),
     ...KINDS.flatMap((k) => everyLang((l) => occasionPath(l, k), 0.9)),
-    { url: `${SITE_URL}/new`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/developers`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/llms.txt`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${SITE_URL}/api/v1/openapi.json`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },

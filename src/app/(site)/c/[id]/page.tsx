@@ -44,5 +44,5 @@ export default async function CardPage({ params, searchParams }: PageProps<"/c/[
   const data = await get(id, g);
   if (!data) notFound();
   const shareUrl = `${SITE_URL}/c/${id}${data.guestName ? `?g=${g}` : ""}`;
-  return <Reveal card={data.card} guestName={data.guestName} shareUrl={shareUrl} print={sp.print === "1"} rsvpKey={{ id, g: data.guestName ? g : undefined }} />;
+  return <div lang={data.card.lang}><Reveal card={data.card} guestName={data.guestName} shareUrl={shareUrl} print={sp.print === "1"} rsvpKey={{ id, g: data.guestName ? g : undefined }} /></div>;
 }

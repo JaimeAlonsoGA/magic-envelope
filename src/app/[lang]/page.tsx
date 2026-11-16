@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Home } from "@/components/home";
 import { LangProvider } from "@/lib/locale";
 import { LANGS, type Lang } from "@/lib/model";
-import { homePath, languageAlternates, siteCopy, siteJsonLd } from "@/lib/seo";
+import { OG_IMAGE, homePath, languageAlternates, siteCopy, siteJsonLd } from "@/lib/seo";
 import { ratingSummary } from "@/lib/store.server";
 
 type Local = Exclude<Lang, "en">;
@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: PageProps<"/[lang]">): Promis
     title: { absolute: c.title },
     description: c.description,
     alternates: languageAlternates(homePath, lang),
-    openGraph: { title: c.title, description: c.description, url: homePath(lang), locale: lang },
-    twitter: { title: c.title, description: c.description },
+    openGraph: { type: "website", siteName: "Magic Envelope", title: c.title, description: c.description, url: homePath(lang), locale: lang, images: [OG_IMAGE] },
+    twitter: { title: c.title, description: c.description, images: [OG_IMAGE.url] },
   };
 }
 
@@ -35,7 +35,7 @@ export default async function LocalHome({ params }: PageProps<"/[lang]">) {
   return (
     <LangProvider lang={lang}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd(lang, rating)) }} />
-      <div lang={lang}><Home rating={rating} /></div>
+      <Home rating={rating} />
     </LangProvider>
   );
 }

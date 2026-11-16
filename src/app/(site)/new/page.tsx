@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Create a letter",
   description: "Pick a language, a style and an occasion — or start blank. Free, no account.",
   alternates: { canonical: "/new" },
+  // client-rendered steps: nothing for a search result to show. The links on it are still followed.
+  robots: { index: false, follow: true },
 };
 
 export default async function NewPage({ searchParams }: PageProps<"/new">) {

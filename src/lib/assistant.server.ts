@@ -104,7 +104,7 @@ export function letterFrom(p: Plan): { card: Card; guests: { id: string; name: s
   }
   if (p.message) blocks.push(block("text", { text: p.message.slice(0, 2000) }));
   if (p.date && parseWhen(p.date.start)) blocks.push(block("date", { start: p.date.start, ...(p.date.end && parseWhen(p.date.end) ? { end: p.date.end } : {}) }));
-  if (p.date && parseWhen(p.date.start) && (p.kind === "birthday" || p.kind === "party" || p.kind === "wedding")) blocks.push(block("countdown", { to: "" }));
+  if (p.date && parseWhen(p.date.start) && (p.kind === "birthday" || p.kind === "party" || p.kind === "wedding" || p.kind === "launch")) blocks.push(block("countdown", { to: "" }));
   if (p.place) blocks.push(block("place", { name: p.place.name.slice(0, 200), address: p.place.address.slice(0, 200) }));
   if (p.schedule?.length) blocks.push(block("agenda", { items: p.schedule.slice(0, 20).map((s) => ({ time: s.time.slice(0, 10), what: s.what.slice(0, 200) })) }));
   if (p.dressCode) blocks.push(block("dress", { text: p.dressCode.slice(0, 200) }));
