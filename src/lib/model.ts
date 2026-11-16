@@ -12,8 +12,9 @@ export type Lang = (typeof LANGS)[number];
 
 /* ───────────── Kinds of letter ───────────── */
 
-// Order is the order people see (home, wizard, footer): the common occasions first, then the rest.
-export const KINDS = ["birthday", "wedding", "party", "launch", "dinner", "letter", "event", "graduation", "baby"] as const;
+// Order is the order people see (home, wizard, footer): what people here actually send first (letters,
+// birthdays, parties, launches), the formal occasions last.
+export const KINDS = ["letter", "birthday", "party", "launch", "dinner", "event", "wedding", "graduation", "baby"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /* ───────────── Styles (design systems live in lib/styles.ts) ───────────── */

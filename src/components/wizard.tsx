@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { KIND_EMOJI, blankCard, fromPreset } from "@/lib/blocks";
 import { createDraft, getLastLang, setLastLang } from "@/lib/drafts";
 import { useHydrated } from "@/lib/hooks";
@@ -18,11 +18,27 @@ import { StyleSwatch } from "./style-swatch";
 /** Deep links (/new?lang=…&style=…&kind=…) skip the steps they already decide. */
 export function Wizard({ initialStyle, initialKind, initialLang }: { initialStyle?: StyleId; initialKind?: Kind; initialLang?: Lang }) {
   // The default language comes from localStorage, so the steps render on the client; until then, their outline.
-  return useHydrated() ? <Steps initialStyle={initialStyle} initialKind={initialKind} initialLang={initialLang} /> : <Outline />;
+  const hydrated = useHydrated();
+  // A link that decides everything (a letter picked on an occasion page) has nothing left to ask: open it.
+  if (initialLang && initialStyle && initialKind) return <Outline><StartNow card={() => fromPreset(initialKind, initialStyle, initialLang)} lang={initialLang} /></Outline>;
+  return hydrated ? <Steps initialStyle={initialStyle} initialKind={initialKind} initialLang={initialLang} /> : <Outline />;
+}
+
+/** Creates the draft once (Strict Mode runs effects twice) and replaces /new, so Back returns to the page the link was on. */
+function StartNow({ card, lang }: { card: () => Card; lang: Lang }) {
+  const router = useRouter();
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current) return;
+    done.current = true;
+    setLastLang(lang);
+    router.replace(`/edit/${createDraft(card())}`);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
 }
 
 /** The page's shape before hydration: no blank flash, no layout jump. */
-function Outline() {
+function Outline({ children }: { children?: React.ReactNode }) {
   return (
     <main aria-busy className="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 pb-10 pt-[max(.75rem,env(safe-area-inset-top))]">
       <div className="h-14" />
@@ -32,6 +48,7 @@ function Outline() {
           {Array.from({ length: 6 }, (_, i) => <div key={i} className="h-[4.25rem] rounded-xl bg-ink/5" />)}
         </div>
       </div>
+      {children}
     </main>
   );
 }
